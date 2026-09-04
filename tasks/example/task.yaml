@@ -1,0 +1,19 @@
+schema_version: 1
+
+id: example_bug
+
+repository:
+  type: local
+  path: fixtures/example_repo
+  base_commit: "<git-commit>"
+
+task:
+  prompt: |
+    Fix the bug described in the repository.
+
+evaluation:
+  command: "pytest -q"
+  timeout_seconds: 120
+
+metadata:
+  language: python
