@@ -78,6 +78,22 @@ The source must be an existing local Git repository, and worktree registration m
 
 ---
 
+## ADR-004: Why use the Docker CLI before adding an SDK?
+
+### Decision
+
+Use explicit Docker CLI subprocess calls for the initial sandbox lifecycle.
+
+### Reason
+
+Milestone 2.1 needs only container creation and destruction. The installed Docker CLI already exposes those operations, keeps the dependency set small, and makes the exact lifecycle commands inspectable.
+
+### Trade-off
+
+CLI failures require explicit return-code and stderr handling. If later sandbox behavior becomes substantially more complex, the implementation choice can be reevaluated using evidence from those requirements.
+
+---
+
 ## Future ADR Topics
 
 Potential architecture decisions to record during development:

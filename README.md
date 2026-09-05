@@ -7,13 +7,14 @@ rather than a single successful run.
 
 ## Current status
 
-The project is at **Milestone 1 — Deterministic Local Run**. It provides a
-validated YAML task format and can execute one local Run using an isolated Git
-worktree, a deterministic FakeAgent, subprocess-based evaluation, and
-filesystem artifacts.
+The project has completed **Milestone 2.1 — Sandbox Contract + Minimal Docker
+Lifecycle**. In addition to the deterministic local Run from Milestone 1, it
+provides a small sandbox lifecycle contract and can create and reliably destroy
+a Docker container without enabling Docker privileged mode.
 
-Docker sandboxing, Codex execution, and repeated experiments are not
-implemented yet.
+PatchBench task execution does not run inside Docker yet. Container command
+execution for tasks, workspace mounts, resource limits, Codex execution, and
+repeated experiments are not implemented.
 
 ## Development setup
 
@@ -30,6 +31,12 @@ Run the tests with:
 
 ```bash
 pytest
+```
+
+Docker integration tests are explicitly opt-in:
+
+```bash
+PATCHBENCH_RUN_DOCKER_TESTS=1 pytest -m docker
 ```
 
 ## CLI
