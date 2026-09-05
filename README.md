@@ -7,14 +7,15 @@ rather than a single successful run.
 
 ## Current status
 
-The project has completed **Milestone 2.1 — Sandbox Contract + Minimal Docker
-Lifecycle**. In addition to the deterministic local Run from Milestone 1, it
-provides a small sandbox lifecycle contract and can create and reliably destroy
-a Docker container without enabling Docker privileged mode.
+The project has completed **Milestone 2.2 — Docker Command Execution + Workspace
+Mount**. In addition to the deterministic local Run from Milestone 1, the
+sandbox can create and reliably destroy a Docker container without enabling
+Docker privileged mode, bind-mount one explicit host workspace read-write at
+`/workspace`, and execute explicit argv-style commands there.
 
-PatchBench task execution does not run inside Docker yet. Container command
-execution for tasks, workspace mounts, resource limits, Codex execution, and
-repeated experiments are not implemented.
+LocalRun does not use Docker yet. Automatic workspace integration, Dockerized
+agent or evaluator execution, resource limits, timeout management, Codex
+execution, and repeated experiments are not implemented.
 
 ## Development setup
 

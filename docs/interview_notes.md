@@ -94,6 +94,22 @@ CLI failures require explicit return-code and stderr handling. If later sandbox 
 
 ---
 
+## ADR-005: Why one fixed workspace mount and argv-style commands?
+
+### Decision
+
+Milestone 2.2 accepts at most one host workspace, mounts it read-write at `/workspace`, and represents container commands as explicit argument sequences.
+
+### Reason
+
+A single fixed mount makes host exposure easy to inspect and avoids introducing a general volume policy before it is needed. Argument sequences preserve command boundaries without shell parsing or `shell=True`.
+
+### Trade-off
+
+The container path and working directory are intentionally fixed, and ownership of files created through the bind mount follows Docker's host/container UID behavior. Broader mount and identity policies are deferred.
+
+---
+
 ## Future ADR Topics
 
 Potential architecture decisions to record during development:

@@ -82,3 +82,43 @@ def test_docker_sandbox_scope_cleans_up_after_exception() -> None:
 
     assert created_handle is not None
     assert not container_exists(created_handle)
+
+
+def test_workspace_mount_and_command_execution(tmp_path) -> None:
+    (tmp_path / "input.txt").write_text("hello from host", encoding="utf-8")
+    sandbox = DockerSandbox()
+    created_handle: SandboxHandle | None = None
+
+    with sandbox_scope(sandbox, workspace=tmp_path) as handle:
+        created_handle = handle
+        result = sandbox.exec(
+            handle,
+            [
+                "python",
+                "-c",
+                (
+                    "from pathlib import Path; "
+                    "text = Path('input.txt').read_text(); "
+                    "Path('output.txt').write_text(text.upper()); "
+                    "print(text)"
+                ),
+            ],
+        )
+        failed_result = sandbox.exec(
+            handle,
+            [
+                "python",
+                "-c",
+                "import sys; print('expected error', file=sys.stderr); sys.exit(7)",
+            ],
+        )
+
+        assert result.exit_code == 0
+        assert result.stdout == "hello from host\n"
+        assert result.stderr == ""
+        assert (tmp_path / "output.txt").read_text() == "HELLO FROM HOST"
+        assert failed_result.exit_code == 7
+        assert failed_result.stderr == "expected error\n"
+
+    assert created_handle is not None
+    assert not container_exists(created_handle)

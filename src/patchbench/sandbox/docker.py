@@ -1,8 +1,10 @@
-"""Minimal Docker-backed sandbox lifecycle."""
+"""Docker-backed sandbox lifecycle and command-execution implementation."""
 
+from collections.abc import Sequence
+from pathlib import Path
 import subprocess
 
-from patchbench.sandbox.base import SandboxHandle
+from patchbench.sandbox.base import SandboxExecResult, SandboxHandle
 
 
 class DockerSandboxError(RuntimeError):
@@ -10,27 +12,43 @@ class DockerSandboxError(RuntimeError):
 
 
 class DockerSandbox:
-    """Create and destroy a stable, unprivileged Docker container."""
+    """Create, use, and destroy a stable Docker container."""
 
     label = "patchbench.sandbox=true"
+    workspace_path = "/workspace"
 
     def __init__(self, image: str = "python:3.12-slim") -> None:
         self.image = image
 
-    def create(self) -> SandboxHandle:
+    def create(self, workspace: Path | None = None) -> SandboxHandle:
         """Verify Docker and start a container that remains running."""
 
+        workspace_path = self._resolve_workspace(workspace)
         self._run("version", "--format", "{{.Server.Version}}")
-        completed = self._run(
+        run_arguments = [
             "run",
             "--detach",
             "--label",
             self.label,
-            "--",
-            self.image,
-            "python",
-            "-c",
-            "import time; time.sleep(31536000)",
+        ]
+        if workspace_path is not None:
+            run_arguments.extend(
+                [
+                    "--mount",
+                    f"type=bind,source={workspace_path},target={self.workspace_path}",
+                ]
+            )
+        run_arguments.extend(
+            [
+                "--",
+                self.image,
+                "python",
+                "-c",
+                "import time; time.sleep(31536000)",
+            ]
+        )
+        completed = self._run(
+            *run_arguments,
         )
         container_id = completed.stdout.strip()
         if not container_id:
@@ -56,6 +74,42 @@ class DockerSandbox:
             )
         return handle
 
+    def exec(
+        self, handle: SandboxHandle, command: Sequence[str]
+    ) -> SandboxExecResult:
+        """Execute an explicit argv command in the fixed workspace directory."""
+
+        if isinstance(command, (str, bytes)) or not command:
+            raise ValueError("Sandbox command must be a non-empty argv sequence")
+        if not all(isinstance(argument, str) for argument in command):
+            raise TypeError("Every sandbox command argument must be a string")
+
+        completed = self._run_unchecked(
+            "exec",
+            "--workdir",
+            self.workspace_path,
+            handle.identifier,
+            *command,
+        )
+        if completed.returncode != 0:
+            running = self._run(
+                "container",
+                "inspect",
+                "--format",
+                "{{.State.Running}}",
+                handle.identifier,
+            ).stdout.strip()
+            if running != "true":
+                raise DockerSandboxError(
+                    f"Docker container {handle.identifier} is not running after "
+                    "command execution"
+                )
+        return SandboxExecResult(
+            exit_code=completed.returncode,
+            stdout=completed.stdout,
+            stderr=completed.stderr,
+        )
+
     def destroy(self, handle: SandboxHandle) -> None:
         """Force-remove a container; an already absent container is acceptable."""
 
@@ -71,6 +125,25 @@ class DockerSandbox:
         if completed.returncode != 0:
             raise self._command_error(completed, *arguments)
         return completed
+
+    @staticmethod
+    def _resolve_workspace(workspace: Path | None) -> Path | None:
+        if workspace is None:
+            return None
+
+        candidate = Path(workspace).expanduser()
+        try:
+            resolved = candidate.resolve(strict=True)
+        except OSError as error:
+            raise DockerSandboxError(
+                f"Docker sandbox workspace does not exist or cannot be resolved: "
+                f"{candidate} ({error})"
+            ) from error
+        if not resolved.is_dir():
+            raise DockerSandboxError(
+                f"Docker sandbox workspace is not a directory: {resolved}"
+            )
+        return resolved
 
     @staticmethod
     def _run_unchecked(*arguments: str) -> subprocess.CompletedProcess[str]:
