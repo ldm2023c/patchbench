@@ -28,8 +28,16 @@ def load_task(path: str | Path) -> TaskSpec:
         raise TaskLoadError(f"Invalid YAML in task file '{task_path}': {error}") from error
 
     try:
-        return TaskSpec.model_validate(raw_task)
+        task = TaskSpec.model_validate(raw_task)
     except ValidationError as error:
         raise TaskLoadError(
             f"Invalid task configuration in '{task_path}':\n{error}"
         ) from error
+
+    repository_path = Path(task.repository.path)
+    if repository_path.is_absolute():
+        return task
+
+    resolved_path = (task_path.resolve().parent / repository_path).resolve()
+    repository = task.repository.model_copy(update={"path": str(resolved_path)})
+    return task.model_copy(update={"repository": repository})

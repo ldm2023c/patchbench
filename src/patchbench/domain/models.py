@@ -1,5 +1,7 @@
 """Domain models for PatchBench task definitions."""
 
+from enum import Enum
+from pathlib import Path
 from typing import Annotated, Literal
 
 from pydantic import BaseModel, ConfigDict, Field
@@ -50,3 +52,49 @@ class TaskSpec(DomainModel):
     task: TaskPromptConfig
     evaluation: EvaluationConfig
     metadata: TaskMetadata = Field(default_factory=TaskMetadata)
+
+
+class RunStatus(str, Enum):
+    """Final outcome of a completed local Run."""
+
+    PASSED = "passed"
+    FAILED = "failed"
+
+
+class AgentResult(DomainModel):
+    """Normalized result returned by an agent implementation."""
+
+    succeeded: bool
+    duration_seconds: float = Field(ge=0)
+    log: str
+
+
+class EvaluationResult(DomainModel):
+    """Normalized result from executing a task evaluation command."""
+
+    exit_code: int
+    passed: bool
+    duration_seconds: float = Field(ge=0)
+    stdout: str
+    stderr: str
+
+
+class ArtifactPaths(DomainModel):
+    """Filesystem locations persisted for one Run."""
+
+    directory: Path
+    metadata: Path
+    agent_log: Path
+    test_log: Path
+    patch: Path
+
+
+class RunRecord(DomainModel):
+    """Summary of one completed PatchBench Run."""
+
+    run_id: NonEmptyString
+    task_id: NonEmptyString
+    status: RunStatus
+    evaluation_passed: bool
+    duration_seconds: float = Field(ge=0)
+    artifacts: ArtifactPaths

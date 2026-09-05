@@ -7,10 +7,13 @@ rather than a single successful run.
 
 ## Current status
 
-The project is at **Milestone 0 — Project Skeleton**. It currently provides a
-Python package, a validated YAML task format, and a CLI command for checking
-task files. Docker sandboxing and Codex experiment execution are not implemented
-yet.
+The project is at **Milestone 1 — Deterministic Local Run**. It provides a
+validated YAML task format and can execute one local Run using an isolated Git
+worktree, a deterministic FakeAgent, subprocess-based evaluation, and
+filesystem artifacts.
+
+Docker sandboxing, Codex execution, and repeated experiments are not
+implemented yet.
 
 ## Development setup
 
@@ -43,6 +46,29 @@ Validate a task definition:
 patchbench validate-task tasks/example/task.yaml
 ```
 
-The repository path and base commit in the example task are placeholders;
-Milestone 0 validates their configuration but does not access or execute a
-repository.
+Prepare the example fixture's deterministic local Git commit:
+
+```bash
+python scripts/prepare_example_fixture.py
+```
+
+The printed commit must match the `base_commit` recorded in the example task.
+The preparation command is safe to run again when the fixture is already
+prepared and clean.
+
+Execute one local Run with FakeAgent:
+
+```bash
+patchbench run --task tasks/example/task.yaml --agent fake
+```
+
+Every Run starts a detached worktree at the configured base commit, evaluates
+the deterministic repair, removes the temporary worktree, and retains these
+files under `results/<run-id>/`:
+
+```text
+metadata.json
+agent.log
+test.log
+patch.diff
+```
