@@ -62,13 +62,27 @@ It adds a small amount of temporary implementation, but substantially improves d
 
 ---
 
+## ADR-003: Why detached Git worktrees for local Runs?
+
+### Decision
+
+Create a separate detached Git worktree at the configured base commit for every local Run.
+
+### Reason
+
+A detached worktree gives the Run an independent filesystem while preserving an exact, Git-verified starting commit. Agent edits and evaluator byproducts remain outside the source repository, and Git can capture the resulting patch directly.
+
+### Trade-off
+
+The source must be an existing local Git repository, and worktree registration must be cleaned up even when execution fails. Milestone 1 handles this with a context-managed lifecycle and does not clone remote repositories.
+
+---
+
 ## Future ADR Topics
 
 Potential architecture decisions to record during development:
 
 - Why Docker is used for isolated execution.
-- Why experiments must not modify the original repository.
-- Why every Run receives an independent workspace.
 - Why MVP uses filesystem storage instead of PostgreSQL.
 - Why Runs execute sequentially before introducing concurrency.
 - Why Agent implementations use adapters.

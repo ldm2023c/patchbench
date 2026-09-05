@@ -4,15 +4,15 @@ id: example_bug
 
 repository:
   type: local
-  path: fixtures/example_repo
-  base_commit: "<git-commit>"
+  path: ../../fixtures/example_repo
+  base_commit: a55a354ffb46bfd010a3cc86dbc4a7b6135338f3
 
 task:
   prompt: |
     Fix the bug described in the repository.
 
 evaluation:
-  command: "pytest -q"
+  command: "python -m pytest -q"
   timeout_seconds: 120
 
 metadata:
