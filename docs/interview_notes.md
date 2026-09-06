@@ -126,6 +126,22 @@ A timed-out sandbox cannot be reused, and cleanup is coarser than terminating on
 
 ---
 
+## ADR-007: Why move evaluation into the Sandbox before agent execution?
+
+### Decision
+
+Add a Sandbox-backed evaluator as an independently testable component while keeping FakeAgent, LocalRun, and the CLI host-side until the next integration slice.
+
+### Reason
+
+Task evaluation already has a narrow command/result boundary, so it can validate real sandbox execution without coupling Docker lifecycle changes to Run orchestration or the future Codex execution design.
+
+### Trade-off
+
+The host and Sandbox evaluators temporarily coexist, and merely adding the Sandbox evaluator does not make existing Runs Dockerized.
+
+---
+
 ## Future ADR Topics
 
 Potential architecture decisions to record during development:

@@ -16,10 +16,13 @@ optional CPU/memory limits, and bound command execution with timeout cleanup.
 A timeout force-removes the disposable container so the in-container process
 cannot continue unnoticed.
 
-LocalRun does not use Docker yet. Automatic workspace integration, Dockerized
-agent or evaluator execution, network isolation, Codex execution, and repeated
-experiments are not implemented. The current Docker sandbox is not presented as
-a production-grade hostile multi-tenant security boundary.
+The first Milestone 2.4 slice also provides a `SandboxCommandEvaluator` that can
+execute an evaluation command through an already-created Sandbox. LocalRun and
+the CLI do not use it yet: FakeAgent and the existing LocalRun evaluation remain
+host-side. Automatic workspace integration, Dockerized agent execution, network
+isolation, Codex execution, and repeated experiments are not implemented. The
+current Docker sandbox is not presented as a production-grade hostile
+multi-tenant security boundary.
 
 ## Development setup
 

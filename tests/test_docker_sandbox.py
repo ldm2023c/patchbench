@@ -3,6 +3,8 @@ import subprocess
 
 import pytest
 
+from patchbench.domain.models import EvaluationConfig
+from patchbench.evaluators.sandbox import SandboxCommandEvaluator
 from patchbench.sandbox.base import (
     SandboxHandle,
     SandboxResourceLimits,
@@ -139,6 +141,50 @@ def test_docker_sandbox_timeout_removes_container(tmp_path) -> None:
                 ["python", "-c", "import time; time.sleep(30)"],
                 timeout_seconds=0.25,
             )
+
+    assert created_handle is not None
+    assert not container_exists(created_handle)
+
+
+def test_sandbox_command_evaluator_executes_in_mounted_workspace(tmp_path) -> None:
+    (tmp_path / "evaluation-input.txt").write_text(
+        "workspace observed",
+        encoding="utf-8",
+    )
+    sandbox = DockerSandbox()
+    evaluator = SandboxCommandEvaluator(sandbox)
+    created_handle: SandboxHandle | None = None
+
+    with sandbox_scope(sandbox, workspace=tmp_path) as handle:
+        created_handle = handle
+        result = evaluator.evaluate(
+            handle,
+            EvaluationConfig(
+                command=(
+                    'python -c "from pathlib import Path; '
+                    "print(Path('evaluation-input.txt').read_text())\""
+                ),
+                timeout_seconds=5,
+            ),
+        )
+        failed_result = evaluator.evaluate(
+            handle,
+            EvaluationConfig(
+                command=(
+                    'python -c "import sys; '
+                    "print('evaluation failed', file=sys.stderr); "
+                    'raise SystemExit(4)"'
+                ),
+                timeout_seconds=5,
+            ),
+        )
+
+        assert result.exit_code == 0
+        assert result.passed is True
+        assert result.stdout == "workspace observed"
+        assert failed_result.exit_code == 4
+        assert failed_result.passed is False
+        assert failed_result.stderr == "evaluation failed"
 
     assert created_handle is not None
     assert not container_exists(created_handle)
