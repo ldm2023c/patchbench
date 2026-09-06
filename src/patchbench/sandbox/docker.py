@@ -1,14 +1,23 @@
 """Docker-backed sandbox lifecycle and command-execution implementation."""
 
 from collections.abc import Sequence
+from math import isfinite
 from pathlib import Path
 import subprocess
 
-from patchbench.sandbox.base import SandboxExecResult, SandboxHandle
+from patchbench.sandbox.base import (
+    SandboxExecResult,
+    SandboxHandle,
+    SandboxResourceLimits,
+)
 
 
 class DockerSandboxError(RuntimeError):
     """Raised when the Docker CLI or daemon cannot complete an operation."""
+
+
+class DockerSandboxTimeoutError(DockerSandboxError):
+    """Raised when bounded sandbox command execution times out."""
 
 
 class DockerSandbox:
@@ -20,7 +29,11 @@ class DockerSandbox:
     def __init__(self, image: str = "python:3.12-slim") -> None:
         self.image = image
 
-    def create(self, workspace: Path | None = None) -> SandboxHandle:
+    def create(
+        self,
+        workspace: Path | None = None,
+        resource_limits: SandboxResourceLimits | None = None,
+    ) -> SandboxHandle:
         """Verify Docker and start a container that remains running."""
 
         workspace_path = self._resolve_workspace(workspace)
@@ -31,6 +44,13 @@ class DockerSandbox:
             "--label",
             self.label,
         ]
+        if resource_limits is not None:
+            if resource_limits.cpus is not None:
+                run_arguments.extend(["--cpus", str(resource_limits.cpus)])
+            if resource_limits.memory_bytes is not None:
+                run_arguments.extend(
+                    ["--memory", str(resource_limits.memory_bytes)]
+                )
         if workspace_path is not None:
             run_arguments.extend(
                 [
@@ -75,7 +95,11 @@ class DockerSandbox:
         return handle
 
     def exec(
-        self, handle: SandboxHandle, command: Sequence[str]
+        self,
+        handle: SandboxHandle,
+        command: Sequence[str],
+        *,
+        timeout_seconds: float | None = None,
     ) -> SandboxExecResult:
         """Execute an explicit argv command in the fixed workspace directory."""
 
@@ -83,14 +107,38 @@ class DockerSandbox:
             raise ValueError("Sandbox command must be a non-empty argv sequence")
         if not all(isinstance(argument, str) for argument in command):
             raise TypeError("Every sandbox command argument must be a string")
+        if timeout_seconds is not None and (
+            isinstance(timeout_seconds, bool)
+            or not isinstance(timeout_seconds, (int, float))
+            or not isfinite(timeout_seconds)
+            or timeout_seconds <= 0
+        ):
+            raise ValueError("Sandbox command timeout must be a finite positive number")
 
-        completed = self._run_unchecked(
+        exec_arguments = (
             "exec",
             "--workdir",
             self.workspace_path,
             handle.identifier,
             *command,
         )
+        try:
+            completed = self._run_unchecked(
+                *exec_arguments,
+                timeout_seconds=timeout_seconds,
+            )
+        except subprocess.TimeoutExpired as error:
+            try:
+                self.destroy(handle)
+            except DockerSandboxError as cleanup_error:
+                raise DockerSandboxTimeoutError(
+                    f"Docker sandbox command timed out after {timeout_seconds} seconds; "
+                    f"failed to destroy container {handle.identifier}: {cleanup_error}"
+                ) from cleanup_error
+            raise DockerSandboxTimeoutError(
+                f"Docker sandbox command timed out after {timeout_seconds} seconds; "
+                f"container {handle.identifier} was force-removed"
+            ) from error
         if completed.returncode != 0:
             running = self._run(
                 "container",
@@ -146,13 +194,16 @@ class DockerSandbox:
         return resolved
 
     @staticmethod
-    def _run_unchecked(*arguments: str) -> subprocess.CompletedProcess[str]:
+    def _run_unchecked(
+        *arguments: str, timeout_seconds: float | None = None
+    ) -> subprocess.CompletedProcess[str]:
         try:
             return subprocess.run(
                 ["docker", *arguments],
                 capture_output=True,
                 text=True,
                 check=False,
+                timeout=timeout_seconds,
             )
         except OSError as error:
             raise DockerSandboxError(f"Docker CLI is unavailable: {error}") from error

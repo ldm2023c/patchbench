@@ -3,8 +3,12 @@ import subprocess
 
 import pytest
 
-from patchbench.sandbox.base import SandboxHandle, sandbox_scope
-from patchbench.sandbox.docker import DockerSandbox
+from patchbench.sandbox.base import (
+    SandboxHandle,
+    SandboxResourceLimits,
+    sandbox_scope,
+)
+from patchbench.sandbox.docker import DockerSandbox, DockerSandboxTimeoutError
 
 
 pytestmark = pytest.mark.docker
@@ -55,6 +59,24 @@ def container_is_running(handle: SandboxHandle) -> bool:
     return completed.stdout.strip() == "true"
 
 
+def container_resource_limits(handle: SandboxHandle) -> tuple[int, int]:
+    completed = subprocess.run(
+        [
+            "docker",
+            "container",
+            "inspect",
+            "--format",
+            "{{.HostConfig.NanoCpus}} {{.HostConfig.Memory}}",
+            handle.identifier,
+        ],
+        capture_output=True,
+        text=True,
+        check=True,
+    )
+    nano_cpus, memory_bytes = completed.stdout.split()
+    return int(nano_cpus), int(memory_bytes)
+
+
 def test_docker_sandbox_creates_and_destroys_container() -> None:
     sandbox = DockerSandbox()
     handle = sandbox.create()
@@ -79,6 +101,44 @@ def test_docker_sandbox_scope_cleans_up_after_exception() -> None:
             created_handle = handle
             assert container_exists(handle)
             raise RuntimeError("simulated failure")
+
+    assert created_handle is not None
+    assert not container_exists(created_handle)
+
+
+def test_docker_sandbox_applies_resource_limits(tmp_path) -> None:
+    limits = SandboxResourceLimits(cpus=0.5, memory_bytes=64 * 1024 * 1024)
+    sandbox = DockerSandbox()
+
+    with sandbox_scope(
+        sandbox,
+        workspace=tmp_path,
+        resource_limits=limits,
+    ) as handle:
+        assert container_resource_limits(handle) == (500_000_000, 67_108_864)
+
+        result = sandbox.exec(
+            handle,
+            ["python", "-c", "print('bounded sandbox')"],
+            timeout_seconds=5,
+        )
+
+        assert result.exit_code == 0
+        assert result.stdout == "bounded sandbox\n"
+
+
+def test_docker_sandbox_timeout_removes_container(tmp_path) -> None:
+    sandbox = DockerSandbox()
+    created_handle: SandboxHandle | None = None
+
+    with pytest.raises(DockerSandboxTimeoutError, match="timed out"):
+        with sandbox_scope(sandbox, workspace=tmp_path) as handle:
+            created_handle = handle
+            sandbox.exec(
+                handle,
+                ["python", "-c", "import time; time.sleep(30)"],
+                timeout_seconds=0.25,
+            )
 
     assert created_handle is not None
     assert not container_exists(created_handle)

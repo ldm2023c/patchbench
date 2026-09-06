@@ -1,8 +1,9 @@
-"""Sandbox lifecycle and command-execution contract for Milestone 2.2."""
+"""Sandbox lifecycle and bounded command-execution contract."""
 
 from collections.abc import Iterator, Sequence
 from contextlib import contextmanager
 from dataclasses import dataclass
+from math import isfinite
 from pathlib import Path
 from typing import Protocol
 
@@ -27,14 +28,45 @@ class SandboxExecResult:
     stderr: str
 
 
+@dataclass(frozen=True)
+class SandboxResourceLimits:
+    """Implementation-independent resource limits for one sandbox."""
+
+    cpus: float | None = None
+    memory_bytes: int | None = None
+
+    def __post_init__(self) -> None:
+        if self.cpus is not None and (
+            isinstance(self.cpus, bool)
+            or not isinstance(self.cpus, (int, float))
+            or not isfinite(self.cpus)
+            or self.cpus <= 0
+        ):
+            raise ValueError("Sandbox CPU limit must be a finite positive number")
+        if self.memory_bytes is not None and (
+            isinstance(self.memory_bytes, bool)
+            or not isinstance(self.memory_bytes, int)
+            or self.memory_bytes <= 0
+        ):
+            raise ValueError("Sandbox memory limit must be a positive integer")
+
+
 class Sandbox(Protocol):
     """Contract for one sandbox lifecycle and explicit command execution."""
 
-    def create(self, workspace: Path | None = None) -> SandboxHandle:
+    def create(
+        self,
+        workspace: Path | None = None,
+        resource_limits: SandboxResourceLimits | None = None,
+    ) -> SandboxHandle:
         """Create a sandbox and return its handle."""
 
     def exec(
-        self, handle: SandboxHandle, command: Sequence[str]
+        self,
+        handle: SandboxHandle,
+        command: Sequence[str],
+        *,
+        timeout_seconds: float | None = None,
     ) -> SandboxExecResult:
         """Execute an argv-style command inside a running sandbox."""
 
@@ -44,11 +76,14 @@ class Sandbox(Protocol):
 
 @contextmanager
 def sandbox_scope(
-    sandbox: Sandbox, *, workspace: Path | None = None
+    sandbox: Sandbox,
+    *,
+    workspace: Path | None = None,
+    resource_limits: SandboxResourceLimits | None = None,
 ) -> Iterator[SandboxHandle]:
     """Create a sandbox and guarantee a destroy attempt on scope exit."""
 
-    handle = sandbox.create(workspace)
+    handle = sandbox.create(workspace, resource_limits)
     try:
         yield handle
     finally:

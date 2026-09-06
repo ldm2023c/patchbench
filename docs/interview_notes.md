@@ -110,6 +110,22 @@ The container path and working directory are intentionally fixed, and ownership 
 
 ---
 
+## ADR-006: Why implementation-independent limits and whole-sandbox timeout cleanup?
+
+### Decision
+
+Represent CPU and memory limits as validated numeric values in the Sandbox contract, then translate them into Docker arguments in DockerSandbox. If a host-side `docker exec` call times out, force-remove the entire disposable container and invalidate its handle.
+
+### Reason
+
+Numeric resource concepts do not couple callers to Docker CLI syntax. Destroying the container on timeout guarantees that killing the host Docker client does not leave an unobserved task process running inside the sandbox.
+
+### Trade-off
+
+A timed-out sandbox cannot be reused, and cleanup is coarser than terminating only the task process. This favors deterministic cleanup over in-container process discovery or signal orchestration.
+
+---
+
 ## Future ADR Topics
 
 Potential architecture decisions to record during development:

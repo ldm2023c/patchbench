@@ -7,15 +7,19 @@ rather than a single successful run.
 
 ## Current status
 
-The project has completed **Milestone 2.2 — Docker Command Execution + Workspace
-Mount**. In addition to the deterministic local Run from Milestone 1, the
-sandbox can create and reliably destroy a Docker container without enabling
-Docker privileged mode, bind-mount one explicit host workspace read-write at
-`/workspace`, and execute explicit argv-style commands there.
+The project has completed **Milestone 2.3 — Timeout + CPU/Memory Limits +
+Cleanup/Error Paths**. In addition to the deterministic local Run from
+Milestone 1, the sandbox can create and reliably destroy a Docker container
+without enabling Docker privileged mode, bind-mount one explicit host workspace
+read-write at `/workspace`, execute explicit argv-style commands there, apply
+optional CPU/memory limits, and bound command execution with timeout cleanup.
+A timeout force-removes the disposable container so the in-container process
+cannot continue unnoticed.
 
 LocalRun does not use Docker yet. Automatic workspace integration, Dockerized
-agent or evaluator execution, resource limits, timeout management, Codex
-execution, and repeated experiments are not implemented.
+agent or evaluator execution, network isolation, Codex execution, and repeated
+experiments are not implemented. The current Docker sandbox is not presented as
+a production-grade hostile multi-tenant security boundary.
 
 ## Development setup
 
