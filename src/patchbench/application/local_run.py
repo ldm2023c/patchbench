@@ -8,7 +8,9 @@ from patchbench.agents.fake import FakeAgent
 from patchbench.config.task_loader import load_task
 from patchbench.domain.models import RunRecord, RunStatus
 from patchbench.evaluators.command import CommandEvaluator
+from patchbench.evaluators.sandbox import SandboxCommandEvaluator
 from patchbench.repository.git_repository import GitRepositoryManager
+from patchbench.sandbox.base import Sandbox, sandbox_scope
 from patchbench.storage.filesystem import FilesystemArtifactStore
 
 
@@ -17,6 +19,7 @@ def run_task(
     *,
     workspace_root: Path | None = None,
     results_root: Path | None = None,
+    sandbox: Sandbox | None = None,
 ) -> RunRecord:
     """Execute one Task with FakeAgent in an isolated local Git worktree."""
 
@@ -31,9 +34,15 @@ def run_task(
     with repository_manager.workspace(task.repository, run_id) as workspace:
         agent_result = FakeAgent().run(workspace.path, task)
         patch = repository_manager.capture_diff(workspace)
-        evaluation_result = CommandEvaluator().evaluate(
-            workspace.path, task.evaluation
-        )
+        if sandbox is None:
+            evaluation_result = CommandEvaluator().evaluate(
+                workspace.path, task.evaluation
+            )
+        else:
+            with sandbox_scope(sandbox, workspace=workspace.path) as handle:
+                evaluation_result = SandboxCommandEvaluator(sandbox).evaluate(
+                    handle, task.evaluation
+                )
         artifact_paths = artifact_store.create_paths(run_id)
         record = RunRecord(
             run_id=run_id,

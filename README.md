@@ -7,13 +7,22 @@ rather than a single successful run.
 
 ## Current status
 
-The project is at **Milestone 1 — Deterministic Local Run**. It provides a
-validated YAML task format and can execute one local Run using an isolated Git
-worktree, a deterministic FakeAgent, subprocess-based evaluation, and
-filesystem artifacts.
+The project has completed **Milestone 2 — Docker Execution**. A Run can now
+optionally evaluate its task command in a Docker sandbox: PatchBench creates an
+isolated Git worktree, FakeAgent edits that worktree on the host, captures the
+agent patch, and mounts only the worktree read-write at `/workspace` for
+evaluation. The sandbox supports explicit argv execution, optional CPU/memory
+limits, timeout cleanup, and reliable container removal without enabling Docker
+privileged mode.
 
-Docker sandboxing, Codex execution, and repeated experiments are not
-implemented yet.
+Host evaluation remains the default, while `--docker` selects Docker-backed
+evaluation. The controlled example uses Python's standard-library `unittest` so
+it runs in the existing minimal Python image without dependency installation.
+Coding agents do not yet execute inside Docker, and arbitrary repository
+dependencies are not automatically provisioned. Network isolation, Codex
+execution, and repeated experiments are not implemented. The current Docker
+sandbox is not presented as a production-grade hostile multi-tenant security
+boundary.
 
 ## Development setup
 
@@ -30,6 +39,12 @@ Run the tests with:
 
 ```bash
 pytest
+```
+
+Docker integration tests are explicitly opt-in:
+
+```bash
+PATCHBENCH_RUN_DOCKER_TESTS=1 pytest -m docker
 ```
 
 ## CLI
@@ -62,9 +77,15 @@ Execute one local Run with FakeAgent:
 patchbench run --task tasks/example/task.yaml --agent fake
 ```
 
-Every Run starts a detached worktree at the configured base commit, evaluates
-the deterministic repair, removes the temporary worktree, and retains these
-files under `results/<run-id>/`:
+Evaluate the same Run inside Docker:
+
+```bash
+patchbench run --task tasks/example/task.yaml --agent fake --docker
+```
+
+Both modes start a detached worktree at the configured base commit, capture the
+deterministic repair before evaluation, remove the temporary worktree, and
+retain these files under `results/<run-id>/`:
 
 ```text
 metadata.json

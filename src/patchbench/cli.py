@@ -10,6 +10,7 @@ from patchbench.application.local_run import run_task
 from patchbench.config.task_loader import TaskLoadError, load_task
 from patchbench.evaluators.command import EvaluationError
 from patchbench.repository.git_repository import RepositoryError
+from patchbench.sandbox.docker import DockerSandbox, DockerSandboxError
 from patchbench.storage.filesystem import ArtifactStoreError
 
 
@@ -47,17 +48,25 @@ def run(
     agent: Annotated[
         str, typer.Option("--agent", help="Agent to execute; only 'fake' is supported.")
     ],
+    docker: Annotated[
+        bool,
+        typer.Option("--docker", help="Evaluate the task inside Docker."),
+    ] = False,
 ) -> None:
     """Execute one deterministic local Run."""
 
     if agent != "fake":
-        typer.echo("Error: Milestone 1 supports only the 'fake' agent.", err=True)
+        typer.echo("Error: The run command supports only the 'fake' agent.", err=True)
         raise typer.Exit(code=1)
 
     try:
-        record = run_task(task_path)
+        record = run_task(
+            task_path,
+            sandbox=DockerSandbox() if docker else None,
+        )
     except (
         ArtifactStoreError,
+        DockerSandboxError,
         EvaluationError,
         FakeAgentError,
         RepositoryError,
