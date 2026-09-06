@@ -142,6 +142,22 @@ The host and Sandbox evaluators temporarily coexist, and merely adding the Sandb
 
 ---
 
+## ADR-008: Why keep FakeAgent host-side and use unittest for the Docker example?
+
+### Decision
+
+FakeAgent remains a host-side orchestration test double, while task evaluation may run in Docker against its isolated worktree. Patch capture occurs before evaluation, and the controlled example uses `python -B -m unittest -q`.
+
+### Reason
+
+Agent execution is a separate Milestone 3 boundary. Capturing first excludes evaluator caches and temporary files from the agent patch. Standard-library unittest runs identically on the host and in the minimal Python image, while `-B` avoids bytecode caches in the bind mount.
+
+### Trade-off
+
+The example proves Docker-backed Run orchestration without proving dependency provisioning for arbitrary repositories. Real project runtime and dependency preparation remain future work.
+
+---
+
 ## Future ADR Topics
 
 Potential architecture decisions to record during development:

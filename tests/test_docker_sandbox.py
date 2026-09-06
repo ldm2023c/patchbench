@@ -1,9 +1,14 @@
+import json
 import os
+from pathlib import Path
 import subprocess
 
 import pytest
 
+from patchbench.application.local_run import run_task
+from patchbench.config.task_loader import load_task
 from patchbench.domain.models import EvaluationConfig
+from patchbench.domain.models import RunStatus
 from patchbench.evaluators.sandbox import SandboxCommandEvaluator
 from patchbench.sandbox.base import (
     SandboxHandle,
@@ -11,6 +16,8 @@ from patchbench.sandbox.base import (
     sandbox_scope,
 )
 from patchbench.sandbox.docker import DockerSandbox, DockerSandboxTimeoutError
+from scripts.prepare_example_fixture import TASK_PATH, prepare_fixture
+from tests.helpers import git
 
 
 pytestmark = pytest.mark.docker
@@ -188,6 +195,54 @@ def test_sandbox_command_evaluator_executes_in_mounted_workspace(tmp_path) -> No
 
     assert created_handle is not None
     assert not container_exists(created_handle)
+
+
+def test_docker_backed_local_run_completes_example_task(tmp_path) -> None:
+    task = load_task(TASK_PATH)
+    source = Path(task.repository.path)
+    expected_commit = task.repository.base_commit
+    assert prepare_fixture(source, expected_commit) == expected_commit
+    source_contents = (source / "calculator.py").read_text(encoding="utf-8")
+    source_status = git(source, "status", "--porcelain")
+    workspace_root = tmp_path / "workspaces"
+
+    record = run_task(
+        TASK_PATH,
+        workspace_root=workspace_root,
+        results_root=tmp_path / "results",
+        sandbox=DockerSandbox(),
+    )
+
+    assert record.status is RunStatus.PASSED
+    assert record.evaluation_passed is True
+    assert {path.name for path in record.artifacts.directory.iterdir()} == {
+        "metadata.json",
+        "agent.log",
+        "test.log",
+        "patch.diff",
+    }
+    metadata = json.loads(record.artifacts.metadata.read_text(encoding="utf-8"))
+    assert metadata["status"] == "passed"
+    assert metadata["evaluation_passed"] is True
+    assert "FakeAgent processed task" in record.artifacts.agent_log.read_text()
+    test_log = record.artifacts.test_log.read_text(encoding="utf-8")
+    assert "python -B -m unittest -q" in test_log
+    assert "Ran 1 test" in test_log
+    assert "OK" in test_log
+    patch = record.artifacts.patch.read_text(encoding="utf-8")
+    assert "-    return a - b" in patch
+    assert "+    return a + b" in patch
+    assert (source / "calculator.py").read_text(encoding="utf-8") == source_contents
+    assert git(source, "status", "--porcelain") == source_status
+    assert git(source, "rev-parse", "HEAD") == expected_commit
+    assert not (workspace_root / record.run_id).exists()
+    assert git(source, "worktree", "list", "--porcelain").count("worktree ") == 1
+    assert subprocess.run(
+        ["docker", "ps", "-aq", "--filter", f"label={DockerSandbox.label}"],
+        capture_output=True,
+        text=True,
+        check=True,
+    ).stdout.strip() == ""
 
 
 def test_workspace_mount_and_command_execution(tmp_path) -> None:

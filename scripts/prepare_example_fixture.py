@@ -1,4 +1,4 @@
-"""Create the deterministic Git commit used by the Milestone 1 example Task."""
+"""Create the deterministic Git commit used by the built-in example Task."""
 
 import os
 from pathlib import Path

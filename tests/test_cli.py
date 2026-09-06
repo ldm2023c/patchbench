@@ -1,5 +1,7 @@
 from pathlib import Path
+from types import SimpleNamespace
 
+import pytest
 from typer.testing import CliRunner
 
 from patchbench.cli import app
@@ -39,6 +41,10 @@ def test_run_with_fake_agent_succeeds(tmp_path: Path, monkeypatch) -> None:
     task_path = write_run_task(tmp_path, source, base_commit)
     source_contents = (source / "calculator.py").read_text(encoding="utf-8")
     monkeypatch.chdir(tmp_path)
+    monkeypatch.setattr(
+        "patchbench.cli.DockerSandbox",
+        lambda: pytest.fail("DockerSandbox must not be created by default"),
+    )
 
     result = runner.invoke(
         app, ["run", "--task", str(task_path), "--agent", "fake"]
@@ -52,3 +58,31 @@ def test_run_with_fake_agent_succeeds(tmp_path: Path, monkeypatch) -> None:
     assert git(source, "status", "--porcelain") == ""
     assert list((tmp_path / "results").iterdir())
     assert list((tmp_path / ".workspaces").iterdir()) == []
+
+
+def test_run_docker_flag_supplies_docker_sandbox(tmp_path: Path, monkeypatch) -> None:
+    sandbox = object()
+    received: dict[str, object] = {}
+
+    def fake_run_task(task_path: Path, *, sandbox=None):
+        received["task_path"] = task_path
+        received["sandbox"] = sandbox
+        return SimpleNamespace(
+            run_id="run-123",
+            task_id="example_bug",
+            evaluation_passed=True,
+            artifacts=SimpleNamespace(directory=tmp_path / "results" / "run-123"),
+        )
+
+    monkeypatch.setattr("patchbench.cli.DockerSandbox", lambda: sandbox)
+    monkeypatch.setattr("patchbench.cli.run_task", fake_run_task)
+    task_path = tmp_path / "task.yaml"
+
+    result = runner.invoke(
+        app,
+        ["run", "--task", str(task_path), "--agent", "fake", "--docker"],
+    )
+
+    assert result.exit_code == 0
+    assert received == {"task_path": task_path, "sandbox": sandbox}
+    assert "Result:    PASS" in result.output

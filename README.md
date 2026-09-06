@@ -7,22 +7,22 @@ rather than a single successful run.
 
 ## Current status
 
-The project has completed **Milestone 2.3 — Timeout + CPU/Memory Limits +
-Cleanup/Error Paths**. In addition to the deterministic local Run from
-Milestone 1, the sandbox can create and reliably destroy a Docker container
-without enabling Docker privileged mode, bind-mount one explicit host workspace
-read-write at `/workspace`, execute explicit argv-style commands there, apply
-optional CPU/memory limits, and bound command execution with timeout cleanup.
-A timeout force-removes the disposable container so the in-container process
-cannot continue unnoticed.
+The project has completed **Milestone 2 — Docker Execution**. A Run can now
+optionally evaluate its task command in a Docker sandbox: PatchBench creates an
+isolated Git worktree, FakeAgent edits that worktree on the host, captures the
+agent patch, and mounts only the worktree read-write at `/workspace` for
+evaluation. The sandbox supports explicit argv execution, optional CPU/memory
+limits, timeout cleanup, and reliable container removal without enabling Docker
+privileged mode.
 
-The first Milestone 2.4 slice also provides a `SandboxCommandEvaluator` that can
-execute an evaluation command through an already-created Sandbox. LocalRun and
-the CLI do not use it yet: FakeAgent and the existing LocalRun evaluation remain
-host-side. Automatic workspace integration, Dockerized agent execution, network
-isolation, Codex execution, and repeated experiments are not implemented. The
-current Docker sandbox is not presented as a production-grade hostile
-multi-tenant security boundary.
+Host evaluation remains the default, while `--docker` selects Docker-backed
+evaluation. The controlled example uses Python's standard-library `unittest` so
+it runs in the existing minimal Python image without dependency installation.
+Coding agents do not yet execute inside Docker, and arbitrary repository
+dependencies are not automatically provisioned. Network isolation, Codex
+execution, and repeated experiments are not implemented. The current Docker
+sandbox is not presented as a production-grade hostile multi-tenant security
+boundary.
 
 ## Development setup
 
@@ -77,9 +77,15 @@ Execute one local Run with FakeAgent:
 patchbench run --task tasks/example/task.yaml --agent fake
 ```
 
-Every Run starts a detached worktree at the configured base commit, evaluates
-the deterministic repair, removes the temporary worktree, and retains these
-files under `results/<run-id>/`:
+Evaluate the same Run inside Docker:
+
+```bash
+patchbench run --task tasks/example/task.yaml --agent fake --docker
+```
+
+Both modes start a detached worktree at the configured base commit, capture the
+deterministic repair before evaluation, remove the temporary worktree, and
+retain these files under `results/<run-id>/`:
 
 ```text
 metadata.json

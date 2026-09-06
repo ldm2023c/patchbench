@@ -5,14 +5,14 @@ id: example_bug
 repository:
   type: local
   path: ../../fixtures/example_repo
-  base_commit: a55a354ffb46bfd010a3cc86dbc4a7b6135338f3
+  base_commit: 4ed891e6144bdb78941160726ada95fa7a710f3c
 
 task:
   prompt: |
     Fix the bug described in the repository.
 
 evaluation:
-  command: "python -m pytest -q"
+  command: "python -B -m unittest -q"
   timeout_seconds: 120
 
 metadata:
