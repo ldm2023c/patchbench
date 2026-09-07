@@ -1,7 +1,7 @@
 """PatchBench domain models."""
 
 from patchbench.domain.models import (
-    AgentResult,
+    AgentExecutionMetadata,
     ArtifactPaths,
     EvaluationConfig,
     EvaluationResult,
@@ -14,7 +14,7 @@ from patchbench.domain.models import (
 )
 
 __all__ = [
-    "AgentResult",
+    "AgentExecutionMetadata",
     "ArtifactPaths",
     "EvaluationConfig",
     "EvaluationResult",

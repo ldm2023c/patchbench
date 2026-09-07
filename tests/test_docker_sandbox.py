@@ -5,6 +5,7 @@ import subprocess
 
 import pytest
 
+from patchbench.agents.fake import FakeAgent
 from patchbench.application.local_run import run_task
 from patchbench.config.task_loader import load_task
 from patchbench.domain.models import EvaluationConfig
@@ -208,6 +209,8 @@ def test_docker_backed_local_run_completes_example_task(tmp_path) -> None:
 
     record = run_task(
         TASK_PATH,
+        agent=FakeAgent(),
+        agent_name="fake",
         workspace_root=workspace_root,
         results_root=tmp_path / "results",
         sandbox=DockerSandbox(),
@@ -217,7 +220,9 @@ def test_docker_backed_local_run_completes_example_task(tmp_path) -> None:
     assert record.evaluation_passed is True
     assert {path.name for path in record.artifacts.directory.iterdir()} == {
         "metadata.json",
+        "prompt.txt",
         "agent.log",
+        "agent.stderr.log",
         "test.log",
         "patch.diff",
     }

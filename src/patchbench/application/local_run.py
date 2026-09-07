@@ -4,9 +4,9 @@ from pathlib import Path
 from time import perf_counter
 from uuid import uuid4
 
-from patchbench.agents.fake import FakeAgent
+from patchbench.agents.base import Agent, AgentRunRequest
 from patchbench.config.task_loader import load_task
-from patchbench.domain.models import RunRecord, RunStatus
+from patchbench.domain.models import AgentExecutionMetadata, RunRecord, RunStatus
 from patchbench.evaluators.command import CommandEvaluator
 from patchbench.evaluators.sandbox import SandboxCommandEvaluator
 from patchbench.repository.git_repository import GitRepositoryManager
@@ -17,11 +17,15 @@ from patchbench.storage.filesystem import FilesystemArtifactStore
 def run_task(
     task_path: str | Path,
     *,
+    agent: Agent,
+    agent_name: str,
+    agent_timeout_seconds: float | None = None,
+    requested_model: str | None = None,
     workspace_root: Path | None = None,
     results_root: Path | None = None,
     sandbox: Sandbox | None = None,
 ) -> RunRecord:
-    """Execute one Task with FakeAgent in an isolated local Git worktree."""
+    """Execute one Task with an agent in an isolated local Git worktree."""
 
     started = perf_counter()
     task = load_task(task_path)
@@ -32,7 +36,14 @@ def run_task(
     artifact_store = FilesystemArtifactStore(results_root or Path.cwd() / "results")
 
     with repository_manager.workspace(task.repository, run_id) as workspace:
-        agent_result = FakeAgent().run(workspace.path, task)
+        effective_prompt = task.task.prompt
+        agent_result = agent.run(
+            AgentRunRequest(
+                workspace=workspace.path,
+                prompt=effective_prompt,
+                timeout_seconds=agent_timeout_seconds,
+            )
+        )
         patch = repository_manager.capture_diff(workspace)
         if sandbox is None:
             evaluation_result = CommandEvaluator().evaluate(
@@ -52,6 +63,15 @@ def run_task(
             ),
             evaluation_passed=evaluation_result.passed,
             duration_seconds=perf_counter() - started,
+            agent=AgentExecutionMetadata(
+                name=agent_name,
+                backend="host",
+                status=agent_result.status,
+                exit_code=agent_result.exit_code,
+                duration_seconds=agent_result.duration_seconds,
+                timeout_seconds=agent_timeout_seconds,
+                requested_model=requested_model,
+            ),
             artifacts=artifact_paths,
         )
         artifact_store.persist(
@@ -60,6 +80,7 @@ def run_task(
             evaluation_result,
             task.evaluation.command,
             patch,
+            effective_prompt,
         )
 
     return record
