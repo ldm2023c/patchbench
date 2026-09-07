@@ -4,6 +4,7 @@ from types import SimpleNamespace
 import pytest
 from typer.testing import CliRunner
 
+from patchbench.agents.fake import FakeAgent
 from patchbench.cli import app
 from tests.helpers import create_fixture_repository, git, write_run_task
 from tests.test_task_loader import VALID_TASK
@@ -64,8 +65,9 @@ def test_run_docker_flag_supplies_docker_sandbox(tmp_path: Path, monkeypatch) ->
     sandbox = object()
     received: dict[str, object] = {}
 
-    def fake_run_task(task_path: Path, *, sandbox=None):
+    def fake_run_task(task_path: Path, *, agent, sandbox=None):
         received["task_path"] = task_path
+        received["agent"] = agent
         received["sandbox"] = sandbox
         return SimpleNamespace(
             run_id="run-123",
@@ -84,5 +86,7 @@ def test_run_docker_flag_supplies_docker_sandbox(tmp_path: Path, monkeypatch) ->
     )
 
     assert result.exit_code == 0
-    assert received == {"task_path": task_path, "sandbox": sandbox}
+    assert received["task_path"] == task_path
+    assert isinstance(received["agent"], FakeAgent)
+    assert received["sandbox"] is sandbox
     assert "Result:    PASS" in result.output

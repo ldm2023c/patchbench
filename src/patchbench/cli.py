@@ -5,7 +5,8 @@ from typing import Annotated
 
 import typer
 
-from patchbench.agents.fake import FakeAgentError
+from patchbench.agents.base import AgentInfrastructureError, AgentSetupError
+from patchbench.agents.fake import FakeAgent
 from patchbench.application.local_run import run_task
 from patchbench.config.task_loader import TaskLoadError, load_task
 from patchbench.evaluators.command import EvaluationError
@@ -62,13 +63,15 @@ def run(
     try:
         record = run_task(
             task_path,
+            agent=FakeAgent(),
             sandbox=DockerSandbox() if docker else None,
         )
     except (
         ArtifactStoreError,
         DockerSandboxError,
         EvaluationError,
-        FakeAgentError,
+        AgentInfrastructureError,
+        AgentSetupError,
         RepositoryError,
         TaskLoadError,
     ) as error:

@@ -61,14 +61,6 @@ class RunStatus(str, Enum):
     FAILED = "failed"
 
 
-class AgentResult(DomainModel):
-    """Normalized result returned by an agent implementation."""
-
-    succeeded: bool
-    duration_seconds: float = Field(ge=0)
-    log: str
-
-
 class EvaluationResult(DomainModel):
     """Normalized result from executing a task evaluation command."""
 

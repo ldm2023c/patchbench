@@ -5,6 +5,8 @@ import sys
 
 import pytest
 
+from patchbench.agents.base import AgentRunRequest, AgentRunResult, AgentRunStatus
+from patchbench.agents.fake import FakeAgent
 from patchbench.application.local_run import run_task
 from patchbench.domain.models import RunStatus
 from patchbench.sandbox.base import (
@@ -14,6 +16,28 @@ from patchbench.sandbox.base import (
 )
 from patchbench.sandbox.docker import DockerSandboxError
 from tests.helpers import create_fixture_repository, git, write_run_task
+
+
+class RecordingAgent:
+    def __init__(self) -> None:
+        self.request: AgentRunRequest | None = None
+
+    def run(self, request: AgentRunRequest) -> AgentRunResult:
+        self.request = request
+        target = request.workspace / "calculator.py"
+        target.write_text(
+            target.read_text(encoding="utf-8").replace(
+                "return a - b", "return a + b"
+            ),
+            encoding="utf-8",
+        )
+        return AgentRunResult(
+            status=AgentRunStatus.COMPLETED,
+            exit_code=0,
+            stdout="RecordingAgent completed.\n",
+            stderr="RecordingAgent stderr is kept separate.\n",
+            duration_seconds=0.0,
+        )
 
 
 class RecordingSandbox:
@@ -80,7 +104,10 @@ def test_local_run_passes_persists_artifacts_and_preserves_source(tmp_path) -> N
     source_status = git(source, "status", "--porcelain")
 
     record = run_task(
-        task_path, workspace_root=workspace_root, results_root=results_root
+        task_path,
+        agent=FakeAgent(),
+        workspace_root=workspace_root,
+        results_root=results_root,
     )
 
     assert record.task_id == "calculator_bug"
@@ -121,6 +148,7 @@ def test_local_run_records_failed_evaluation(tmp_path) -> None:
 
     record = run_task(
         task_path,
+        agent=FakeAgent(),
         workspace_root=tmp_path / "workspaces",
         results_root=tmp_path / "results",
     )
@@ -146,6 +174,7 @@ def test_local_run_uses_supplied_sandbox_after_capturing_agent_patch(
 
     record = run_task(
         task_path,
+        agent=FakeAgent(),
         workspace_root=workspace_root,
         results_root=tmp_path / "results",
         sandbox=sandbox,
@@ -172,6 +201,7 @@ def test_local_run_records_nonzero_sandbox_evaluation(tmp_path) -> None:
 
     record = run_task(
         task_path,
+        agent=FakeAgent(),
         workspace_root=tmp_path / "workspaces",
         results_root=tmp_path / "results",
         sandbox=sandbox,
@@ -195,6 +225,7 @@ def test_local_run_cleans_sandbox_and_worktree_on_infrastructure_error(
     with pytest.raises(DockerSandboxError) as raised:
         run_task(
             task_path,
+            agent=FakeAgent(),
             workspace_root=workspace_root,
             results_root=tmp_path / "results",
             sandbox=sandbox,
@@ -225,9 +256,34 @@ def test_relative_repository_path_is_resolved_from_task_directory(
 
     record = run_task(
         task_path,
+        agent=FakeAgent(),
         workspace_root=tmp_path / "workspaces",
         results_root=tmp_path / "results",
     )
 
     assert record.status is RunStatus.PASSED
     assert git(source, "status", "--porcelain") == ""
+
+
+def test_local_run_supplies_workspace_and_effective_prompt_to_agent(tmp_path) -> None:
+    source, base_commit = create_fixture_repository(tmp_path)
+    task_path = write_run_task(tmp_path, source, base_commit)
+    agent = RecordingAgent()
+
+    record = run_task(
+        task_path,
+        agent=agent,
+        workspace_root=tmp_path / "workspaces",
+        results_root=tmp_path / "results",
+    )
+
+    assert record.status is RunStatus.PASSED
+    assert agent.request is not None
+    assert agent.request.prompt == "Fix the calculator bug."
+    assert agent.request.timeout_seconds is None
+    assert agent.request.workspace.name == record.run_id
+    assert not agent.request.workspace.exists()
+    assert record.artifacts.agent_log.read_text() == "RecordingAgent completed.\n"
+    patch = record.artifacts.patch.read_text(encoding="utf-8")
+    assert "-    return a - b" in patch
+    assert "+    return a + b" in patch
