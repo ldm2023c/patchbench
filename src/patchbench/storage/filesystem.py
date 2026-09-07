@@ -16,7 +16,7 @@ class ArtifactStoreError(RuntimeError):
 
 
 class FilesystemArtifactStore:
-    """Persist the four required artifacts for one Run."""
+    """Persist the six required artifacts for one Run."""
 
     def __init__(self, results_root: Path) -> None:
         self.results_root = results_root.resolve()
@@ -35,7 +35,9 @@ class FilesystemArtifactStore:
         return ArtifactPaths(
             directory=directory,
             metadata=directory / "metadata.json",
+            prompt=directory / "prompt.txt",
             agent_log=directory / "agent.log",
+            agent_stderr_log=directory / "agent.stderr.log",
             test_log=directory / "test.log",
             patch=directory / "patch.diff",
         )
@@ -47,6 +49,7 @@ class FilesystemArtifactStore:
         evaluation_result: EvaluationResult,
         evaluation_command: str,
         patch: str,
+        effective_prompt: str,
     ) -> None:
         """Write measured Run data and captured logs to their artifact files."""
 
@@ -62,8 +65,12 @@ class FilesystemArtifactStore:
                 json.dumps(record.model_dump(mode="json"), indent=2) + "\n",
                 encoding="utf-8",
             )
+            record.artifacts.prompt.write_text(effective_prompt, encoding="utf-8")
             record.artifacts.agent_log.write_text(
                 agent_result.stdout, encoding="utf-8"
+            )
+            record.artifacts.agent_stderr_log.write_text(
+                agent_result.stderr, encoding="utf-8"
             )
             record.artifacts.test_log.write_text(test_log, encoding="utf-8")
             record.artifacts.patch.write_text(patch, encoding="utf-8")

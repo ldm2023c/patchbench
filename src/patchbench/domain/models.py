@@ -6,6 +6,8 @@ from typing import Annotated, Literal
 
 from pydantic import BaseModel, ConfigDict, Field
 
+from patchbench.agents.base import AgentRunStatus
+
 
 NonEmptyString = Annotated[str, Field(min_length=1)]
 
@@ -61,6 +63,18 @@ class RunStatus(str, Enum):
     FAILED = "failed"
 
 
+class AgentExecutionMetadata(DomainModel):
+    """Reliability-relevant facts for one host agent execution."""
+
+    name: NonEmptyString
+    backend: Literal["host"]
+    status: AgentRunStatus
+    exit_code: int | None
+    duration_seconds: float = Field(ge=0)
+    timeout_seconds: float | None = Field(default=None, gt=0)
+    requested_model: NonEmptyString | None = None
+
+
 class EvaluationResult(DomainModel):
     """Normalized result from executing a task evaluation command."""
 
@@ -76,7 +90,9 @@ class ArtifactPaths(DomainModel):
 
     directory: Path
     metadata: Path
+    prompt: Path
     agent_log: Path
+    agent_stderr_log: Path
     test_log: Path
     patch: Path
 
@@ -89,4 +105,5 @@ class RunRecord(DomainModel):
     status: RunStatus
     evaluation_passed: bool
     duration_seconds: float = Field(ge=0)
+    agent: AgentExecutionMetadata
     artifacts: ArtifactPaths
