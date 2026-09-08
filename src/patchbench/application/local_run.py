@@ -6,7 +6,12 @@ from uuid import uuid4
 
 from patchbench.agents.base import Agent, AgentRunRequest
 from patchbench.config.task_loader import load_task
-from patchbench.domain.models import AgentExecutionMetadata, RunRecord, RunStatus
+from patchbench.domain.models import (
+    AgentExecutionMetadata,
+    RunRecord,
+    RunStatus,
+    TaskSpec,
+)
 from patchbench.evaluators.command import CommandEvaluator
 from patchbench.evaluators.sandbox import SandboxCommandEvaluator
 from patchbench.repository.git_repository import GitRepositoryManager
@@ -29,6 +34,34 @@ def run_task(
 
     started = perf_counter()
     task = load_task(task_path)
+    return _execute_single_run(
+        task,
+        agent=agent,
+        agent_name=agent_name,
+        agent_timeout_seconds=agent_timeout_seconds,
+        requested_model=requested_model,
+        workspace_root=workspace_root,
+        results_root=results_root,
+        sandbox=sandbox,
+        started_at=started,
+    )
+
+
+def _execute_single_run(
+    task: TaskSpec,
+    *,
+    agent: Agent,
+    agent_name: str,
+    agent_timeout_seconds: float | None = None,
+    requested_model: str | None = None,
+    workspace_root: Path | None = None,
+    results_root: Path | None = None,
+    sandbox: Sandbox | None = None,
+    started_at: float | None = None,
+) -> RunRecord:
+    """Execute one already-loaded Task through the existing Run lifecycle."""
+
+    started = perf_counter() if started_at is None else started_at
     run_id = uuid4().hex
     repository_manager = GitRepositoryManager(
         workspace_root or Path.cwd() / ".workspaces"

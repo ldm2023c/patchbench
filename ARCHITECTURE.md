@@ -466,9 +466,11 @@ non-empty sequence of `RunRecord` values. Evaluation metrics come from
 `RunRecord.evaluation_passed`; agent failure and timeout counts come
 independently from `RunRecord.agent.status`.
 
-Runs should initially execute sequentially. Independent execution is
-implemented in M4.2, followed by Experiment persistence and CLI composition in
-M4.3.
+M4.2 loads one TaskSpec for the Experiment, freezes one ExperimentConfiguration,
+and executes child Runs sequentially through the existing single-Run lifecycle.
+A minimal Agent factory callable supplies a fresh Agent for each child Run.
+
+Experiment persistence and CLI composition remain M4.3 work.
 
 An aborted Experiment does not fabricate a Run or partial Experiment record;
 already-completed standalone child Run artifacts remain.

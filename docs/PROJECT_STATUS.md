@@ -22,11 +22,14 @@ Optional V2 work is outside this completion line.
 ## Git / Development State
 
 - Current development branch: `feat/m4-repeated-experiments`
-- Latest accepted slice: M4.1 — Experiment Domain + Aggregation
-- Latest accepted commit: `f9a09a9 feat: add experiment domain and aggregation`
+- Latest accepted slice: M4.2 — Sequential Experiment Orchestration
+- Exact current feature-branch commit: obtain from
+  `git log -1 --oneline --decorate`
+- Historical accepted commits: `068b585` (status checkpoint) and `f9a09a9`
+  (M4.1 implementation)
 - `main` and `origin/main`: `bdeaec6`, the merge of completed M3
 
-M4.1 is accepted on the current feature branch. It is not yet merged to `main`.
+M4.2 is accepted on the current feature branch. It is not yet merged to `main`.
 
 ## Completed Milestones
 
@@ -36,6 +39,7 @@ M1 — Reproducible Local Run             complete
 M2 — Docker Evaluation                  complete
 M3 — Real Agent Execution               complete
 M4.1 — Experiment Domain + Aggregation  accepted on current M4 branch
+M4.2 — Sequential Experiment Orchestration  accepted on current M4 branch
 ```
 
 ## Current Capabilities
@@ -54,10 +58,12 @@ M4.1 — Experiment Domain + Aggregation  accepted on current M4 branch
   `test.log`, and `patch.diff` artifacts.
 - Completed-Experiment domain models.
 - Pure aggregation from completed RunRecords into ExperimentAggregate metrics.
+- Sequential Experiment orchestration that loads one frozen TaskSpec, constructs
+  a fresh Agent per child Run, reuses the isolated single-Run lifecycle, and
+  returns a completed ExperimentRecord.
 
 ### Not Yet Implemented
 
-- Independent N-run Experiment orchestration.
 - Experiment CLI commands.
 - Experiment metadata or artifact persistence.
 - Failure classification.
@@ -68,7 +74,8 @@ M4.1 — Experiment Domain + Aggregation  accepted on current M4 branch
 
 - **M4.1 — Experiment Domain + Aggregation:** accepted on the current M4
   feature branch.
-- **M4.2 — Sequential Experiment Orchestration:** next; not implemented.
+- **M4.2 — Sequential Experiment Orchestration:** accepted on the current M4
+  feature branch; not yet merged to `main`.
 - **M4.3 — Experiment CLI + Persistence + E2E:** not implemented.
 
 M4.1 implemented domain surface:
@@ -141,8 +148,6 @@ remains separate.
 
 ## Deferred Work
 
-- M4.2: sequential independent N-run orchestration, a fresh Agent and worktree
-  per Run, and one frozen TaskSpec and execution configuration.
 - M4.3: Experiment CLI, Experiment metadata persistence, and real repeated
   Codex end-to-end verification.
 - M5: PASS-vs-FAIL comparison, deterministic failure classification, and replay.
@@ -162,7 +167,12 @@ focused:         24 passed
 full regression: 113 passed, 7 skipped
 ```
 
-This evidence validates M4.1, not M4.2 or M4.3.
+Accepted M4.2 verification evidence:
+
+```text
+focused:         44 passed
+full regression: 123 passed, 7 skipped
+```
 
 ## Documentation Map
 
@@ -190,6 +200,4 @@ status changes. Do not document every small implementation detail.
 
 ## Exact Next Action
 
-Design and scope-lock M4.2 — Sequential Experiment Orchestration.
-
-Do not begin M4.2 implementation before exact-slice confirmation.
+Design and scope-lock M4.3 — Experiment CLI + Persistence + E2E.
