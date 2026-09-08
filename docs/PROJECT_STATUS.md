@@ -21,19 +21,17 @@ Optional V2 work is outside this completion line.
 
 ## Git / Development State
 
-- Current development branch: `feat/m4-repeated-experiments`
-- Latest accepted slice: M4.3 — Experiment CLI + Persistence + E2E
+- Current development branch: `feat/m5-failure-analysis-replay`
+- Latest accepted slice: M5.1 — Deterministic Failure Classification
 - Exact current feature-branch commit: obtain from
   `git log -1 --oneline --decorate`
 - Historical accepted commits: `068b585` (status checkpoint) and `f9a09a9`
   (M4.1 implementation)
-- `main` and `origin/main`: `bdeaec6`, the merge of completed M3
+- `main` and `origin/main`: `9ae4375`, the merge of completed M4
 
-M4.3 is accepted on the current M4 feature branch; it is not yet merged to
-`main`. M4 — Repeated Experiments is complete on the current feature branch;
-the whole-branch review is accepted, and M4 is ready for push, PR, and merge to
-`main`. M4 is not yet merged to or complete on `main`; completed M3 remains the
-latest milestone merged there.
+M4 — Repeated Experiments is complete and merged to `main`. M5.1 —
+Deterministic Failure Classification is accepted on the current M5 feature
+branch and is not yet merged to `main`.
 
 ## Completed Milestones
 
@@ -42,9 +40,7 @@ M0 — Foundation                         complete
 M1 — Reproducible Local Run             complete
 M2 — Docker Evaluation                  complete
 M3 — Real Agent Execution               complete
-M4.1 — Experiment Domain + Aggregation  accepted on current M4 branch
-M4.2 — Sequential Experiment Orchestration  accepted on current M4 branch
-M4.3 — Experiment CLI + Persistence + E2E  accepted on current M4 branch
+M4 — Repeated Experiments                complete and merged to main
 ```
 
 ## Current Capabilities
@@ -69,24 +65,28 @@ M4.3 — Experiment CLI + Persistence + E2E  accepted on current M4 branch
 - Completed Experiment metadata persistence at
   `results/experiments/<experiment-id>/metadata.json`, referencing standalone
   child Run artifacts by `run_ids`.
+- Pure deterministic multi-label classification from a completed `RunRecord`
+  plus already-loaded patch evidence into `FailureAnalysis`, using the directly
+  observable `AGENT_COMMAND_FAILED`, `AGENT_TIMED_OUT`, `NO_PATCH`, and
+  `TEST_FAILED` categories.
 
 ### Not Yet Implemented
 
-- Failure classification.
+- Failure-analysis CLI or persistence.
 - PASS-vs-FAIL comparison.
 - Replay.
 
 ## Current M4 State
 
 - **M4.1 — Experiment Domain + Aggregation:** accepted on the current M4
-  feature branch.
+  feature branch and merged through M4.
 - **M4.2 — Sequential Experiment Orchestration:** accepted on the current M4
-  feature branch; not yet merged to `main`.
+  feature branch and merged through M4.
 - **M4.3 — Experiment CLI + Persistence + E2E:** accepted on the current M4
-  feature branch; not yet merged to `main`.
+  feature branch and merged through M4.
 
-M4 — Repeated Experiments has passed whole-branch review and is complete on the
-current feature branch. It is ready for push, PR, and merge to `main`.
+M4 — Repeated Experiments passed whole-branch review and is complete and merged
+to `main` at `9ae4375`.
 
 M4.1 implemented domain surface:
 
@@ -130,6 +130,17 @@ Two blockers were found, fixed, and incrementally reviewed:
 The resulting CLI invariant is that the selected Codex model is normalized once
 before both Agent construction and Run/Experiment metadata composition. No M4
 whole-branch blockers remain.
+
+## Current M5 State
+
+- **M5.1 — Deterministic Failure Classification:** accepted on the current M5
+  feature branch; not yet merged to `main`.
+- **M5.2 — PASS-vs-FAIL Comparison:** not implemented.
+- **M5.3 — Replay + CLI + E2E:** not implemented.
+
+M5.1 introduces `FailureCategory`, `FailureAnalysis`, and the pure
+`classify_run_failure()` boundary. It reports only ordered, directly observable
+conditions and does not infer semantic root causes.
 
 ## Architecture Invariants
 
@@ -176,9 +187,10 @@ remains separate.
 
 ## Deferred Work
 
-- M4 completion workflow: commit the accepted review fixes, push, PR, merge to
-  `main`, and synchronize local `main`.
-- M5: PASS-vs-FAIL comparison, deterministic failure classification, and replay.
+- M5.2: PASS-vs-FAIL comparison.
+- M5.3: replay, failure CLI/persistence, and end-to-end verification.
+- Later failure-analysis work: semantic categories, evaluator timeout
+  classification, and infrastructure-abort evidence.
 - M6: realistic demo tasks, an experiment dataset, README polish, architecture
   diagram, resume bullets, and interview-note consolidation.
 - Optional V2: repository-aware context, large benchmark ingestion,
@@ -246,6 +258,15 @@ compileall:     PASS
 git diff --check: PASS
 ```
 
+Accepted M5.1 verification evidence:
+
+```text
+focused:         8 passed
+full regression: 146 passed, 7 skipped
+```
+
+M5.1 required no networked, Codex, or Docker end-to-end execution.
+
 ## Documentation Map
 
 - `docs/PROJECT_STATUS.md`: canonical current truth, handoff, and exact next
@@ -272,4 +293,4 @@ status changes. Do not document every small implementation detail.
 
 ## Exact Next Action
 
-Commit the accepted M4 whole-branch review fixes, then push the feature branch and open the M4 pull request.
+Design and scope-lock M5.2 — PASS-vs-FAIL Comparison.

@@ -65,6 +65,8 @@ ArtifactPaths
 ExperimentConfiguration
 ExperimentAggregate
 ExperimentRecord
+FailureCategory
+FailureAnalysis
 ```
 
 The domain layer must not depend directly on:
@@ -74,6 +76,23 @@ The domain layer must not depend directly on:
 - Git subprocesses;
 - CLI libraries;
 - databases.
+
+### Deterministic Failure Classification
+
+M5.1 classifies directly observable failure conditions through a pure domain
+boundary:
+
+```text
+RunRecord + already-loaded patch text
+                  ↓
+       classify_run_failure()
+                  ↓
+          FailureAnalysis
+```
+
+The classifier does not read artifacts or invoke Git, Agents, evaluators,
+Sandboxes, network services, or LLMs. Agent outcomes and Evaluation outcomes
+remain independent labels, and semantic root-cause inference is deferred.
 
 ---
 

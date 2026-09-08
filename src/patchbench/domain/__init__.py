@@ -4,6 +4,11 @@ from patchbench.domain.aggregation import (
     ExperimentAggregationError,
     aggregate_runs,
 )
+from patchbench.domain.failure import (
+    FailureAnalysis,
+    FailureCategory,
+    classify_run_failure,
+)
 from patchbench.domain.models import (
     AgentExecutionMetadata,
     ArtifactPaths,
@@ -29,6 +34,8 @@ __all__ = [
     "ExperimentAggregationError",
     "ExperimentConfiguration",
     "ExperimentRecord",
+    "FailureAnalysis",
+    "FailureCategory",
     "RepositoryConfig",
     "RunRecord",
     "RunStatus",
@@ -36,4 +43,5 @@ __all__ = [
     "TaskPromptConfig",
     "TaskSpec",
     "aggregate_runs",
+    "classify_run_failure",
 ]
