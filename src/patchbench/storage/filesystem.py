@@ -1,4 +1,4 @@
-"""Filesystem persistence for completed local Runs."""
+"""Filesystem persistence for completed Runs and Experiments."""
 
 import json
 from pathlib import Path
@@ -7,16 +7,17 @@ from patchbench.agents.base import AgentRunResult
 from patchbench.domain.models import (
     ArtifactPaths,
     EvaluationResult,
+    ExperimentRecord,
     RunRecord,
 )
 
 
 class ArtifactStoreError(RuntimeError):
-    """Raised when Run artifacts cannot be created or written."""
+    """Raised when completed artifacts cannot be created or written."""
 
 
 class FilesystemArtifactStore:
-    """Persist the six required artifacts for one Run."""
+    """Persist completed Run and Experiment artifacts."""
 
     def __init__(self, results_root: Path) -> None:
         self.results_root = results_root.resolve()
@@ -76,3 +77,20 @@ class FilesystemArtifactStore:
             record.artifacts.patch.write_text(patch, encoding="utf-8")
         except OSError as error:
             raise ArtifactStoreError(f"Unable to persist Run artifacts: {error}") from error
+
+    def save_experiment(self, record: ExperimentRecord) -> Path:
+        """Persist one completed Experiment metadata document and return its path."""
+
+        directory = self.results_root / "experiments" / record.experiment_id
+        metadata = directory / "metadata.json"
+        try:
+            directory.mkdir(parents=True, exist_ok=False)
+            metadata.write_text(
+                json.dumps(record.model_dump(mode="json"), indent=2) + "\n",
+                encoding="utf-8",
+            )
+        except OSError as error:
+            raise ArtifactStoreError(
+                f"Unable to persist Experiment metadata '{metadata}': {error}"
+            ) from error
+        return metadata

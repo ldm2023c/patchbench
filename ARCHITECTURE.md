@@ -223,22 +223,22 @@ Conceptual layout:
 
 ```text
 results/
-└── <experiment-id>/
-    ├── experiment.json
-    ├── run-001/
-    │   ├── metadata.json
-    │   ├── agent.log
-    │   ├── test.log
-    │   └── patch.diff
-    ├── run-002/
-    │   ├── metadata.json
-    │   ├── agent.log
-    │   ├── test.log
-    │   └── patch.diff
-    └── ...
+├── <run-id>/
+│   ├── metadata.json
+│   ├── prompt.txt
+│   ├── agent.log
+│   ├── agent.stderr.log
+│   ├── test.log
+│   └── patch.diff
+└── experiments/
+    └── <experiment-id>/
+        └── metadata.json
 ```
 
-Artifacts should be treated as immutable after a Run completes.
+Completed Experiment metadata references its standalone child Run artifact
+directories by `run_ids`; it does not duplicate child RunRecord bodies.
+
+Artifacts should be treated as immutable after a Run or Experiment completes.
 
 A database is intentionally unnecessary for the first local MVP.
 
@@ -425,7 +425,8 @@ For:
 patchbench experiment \
     --task bug_001 \
     --agent codex \
-    --repeat 5
+    --model <model> \
+    --runs 5
 ```
 
 the application layer conceptually performs:
@@ -470,10 +471,16 @@ M4.2 loads one TaskSpec for the Experiment, freezes one ExperimentConfiguration,
 and executes child Runs sequentially through the existing single-Run lifecycle.
 A minimal Agent factory callable supplies a fresh Agent for each child Run.
 
-Experiment persistence and CLI composition remain M4.3 work.
+M4.3 adds CLI composition for the selected Agent, model, agent timeout, and
+host-or-Docker evaluation backend. After M4.2 returns a fully completed
+ExperimentRecord, the filesystem artifact store persists that record at
+`results/experiments/<experiment-id>/metadata.json` and the CLI prints separate
+Evaluation, Agent, Duration, and Artifacts summary sections.
 
 An aborted Experiment does not fabricate a Run or partial Experiment record;
-already-completed standalone child Run artifacts remain.
+already-completed standalone child Run artifacts remain and no completed
+Experiment metadata is written. A metadata persistence failure remains a
+storage failure and may likewise leave completed child Run artifacts.
 
 ---
 

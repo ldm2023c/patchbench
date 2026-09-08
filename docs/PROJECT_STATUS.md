@@ -22,14 +22,17 @@ Optional V2 work is outside this completion line.
 ## Git / Development State
 
 - Current development branch: `feat/m4-repeated-experiments`
-- Latest accepted slice: M4.2 — Sequential Experiment Orchestration
+- Latest accepted slice: M4.3 — Experiment CLI + Persistence + E2E
 - Exact current feature-branch commit: obtain from
   `git log -1 --oneline --decorate`
 - Historical accepted commits: `068b585` (status checkpoint) and `f9a09a9`
   (M4.1 implementation)
 - `main` and `origin/main`: `bdeaec6`, the merge of completed M3
 
-M4.2 is accepted on the current feature branch. It is not yet merged to `main`.
+M4.3 is accepted on the current M4 feature branch; it is not yet merged to
+`main`. M4 — Repeated Experiments is complete on the current feature branch;
+pending whole-branch review / PR / merge to `main`. M4 is not yet complete on
+`main`.
 
 ## Completed Milestones
 
@@ -40,6 +43,7 @@ M2 — Docker Evaluation                  complete
 M3 — Real Agent Execution               complete
 M4.1 — Experiment Domain + Aggregation  accepted on current M4 branch
 M4.2 — Sequential Experiment Orchestration  accepted on current M4 branch
+M4.3 — Experiment CLI + Persistence + E2E  accepted on current M4 branch
 ```
 
 ## Current Capabilities
@@ -56,16 +60,17 @@ M4.2 — Sequential Experiment Orchestration  accepted on current M4 branch
 - Independent agent execution and evaluator outcomes.
 - Per-Run `metadata.json`, `prompt.txt`, `agent.log`, `agent.stderr.log`,
   `test.log`, and `patch.diff` artifacts.
-- Completed-Experiment domain models.
+- Completed-Experiment `ExperimentConfiguration`, `ExperimentAggregate`, and
+  `ExperimentRecord` domain models.
 - Pure aggregation from completed RunRecords into ExperimentAggregate metrics.
-- Sequential Experiment orchestration that loads one frozen TaskSpec, constructs
-  a fresh Agent per child Run, reuses the isolated single-Run lifecycle, and
-  returns a completed ExperimentRecord.
+- `patchbench experiment` execution of N sequential independent Runs using
+  repeated FakeAgent or real Codex execution with host or Docker evaluation.
+- Completed Experiment metadata persistence at
+  `results/experiments/<experiment-id>/metadata.json`, referencing standalone
+  child Run artifacts by `run_ids`.
 
 ### Not Yet Implemented
 
-- Experiment CLI commands.
-- Experiment metadata or artifact persistence.
 - Failure classification.
 - PASS-vs-FAIL comparison.
 - Replay.
@@ -76,7 +81,11 @@ M4.2 — Sequential Experiment Orchestration  accepted on current M4 branch
   feature branch.
 - **M4.2 — Sequential Experiment Orchestration:** accepted on the current M4
   feature branch; not yet merged to `main`.
-- **M4.3 — Experiment CLI + Persistence + E2E:** not implemented.
+- **M4.3 — Experiment CLI + Persistence + E2E:** accepted on the current M4
+  feature branch; not yet merged to `main`.
+
+M4 — Repeated Experiments is complete on the current feature branch; pending
+whole-branch review / PR / merge to `main`.
 
 M4.1 implemented domain surface:
 
@@ -148,8 +157,8 @@ remains separate.
 
 ## Deferred Work
 
-- M4.3: Experiment CLI, Experiment metadata persistence, and real repeated
-  Codex end-to-end verification.
+- M4 completion workflow: whole-branch review, push, PR, merge to `main`, and
+  local `main` synchronization.
 - M5: PASS-vs-FAIL comparison, deterministic failure classification, and replay.
 - M6: realistic demo tasks, an experiment dataset, README polish, architecture
   diagram, resume bullets, and interview-note consolidation.
@@ -173,6 +182,41 @@ Accepted M4.2 verification evidence:
 focused:         44 passed
 full regression: 123 passed, 7 skipped
 ```
+
+Accepted M4.3 automated verification evidence:
+
+```text
+focused:         33 passed
+full regression: 138 passed, 7 skipped
+```
+
+Accepted M4.3 human runtime evidence:
+
+```text
+FakeAgent E2E:
+  runs:            3
+  evaluation PASS: 3
+  evaluation FAIL: 0
+
+Real Codex + Docker E2E:
+  agent:                     codex
+  model:                     gpt-6-astra
+  runs:                      3
+  agent timeout:             120 seconds
+  evaluation backend:        docker
+  evaluation pass count:     3
+  evaluation fail count:     0
+  evaluation pass rate:      1.0
+  agent command failures:    0
+  agent timeouts:             0
+  total child duration:      approximately 137.328 seconds
+  mean run duration:         approximately 45.776 seconds
+  experiment duration:       approximately 137.352 seconds
+```
+
+The Experiment consistency checker passed. The source fixture was clean, only
+its source Git worktree remained, temporary Experiment workspaces were empty,
+and no PatchBench sandbox containers remained.
 
 ## Documentation Map
 
@@ -200,4 +244,4 @@ status changes. Do not document every small implementation detail.
 
 ## Exact Next Action
 
-Design and scope-lock M4.3 — Experiment CLI + Persistence + E2E.
+Perform M4 whole-branch review before push / PR / merge.

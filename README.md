@@ -12,12 +12,12 @@ reproducible single Runs with FakeAgent or a real host-side CodexAdapter, actual
 Git patch capture, host or Docker-backed evaluation, and structured per-Run
 artifacts.
 
-**Milestone 4 — Repeated Experiments** is in progress. M4.1 — Experiment Domain
-+ Aggregation is complete on the current `feat/m4-repeated-experiments`
-development branch; it defines completed-Experiment models and pure aggregation
-without yet implementing repeated Run orchestration, an experiment CLI, or
-experiment persistence. See [Project Status](docs/PROJECT_STATUS.md) for the
-canonical current development state and exact next action.
+**Milestone 4 — Repeated Experiments** is in progress. M4.1 and M4.2 are
+accepted on the current `feat/m4-repeated-experiments` development branch.
+M4.3 adds the repeated Experiment CLI and Experiment metadata persistence in
+the current working tree; it remains under review and is not yet accepted or
+committed. See [Project Status](docs/PROJECT_STATUS.md) for the canonical
+current development state and exact next action.
 
 Coding agents still execute on the host; `--docker` selects Docker-backed task
 evaluation. Arbitrary repository dependencies are not automatically
@@ -77,6 +77,20 @@ Execute one local Run with FakeAgent:
 patchbench run --task tasks/example/task.yaml --agent fake
 ```
 
+Execute three independent sequential Runs as one Experiment:
+
+```bash
+patchbench experiment \
+  --task tasks/example/task.yaml \
+  --agent fake \
+  --runs 3
+```
+
+The command prints separate Evaluation and Agent reliability metrics and writes
+the completed Experiment record to
+`results/experiments/<experiment-id>/metadata.json`. Its `run_ids` reference the
+unchanged standalone child artifacts under `results/<run-id>/`.
+
 Evaluate the same Run inside Docker:
 
 ```bash
@@ -89,7 +103,9 @@ retain these files under `results/<run-id>/`:
 
 ```text
 metadata.json
+prompt.txt
 agent.log
+agent.stderr.log
 test.log
 patch.diff
 ```
