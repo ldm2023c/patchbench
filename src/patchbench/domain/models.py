@@ -1,10 +1,10 @@
-"""Domain models for PatchBench task definitions."""
+"""Domain models for PatchBench."""
 
 from enum import Enum
 from pathlib import Path
-from typing import Annotated, Literal
+from typing import Annotated, Literal, Self
 
-from pydantic import BaseModel, ConfigDict, Field
+from pydantic import BaseModel, ConfigDict, Field, model_validator
 
 from patchbench.agents.base import AgentRunStatus
 
@@ -13,7 +13,7 @@ NonEmptyString = Annotated[str, Field(min_length=1)]
 
 
 class DomainModel(BaseModel):
-    """Shared validation behavior for task domain models."""
+    """Shared validation behavior for PatchBench domain models."""
 
     model_config = ConfigDict(extra="forbid", str_strip_whitespace=True)
 
@@ -75,6 +75,46 @@ class AgentExecutionMetadata(DomainModel):
     requested_model: NonEmptyString | None = None
 
 
+class ExperimentConfiguration(DomainModel):
+    """Frozen execution configuration shared by an Experiment's Runs."""
+
+    agent_name: NonEmptyString
+    requested_model: NonEmptyString | None = None
+    agent_timeout_seconds: float | None = Field(
+        default=None,
+        gt=0,
+        allow_inf_nan=False,
+    )
+    evaluation_backend: Literal["host", "docker"]
+
+
+class ExperimentAggregate(DomainModel):
+    """Reliability metrics calculated from completed Runs."""
+
+    run_count: int = Field(ge=1)
+    evaluation_pass_count: int = Field(ge=0)
+    evaluation_fail_count: int = Field(ge=0)
+    evaluation_pass_rate: float = Field(ge=0, le=1)
+    agent_command_failure_count: int = Field(ge=0)
+    agent_timeout_count: int = Field(ge=0)
+    total_duration_seconds: float = Field(ge=0)
+    mean_duration_seconds: float = Field(ge=0)
+    min_duration_seconds: float = Field(ge=0)
+    max_duration_seconds: float = Field(ge=0)
+
+    @model_validator(mode="after")
+    def validate_counts(self) -> Self:
+        """Ensure aggregate counts are consistent with the Run count."""
+
+        if self.evaluation_pass_count + self.evaluation_fail_count != self.run_count:
+            raise ValueError("evaluation pass and fail counts must equal run_count")
+        if self.agent_command_failure_count > self.run_count:
+            raise ValueError("agent_command_failure_count must not exceed run_count")
+        if self.agent_timeout_count > self.run_count:
+            raise ValueError("agent_timeout_count must not exceed run_count")
+        return self
+
+
 class EvaluationResult(DomainModel):
     """Normalized result from executing a task evaluation command."""
 
@@ -107,3 +147,27 @@ class RunRecord(DomainModel):
     duration_seconds: float = Field(ge=0)
     agent: AgentExecutionMetadata
     artifacts: ArtifactPaths
+
+
+class ExperimentRecord(DomainModel):
+    """Summary of one fully completed repeated Experiment."""
+
+    experiment_id: NonEmptyString
+    task_id: NonEmptyString
+    requested_runs: int = Field(ge=1, strict=True)
+    run_ids: list[NonEmptyString] = Field(min_length=1)
+    configuration: ExperimentConfiguration
+    aggregate: ExperimentAggregate
+    duration_seconds: float = Field(ge=0)
+
+    @model_validator(mode="after")
+    def validate_run_cardinality(self) -> Self:
+        """Ensure every requested completed Run has one unique identifier."""
+
+        if len(set(self.run_ids)) != len(self.run_ids):
+            raise ValueError("run_ids must contain unique IDs")
+        if self.requested_runs != len(self.run_ids):
+            raise ValueError("requested_runs must equal the number of run_ids")
+        if self.requested_runs != self.aggregate.run_count:
+            raise ValueError("requested_runs must equal aggregate.run_count")
+        return self

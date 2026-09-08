@@ -53,16 +53,18 @@ Infrastructure-specific logic belongs in adapters.
 
 The domain layer contains data structures and invariants describing PatchBench itself.
 
-Initial domain objects:
+Current core domain objects:
 
 ```text
 TaskSpec
-ExperimentSpec
 RunRecord
 RunStatus
 EvaluationResult
-AgentResult
+AgentExecutionMetadata
 ArtifactPaths
+ExperimentConfiguration
+ExperimentAggregate
+ExperimentRecord
 ```
 
 The domain layer must not depend directly on:
@@ -221,22 +223,22 @@ Conceptual layout:
 
 ```text
 results/
-└── <experiment-id>/
-    ├── experiment.json
-    ├── run-001/
-    │   ├── metadata.json
-    │   ├── agent.log
-    │   ├── test.log
-    │   └── patch.diff
-    ├── run-002/
-    │   ├── metadata.json
-    │   ├── agent.log
-    │   ├── test.log
-    │   └── patch.diff
-    └── ...
+├── <run-id>/
+│   ├── metadata.json
+│   ├── prompt.txt
+│   ├── agent.log
+│   ├── agent.stderr.log
+│   ├── test.log
+│   └── patch.diff
+└── experiments/
+    └── <experiment-id>/
+        └── metadata.json
 ```
 
-Artifacts should be treated as immutable after a Run completes.
+Completed Experiment metadata references its standalone child Run artifact
+directories by `run_ids`; it does not duplicate child RunRecord bodies.
+
+Artifacts should be treated as immutable after a Run or Experiment completes.
 
 A database is intentionally unnecessary for the first local MVP.
 
@@ -423,7 +425,8 @@ For:
 patchbench experiment \
     --task bug_001 \
     --agent codex \
-    --repeat 5
+    --model <model> \
+    --runs 5
 ```
 
 the application layer conceptually performs:
@@ -444,19 +447,40 @@ Experiment
  Experiment Report
 ```
 
-Initial aggregation:
+Completed-Experiment aggregation:
 
 ```text
 run_count
-passed_count
-failed_count
-pass_rate
-average_duration
+evaluation_pass_count
+evaluation_fail_count
+evaluation_pass_rate
+agent_command_failure_count
+agent_timeout_count
+total_duration_seconds
+mean_duration_seconds
+min_duration_seconds
+max_duration_seconds
 ```
 
-Runs should initially execute sequentially.
+M4.1 defines the completed-Experiment domain and pure aggregation from a
+non-empty sequence of `RunRecord` values. Evaluation metrics come from
+`RunRecord.evaluation_passed`; agent failure and timeout counts come
+independently from `RunRecord.agent.status`.
 
-Parallel execution is a future optimization and should not be introduced until reproducibility and cleanup are trustworthy.
+M4.2 loads one TaskSpec for the Experiment, freezes one ExperimentConfiguration,
+and executes child Runs sequentially through the existing single-Run lifecycle.
+A minimal Agent factory callable supplies a fresh Agent for each child Run.
+
+M4.3 adds CLI composition for the selected Agent, model, agent timeout, and
+host-or-Docker evaluation backend. After M4.2 returns a fully completed
+ExperimentRecord, the filesystem artifact store persists that record at
+`results/experiments/<experiment-id>/metadata.json` and the CLI prints separate
+Evaluation, Agent, Duration, and Artifacts summary sections.
+
+An aborted Experiment does not fabricate a Run or partial Experiment record;
+already-completed standalone child Run artifacts remain and no completed
+Experiment metadata is written. A metadata persistence failure remains a
+storage failure and may likewise leave completed child Run artifacts.
 
 ---
 
