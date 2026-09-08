@@ -31,8 +31,9 @@ Optional V2 work is outside this completion line.
 
 M4.3 is accepted on the current M4 feature branch; it is not yet merged to
 `main`. M4 — Repeated Experiments is complete on the current feature branch;
-pending whole-branch review / PR / merge to `main`. M4 is not yet complete on
-`main`.
+the whole-branch review is accepted, and M4 is ready for push, PR, and merge to
+`main`. M4 is not yet merged to or complete on `main`; completed M3 remains the
+latest milestone merged there.
 
 ## Completed Milestones
 
@@ -84,8 +85,8 @@ M4.3 — Experiment CLI + Persistence + E2E  accepted on current M4 branch
 - **M4.3 — Experiment CLI + Persistence + E2E:** accepted on the current M4
   feature branch; not yet merged to `main`.
 
-M4 — Repeated Experiments is complete on the current feature branch; pending
-whole-branch review / PR / merge to `main`.
+M4 — Repeated Experiments has passed whole-branch review and is complete on the
+current feature branch. It is ready for push, PR, and merge to `main`.
 
 M4.1 implemented domain surface:
 
@@ -111,6 +112,24 @@ mean_duration_seconds
 min_duration_seconds
 max_duration_seconds
 ```
+
+### M4 Whole-Branch Review
+
+The accepted milestone-level review covered Experiment domain consistency, the
+Run/Experiment relationship, sequential independence, Agent outcome versus
+Evaluation outcome, hard-failure semantics, CLI one-source-of-truth composition,
+Experiment persistence and artifact ownership, runtime cleanup and
+reproducibility, documentation consistency, and scope boundaries.
+
+Two blockers were found, fixed, and incrementally reviewed:
+
+1. README contained stale M4.3 review status.
+2. A whitespace-padded Codex `--model` could make actual execution and recorded
+   metadata disagree.
+
+The resulting CLI invariant is that the selected Codex model is normalized once
+before both Agent construction and Run/Experiment metadata composition. No M4
+whole-branch blockers remain.
 
 ## Architecture Invariants
 
@@ -157,8 +176,8 @@ remains separate.
 
 ## Deferred Work
 
-- M4 completion workflow: whole-branch review, push, PR, merge to `main`, and
-  local `main` synchronization.
+- M4 completion workflow: commit the accepted review fixes, push, PR, merge to
+  `main`, and synchronize local `main`.
 - M5: PASS-vs-FAIL comparison, deterministic failure classification, and replay.
 - M6: realistic demo tasks, an experiment dataset, README polish, architecture
   diagram, resume bullets, and interview-note consolidation.
@@ -218,6 +237,15 @@ The Experiment consistency checker passed. The source fixture was clean, only
 its source Git worktree remained, temporary Experiment workspaces were empty,
 and no PatchBench sandbox containers remained.
 
+Accepted M4 whole-branch blocker-fix regression evidence:
+
+```text
+focused CLI:    23 passed
+full regression: 138 passed, 7 skipped
+compileall:     PASS
+git diff --check: PASS
+```
+
 ## Documentation Map
 
 - `docs/PROJECT_STATUS.md`: canonical current truth, handoff, and exact next
@@ -244,4 +272,4 @@ status changes. Do not document every small implementation detail.
 
 ## Exact Next Action
 
-Perform M4 whole-branch review before push / PR / merge.
+Commit the accepted M4 whole-branch review fixes, then push the feature branch and open the M4 pull request.

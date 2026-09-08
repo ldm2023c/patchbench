@@ -12,12 +12,11 @@ reproducible single Runs with FakeAgent or a real host-side CodexAdapter, actual
 Git patch capture, host or Docker-backed evaluation, and structured per-Run
 artifacts.
 
-**Milestone 4 — Repeated Experiments** is in progress. M4.1 and M4.2 are
-accepted on the current `feat/m4-repeated-experiments` development branch.
-M4.3 adds the repeated Experiment CLI and Experiment metadata persistence in
-the current working tree; it remains under review and is not yet accepted or
-committed. See [Project Status](docs/PROJECT_STATUS.md) for the canonical
-current development state and exact next action.
+**Milestone 4 — Repeated Experiments** is complete on the current
+`feat/m4-repeated-experiments` development branch. M4.1–M4.3 are accepted on
+that branch, but M4 has not yet been merged to `main`. See
+[Project Status](docs/PROJECT_STATUS.md) for the canonical review/merge state
+and exact next action.
 
 Coding agents still execute on the host; `--docker` selects Docker-backed task
 evaluation. Arbitrary repository dependencies are not automatically

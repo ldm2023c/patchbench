@@ -36,8 +36,8 @@ def _validate_execution_options(
     agent: str,
     model: str | None,
     agent_timeout_seconds: float | None,
-) -> None:
-    """Apply the same execution-option rules to Runs and Experiments."""
+) -> str | None:
+    """Validate shared execution options and normalize the selected model."""
 
     if agent not in {"fake", "codex"}:
         typer.echo(
@@ -56,6 +56,7 @@ def _validate_execution_options(
     if agent == "codex" and (model is None or not model.strip()):
         typer.echo("Error: --model is required with '--agent codex'.", err=True)
         raise typer.Exit(code=1)
+    return model.strip() if model is not None else None
 
 
 def _agent_factory(agent: str, model: str | None) -> Callable[[], Agent]:
@@ -149,7 +150,7 @@ def run(
 ) -> None:
     """Execute one local Run."""
 
-    _validate_execution_options(
+    model = _validate_execution_options(
         "run",
         agent=agent,
         model=model,
@@ -218,7 +219,7 @@ def experiment(
 ) -> None:
     """Execute and persist one completed repeated Experiment."""
 
-    _validate_execution_options(
+    model = _validate_execution_options(
         "experiment",
         agent=agent,
         model=model,

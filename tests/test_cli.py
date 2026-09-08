@@ -152,7 +152,7 @@ def test_run_docker_flag_supplies_docker_sandbox(tmp_path: Path, monkeypatch) ->
     assert "Result:    PASS" in result.output
 
 
-def test_run_codex_composes_model_and_agent_timeout(
+def test_run_codex_normalizes_model_for_agent_and_metadata(
     tmp_path: Path, monkeypatch
 ) -> None:
     selected_agent = object()
@@ -202,7 +202,7 @@ def test_run_codex_composes_model_and_agent_timeout(
             "--agent",
             "codex",
             "--model",
-            "test-model",
+            "  test-model  ",
             "--agent-timeout",
             "12.5",
         ],
@@ -357,7 +357,7 @@ def test_experiment_with_fake_agent_persists_three_runs_and_metadata(
     assert list((tmp_path / ".workspaces").iterdir()) == []
 
 
-def test_experiment_codex_docker_composition_uses_fresh_agents(
+def test_experiment_codex_normalizes_model_and_uses_fresh_agents(
     tmp_path: Path, monkeypatch
 ) -> None:
     sandbox = object()
@@ -409,7 +409,7 @@ def test_experiment_codex_docker_composition_uses_fresh_agents(
             "--agent",
             "codex",
             "--model",
-            "test-model",
+            "  test-model  ",
             "--runs",
             "3",
             "--agent-timeout",
