@@ -53,16 +53,18 @@ Infrastructure-specific logic belongs in adapters.
 
 The domain layer contains data structures and invariants describing PatchBench itself.
 
-Initial domain objects:
+Current core domain objects:
 
 ```text
 TaskSpec
-ExperimentSpec
 RunRecord
 RunStatus
 EvaluationResult
-AgentResult
+AgentExecutionMetadata
 ArtifactPaths
+ExperimentConfiguration
+ExperimentAggregate
+ExperimentRecord
 ```
 
 The domain layer must not depend directly on:
@@ -444,19 +446,32 @@ Experiment
  Experiment Report
 ```
 
-Initial aggregation:
+Completed-Experiment aggregation:
 
 ```text
 run_count
-passed_count
-failed_count
-pass_rate
-average_duration
+evaluation_pass_count
+evaluation_fail_count
+evaluation_pass_rate
+agent_command_failure_count
+agent_timeout_count
+total_duration_seconds
+mean_duration_seconds
+min_duration_seconds
+max_duration_seconds
 ```
 
-Runs should initially execute sequentially.
+M4.1 defines the completed-Experiment domain and pure aggregation from a
+non-empty sequence of `RunRecord` values. Evaluation metrics come from
+`RunRecord.evaluation_passed`; agent failure and timeout counts come
+independently from `RunRecord.agent.status`.
 
-Parallel execution is a future optimization and should not be introduced until reproducibility and cleanup are trustworthy.
+Runs should initially execute sequentially. Independent execution is
+implemented in M4.2, followed by Experiment persistence and CLI composition in
+M4.3.
+
+An aborted Experiment does not fabricate a Run or partial Experiment record;
+already-completed standalone child Run artifacts remain.
 
 ---
 
