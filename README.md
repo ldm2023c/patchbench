@@ -7,22 +7,22 @@ rather than a single successful run.
 
 ## Current status
 
-The project has completed **Milestone 2 — Docker Execution**. A Run can now
-optionally evaluate its task command in a Docker sandbox: PatchBench creates an
-isolated Git worktree, FakeAgent edits that worktree on the host, captures the
-agent patch, and mounts only the worktree read-write at `/workspace` for
-evaluation. The sandbox supports explicit argv execution, optional CPU/memory
-limits, timeout cleanup, and reliable container removal without enabling Docker
-privileged mode.
+Milestones 0–3 are complete and merged to `main`. PatchBench supports
+reproducible single Runs with FakeAgent or a real host-side CodexAdapter, actual
+Git patch capture, host or Docker-backed evaluation, and structured per-Run
+artifacts.
 
-Host evaluation remains the default, while `--docker` selects Docker-backed
-evaluation. The controlled example uses Python's standard-library `unittest` so
-it runs in the existing minimal Python image without dependency installation.
-Coding agents do not yet execute inside Docker, and arbitrary repository
-dependencies are not automatically provisioned. Network isolation, Codex
-execution, and repeated experiments are not implemented. The current Docker
-sandbox is not presented as a production-grade hostile multi-tenant security
-boundary.
+**Milestone 4 — Repeated Experiments** is in progress. M4.1 — Experiment Domain
++ Aggregation is complete on the current `feat/m4-repeated-experiments`
+development branch; it defines completed-Experiment models and pure aggregation
+without yet implementing repeated Run orchestration, an experiment CLI, or
+experiment persistence. See [Project Status](docs/PROJECT_STATUS.md) for the
+canonical current development state and exact next action.
+
+Coding agents still execute on the host; `--docker` selects Docker-backed task
+evaluation. Arbitrary repository dependencies are not automatically
+provisioned, network isolation is not implemented, and the Docker sandbox is
+not presented as a production-grade hostile multi-tenant security boundary.
 
 ## Development setup
 
