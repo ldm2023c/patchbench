@@ -43,7 +43,8 @@ TaskSpec
   → FilesystemArtifactStore
 
 RunRecord × N → ExperimentRecord + ExperimentAggregate
-RunRecord + patch → FailureAnalysis / PassFailComparison
+RunRecord + patch → FailureAnalysis
+PASS Run + patch ↔ FAIL Run + patch → PassFailComparison
 historical RunRecord + patch → ReplayRecord
 ```
 
