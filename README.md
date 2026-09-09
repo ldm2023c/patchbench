@@ -7,17 +7,16 @@ rather than a single successful run.
 
 ## Current status
 
-Milestones 0–4 are complete and merged to `main`. PatchBench supports
+Milestones 0–5 are complete and merged to `main`. PatchBench supports
 reproducible single Runs with FakeAgent or a real host-side CodexAdapter, actual
 Git patch capture, host or Docker-backed evaluation, and structured per-Run
 artifacts.
 
-**Milestone 5 — Minimal Failure Analysis & Replay** is complete on the current
-`feat/m5-failure-analysis-replay` feature branch. Its three slices are
-implemented, reviewed, and accepted, and M5 has passed whole-branch code
-review. M5 is not yet merged to `main`. See [Project
-Status](docs/PROJECT_STATUS.md) for the canonical review/merge state and exact
-next action.
+**Milestone 5 — Minimal Failure Analysis & Replay** is complete and merged to
+`main` through merge commit `223e5de`. Its three slices were implemented,
+reviewed, and accepted, and M5 passed whole-branch code review. See [Project
+Status](docs/PROJECT_STATUS.md) for the canonical milestone state and exact next
+action.
 
 M5 adds deterministic classification of directly observable Run failure
 conditions, explicit deterministic descriptive comparison of one PASS and one

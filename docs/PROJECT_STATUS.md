@@ -21,20 +21,18 @@ Optional V2 work is outside this completion line.
 
 ## Git / Development State
 
-- Current development branch: `feat/m5-failure-analysis-replay`
+- Current branch: `main`
 - Latest accepted slice: M5.3 — Replay + CLI + E2E
-- M5 whole-branch review: accepted
-- Exact current feature-branch commit: obtain from
+- M5 whole-branch review: accepted before merge
+- Exact current commit: obtain from
   `git log -1 --oneline --decorate`
-- `main` and `origin/main`: `9ae4375`, the merge of completed M4
+- `main` and `origin/main`: `223e5de`
+- M5 merge: `223e5de Merge pull request #7 from
+  ldm2023c/feat/m5-failure-analysis-replay`
 
-M4 — Repeated Experiments is complete and merged to `main`. M5.1 —
-Deterministic Failure Classification is accepted on the current M5 feature
-branch and is not yet merged to `main`. M5.2 — PASS-vs-FAIL Comparison is also
-accepted on the current M5 feature branch and is not yet merged to `main`.
-M5.3 — Replay + CLI + E2E is also accepted on the current M5 feature branch and
-is not yet merged to `main`. M5 has passed whole-branch review, is complete on
-the feature branch, and is ready for push, pull request, and merge.
+M4 — Repeated Experiments and M5 — Minimal Failure Analysis & Replay are
+complete and merged to `main`. All three M5 slices and the M5 whole-branch
+review were accepted before merge.
 
 ## Completed Milestones
 
@@ -44,7 +42,7 @@ M1 — Reproducible Local Run             complete
 M2 — Docker Evaluation                  complete
 M3 — Real Agent Execution               complete
 M4 — Repeated Experiments                complete and merged to main
-M5 — Minimal Failure Analysis & Replay   complete on feature branch; not merged
+M5 — Minimal Failure Analysis & Replay   complete and merged to main
 ```
 
 ## Current Capabilities
@@ -142,16 +140,13 @@ whole-branch blockers remain.
 
 ## Current M5 State
 
-- **M5.1 — Deterministic Failure Classification:** accepted on the current M5
-  feature branch; not yet merged to `main`.
-- **M5.2 — PASS-vs-FAIL Comparison:** accepted on the current M5 feature branch;
-  not yet merged to `main`.
-- **M5.3 — Replay + CLI + E2E:** accepted on the current M5 feature branch; not
-  yet merged to `main`.
+- **M5.1 — Deterministic Failure Classification:** accepted and merged through
+  M5.
+- **M5.2 — PASS-vs-FAIL Comparison:** accepted and merged through M5.
+- **M5.3 — Replay + CLI + E2E:** accepted and merged through M5.
 
-All three M5 slices and the M5 whole-branch review are accepted. M5 is complete
-on the feature branch and ready for push, pull request, and merge; it is not yet
-merged to `main`.
+All three M5 slices and the M5 whole-branch review were accepted before merge.
+M5 is complete and merged to `main` at `223e5de` through pull request #7.
 
 M5.1 introduces `FailureCategory`, `FailureAnalysis`, and the pure
 `classify_run_failure()` boundary. It reports only ordered, directly observable
@@ -218,7 +213,7 @@ remains separate.
 
 ## Deferred Work
 
-- Later M5 work: failure/comparison CLI and persistence.
+- Post-M5 deferred work: failure/comparison CLI and persistence.
 - Later comparison work: automatic pair selection, Experiment-wide comparison,
   and structural or semantic patch analysis.
 - Later failure-analysis work: semantic categories, evaluator timeout
@@ -380,4 +375,4 @@ status changes. Do not document every small implementation detail.
 
 ## Exact Next Action
 
-Commit the accepted M5 milestone documentation finalization, then push the feature branch and open the M5 pull request.
+Design and scope-lock M6 — Demo / README / Documentation / Resume polish.
