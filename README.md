@@ -244,13 +244,15 @@ isolation, not a production-grade hostile multi-tenant security boundary.
 
 ## Project Status
 
-Milestones 0–5 are complete and merged to `main`. M6 is the current
-demo/documentation/presentation milestone. M6.1 — Public Demo & README is
-complete and committed on `feat/m6-demo-docs-polish`. M6.2 — Documentation /
-Interview / Resume Polish is complete and accepted on the same feature branch.
-M6 whole-milestone review is still pending. M6 has not yet been merged to
-`main`. See [Project Status](docs/PROJECT_STATUS.md) for canonical milestone
-evidence and the exact next action.
+Milestones 0–6 are complete and merged to `main`. M6 — Demo / README /
+Documentation / Resume polish is complete: M6.1 — Public Demo & README and M6.2
+— Documentation / Interview / Resume Polish are complete, and M6
+whole-milestone review passed before merge. M6 was merged to `main` through
+`e9cdc76 Merge pull request #8 from ldm2023c/feat/m6-demo-docs-polish`.
+PatchBench v1, the current job-search version, is complete. Optional V2 work
+remains deferred and has not started. See
+[Project Status](docs/PROJECT_STATUS.md) for canonical milestone evidence and
+the exact next action.
 
 Historical patch Replay has been validated end to end with both a FakeAgent
 source Run and a real Codex source Run using Docker evaluation. The real
