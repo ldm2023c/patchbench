@@ -1,7 +1,7 @@
 import pytest
 
 from patchbench.domain.models import RepositoryConfig
-from patchbench.repository.git_repository import GitRepositoryManager
+from patchbench.repository.git_repository import GitRepositoryManager, GitWorkspace
 from tests.helpers import create_fixture_repository, git
 
 
@@ -79,3 +79,41 @@ def test_capture_diff_includes_modifications_deletions_and_new_files(tmp_path) -
     assert "diff --git a/agent_note.txt b/agent_note.txt" in patch
     assert "new file mode 100644" in patch
     assert "+created by agent" in patch
+
+
+def test_apply_patch_reproduces_captured_changes_without_staging(tmp_path) -> None:
+    source, base_commit = create_fixture_repository(tmp_path)
+    manager = GitRepositoryManager(tmp_path / "workspaces")
+    configuration = RepositoryConfig(
+        type="local", path=str(source), base_commit=base_commit
+    )
+
+    with manager.workspace(configuration, "capture") as workspace:
+        target = workspace.path / "calculator.py"
+        target.write_text(
+            target.read_text().replace("return a - b", "return a + b"),
+            encoding="utf-8",
+        )
+        binary_contents = b"\x00\x01historical-binary\xff"
+        (workspace.path / "evidence.bin").write_bytes(binary_contents)
+        patch = manager.capture_diff(workspace)
+
+    with manager.workspace(configuration, "replay") as workspace:
+        manager.apply_patch(workspace, patch)
+
+        assert "return a + b" in (workspace.path / "calculator.py").read_text()
+        assert (workspace.path / "evidence.bin").read_bytes() == binary_contents
+        assert git(workspace.path, "diff", "--cached") == ""
+        assert "calculator.py" in git(workspace.path, "status", "--porcelain")
+
+
+def test_apply_patch_skips_git_for_empty_patch(tmp_path, monkeypatch) -> None:
+    manager = GitRepositoryManager(tmp_path / "workspaces")
+    workspace = GitWorkspace(tmp_path / "workspace", tmp_path / "source", "abc")
+    monkeypatch.setattr(
+        manager,
+        "_git",
+        lambda *args, **kwargs: pytest.fail("git apply must not run"),
+    )
+
+    manager.apply_patch(workspace, " \n\t")

@@ -67,6 +67,8 @@ ExperimentAggregate
 ExperimentRecord
 FailureCategory
 FailureAnalysis
+PassFailComparison
+ReplayRecord
 ```
 
 The domain layer must not depend directly on:
@@ -110,6 +112,25 @@ Descriptive comparison records observed differences; it does not establish
 causal attribution. Pair selection and filesystem I/O remain outside the
 domain function.
 
+M5.3 adds historical-patch Replay as an application lifecycle:
+
+```text
+historical RunRecord + canonical patch.diff
+                         ↓
+fresh worktree at caller-supplied TaskSpec base commit
+                         ↓
+              apply patch or skip if empty
+                         ↓
+              existing host/Docker evaluator
+                         ↓
+                    ReplayRecord
+```
+
+Replay invokes no Agent. Evaluation failure and a source/replay outcome
+mismatch are completed observations, not infrastructure errors. Replay v1 uses
+the caller-supplied TaskSpec and currently selected evaluator backend; it does
+not claim to reconstruct the complete historical execution environment.
+
 ---
 
 ## 4. Repository Manager
@@ -122,6 +143,7 @@ Responsibilities:
 - restore the workspace to the base commit;
 - verify that the working tree begins clean;
 - capture the resulting Git patch.
+- apply a canonical historical patch to a fresh Replay workspace.
 
 The original repository must never be directly modified by an experiment.
 
@@ -265,15 +287,23 @@ results/
 │   ├── agent.stderr.log
 │   ├── test.log
 │   └── patch.diff
-└── experiments/
-    └── <experiment-id>/
-        └── metadata.json
+├── experiments/
+│   └── <experiment-id>/
+│       └── metadata.json
+└── replays/
+    └── <replay-id>/
+        ├── metadata.json
+        └── test.log
 ```
 
 Completed Experiment metadata references its standalone child Run artifact
 directories by `run_ids`; it does not duplicate child RunRecord bodies.
 
-Artifacts should be treated as immutable after a Run or Experiment completes.
+Completed Replay metadata references its source Run by `source_run_id`; the
+source patch remains canonical in the Run directory and is not duplicated.
+
+Artifacts should be treated as immutable after a Run, Experiment, or Replay
+completes.
 
 A database is intentionally unnecessary for the first local MVP.
 
@@ -516,6 +546,20 @@ An aborted Experiment does not fabricate a Run or partial Experiment record;
 already-completed standalone child Run artifacts remain and no completed
 Experiment metadata is written. A metadata persistence failure remains a
 storage failure and may likewise leave completed child Run artifacts.
+
+### Replay Lifecycle
+
+M5.3 safely loads one historical RunRecord and canonical patch, checks that its
+task matches a caller-supplied TaskSpec, creates a fresh detached worktree at
+that TaskSpec's base commit, applies the exact non-empty Git patch (or evaluates
+the clean base for an empty patch), and uses the existing host or Docker
+evaluation path. It then persists only completed Replay metadata and evaluator
+output under `results/replays/<replay-id>/`.
+
+Patch-application and infrastructure failures propagate without a completed
+ReplayRecord. A replayed test failure or outcome mismatch is a valid completed
+Replay and remains CLI success. Worktree and optional Sandbox cleanup use the
+existing lifecycle boundaries.
 
 ---
 

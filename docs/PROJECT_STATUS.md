@@ -22,7 +22,7 @@ Optional V2 work is outside this completion line.
 ## Git / Development State
 
 - Current development branch: `feat/m5-failure-analysis-replay`
-- Latest accepted slice: M5.2 — PASS-vs-FAIL Comparison
+- Latest accepted slice: M5.3 — Replay + CLI + E2E
 - Exact current feature-branch commit: obtain from
   `git log -1 --oneline --decorate`
 - Historical accepted commits: `068b585` (status checkpoint) and `f9a09a9`
@@ -33,6 +33,9 @@ M4 — Repeated Experiments is complete and merged to `main`. M5.1 —
 Deterministic Failure Classification is accepted on the current M5 feature
 branch and is not yet merged to `main`. M5.2 — PASS-vs-FAIL Comparison is also
 accepted on the current M5 feature branch and is not yet merged to `main`.
+M5.3 — Replay + CLI + E2E is also accepted on the current M5 feature branch and
+is not yet merged to `main`. All three M5 slices require whole-branch milestone
+review before M5 is merged.
 
 ## Completed Milestones
 
@@ -73,12 +76,15 @@ M4 — Repeated Experiments                complete and merged to main
 - Pure deterministic descriptive comparison of one explicit PASS `RunRecord`
   and one explicit FAIL `RunRecord` from the same task plus already-loaded
   patch evidence into `PassFailComparison`.
+- Historical-patch Replay from one persisted Run artifact into a fresh
+  TaskSpec-base worktree, using the existing host or Docker evaluator without
+  invoking an Agent, with completed metadata under
+  `results/replays/<replay-id>/metadata.json`.
 
 ### Not Yet Implemented
 
 - Failure-analysis or comparison CLI and persistence.
 - Automatic pair selection or Experiment-wide comparison.
-- Replay.
 
 ## Current M4 State
 
@@ -141,7 +147,11 @@ whole-branch blockers remain.
   feature branch; not yet merged to `main`.
 - **M5.2 — PASS-vs-FAIL Comparison:** accepted on the current M5 feature branch;
   not yet merged to `main`.
-- **M5.3 — Replay + CLI + E2E:** not implemented.
+- **M5.3 — Replay + CLI + E2E:** accepted on the current M5 feature branch; not
+  yet merged to `main`.
+
+All three M5 slices are accepted on the feature branch. M5 still requires
+whole-branch review and milestone documentation finalization before merge.
 
 M5.1 introduces `FailureCategory`, `FailureAnalysis`, and the pure
 `classify_run_failure()` boundary. It reports only ordered, directly observable
@@ -155,6 +165,13 @@ not claim causal attribution.
 Valid pairs use the same task and different Run IDs. M5.1 remains the sole
 failure-taxonomy source; patch presence uses stripped semantic presence, patch
 equality uses exact artifact text, and duration is recorded as FAIL minus PASS.
+
+M5.3 adds `ReplayRecord` and `patchbench replay --task ... --run-id ...
+[--docker]`. Replay loads the canonical historical patch, creates a fresh
+worktree at the caller-supplied TaskSpec base commit, applies or skips that
+patch, and invokes the existing evaluator with zero Agent executions. Outcome
+mismatch and replay evaluation FAIL are normal completed observations. Replay
+v1 does not claim complete historical environment reconstruction.
 
 ## Architecture Invariants
 
@@ -201,8 +218,8 @@ remains separate.
 
 ## Deferred Work
 
-- M5.3: replay, failure/comparison CLI and persistence, and end-to-end
-  verification.
+- M5 whole-branch review and milestone documentation finalization.
+- Later M5 work: failure/comparison CLI and persistence.
 - Later comparison work: automatic pair selection, Experiment-wide comparison,
   and structural or semantic patch analysis.
 - Later failure-analysis work: semantic categories, evaluator timeout
@@ -292,6 +309,52 @@ full regression: 158 passed, 7 skipped
 
 M5.2 required no networked, Codex, or Docker end-to-end execution.
 
+Accepted M5.3 automated verification evidence:
+
+```text
+focused:         60 passed
+full regression: 192 passed, 7 skipped
+compileall:      PASS
+git diff --check: PASS
+```
+
+Accepted M5.3 human runtime evidence:
+
+```text
+FakeAgent source → Docker Replay:
+  source Run ID:       f196f4f0235f40268bfaffd2eeab8d97
+  Replay ID:           d1c4c2480c534fa6ad0872352ce41e1e
+  source evaluation:   PASS
+  Replay evaluation:   PASS
+  outcome match:       true
+  evaluation backend:  docker
+  source patch:         243 bytes, non-empty
+  base commit used:     4ed891e6144bdb78941160726ada95fa7a710f3c
+
+Real Codex source → Docker Replay:
+  source Run ID:       de1717bc5b5f4420850e5f79e7350835
+  Replay ID:           567ee76acce241fcbbcf52e3ab654bff
+  source agent:        codex
+  requested model:     gpt-6-astra
+  agent status:        COMPLETED
+  source evaluation:   PASS
+  Replay evaluation:   PASS
+  outcome match:       true
+  evaluation backend:  docker
+  source patch:         1906 bytes
+  base commit used:     4ed891e6144bdb78941160726ada95fa7a710f3c
+```
+
+The real Codex patch included the calculator source fix and canonical Git
+binary patch content for Python `__pycache__` files; Replay applied it and
+passed Docker evaluation. This is known artifact-cleanliness debt, not a new
+M5.3 feature.
+
+For both E2Es, source metadata and patch hashes remained unchanged, Replay
+directories contained only `metadata.json` and `test.log`, the fixture remained
+clean, temporary workspaces were removed, and no PatchBench sandbox containers
+remained. Replay invoked no second Codex execution.
+
 ## Documentation Map
 
 - `docs/PROJECT_STATUS.md`: canonical current truth, handoff, and exact next
@@ -318,4 +381,4 @@ status changes. Do not document every small implementation detail.
 
 ## Exact Next Action
 
-Design and scope-lock M5.3 — Replay + CLI + E2E.
+Perform M5 whole-branch review and milestone documentation finalization.

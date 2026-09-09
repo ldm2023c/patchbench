@@ -149,6 +149,29 @@ class RunRecord(DomainModel):
     artifacts: ArtifactPaths
 
 
+class ReplayRecord(DomainModel):
+    """Summary of one completed historical-patch Replay."""
+
+    replay_id: NonEmptyString
+    source_run_id: NonEmptyString
+    task_id: NonEmptyString
+    base_commit_used: NonEmptyString
+    evaluation_backend: Literal["host", "docker"]
+    source_evaluation_passed: bool
+    replay_evaluation_passed: bool
+    outcome_matches: bool
+    duration_seconds: float = Field(ge=0)
+
+    @model_validator(mode="after")
+    def validate_outcome_match(self) -> Self:
+        """Ensure the persisted verdict agrees with both evaluation outcomes."""
+
+        expected = self.source_evaluation_passed == self.replay_evaluation_passed
+        if self.outcome_matches != expected:
+            raise ValueError("outcome_matches must agree with evaluation outcomes")
+        return self
+
+
 class ExperimentRecord(DomainModel):
     """Summary of one fully completed repeated Experiment."""
 
