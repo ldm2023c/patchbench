@@ -51,11 +51,15 @@ Reviewable Slice
   ↓
 Implementation
   ↓
-Verification
+Self-review
   ↓
-Review
+Human runtime verification
   ↓
-Commit
+Git evidence and full-diff review
+  ↓
+Focused blocker fix and incremental review (when needed)
+  ↓
+Human commit
 ```
 
 Large milestones should be divided into reviewable slices rather than implemented in one large change.
@@ -118,7 +122,14 @@ A code-review packet should normally contain:
 
 The coding agent's summary is useful for navigation but is not treated as evidence by itself.
 
-Source code, tests, Git state, and runtime artifacts are the primary evidence.
+Evidence priority is:
+
+```text
+source code, tests, runtime evidence, and Git state
+> implementation summaries
+```
+
+Summaries help navigation but do not override repository or runtime evidence.
 
 ## 5. Diff Rules
 
@@ -243,12 +254,12 @@ and remove accidental review files.
 At minimum:
 
 ```bash
-pytest
-git diff --cached --check
-git status
+git diff --check
+git status --short
 ```
 
-Additional runtime verification depends on the current milestone.
+Tests, compile checks, and runtime verification depend on the current slice. A
+documentation-only slice does not require unrelated implementation tests.
 
 A commit is created only after:
 
@@ -289,7 +300,7 @@ Before adding functionality, ask:
 2. Is it required by the current milestone?
 3. Does it improve correctness, reproducibility, or experiment quality now?
 4. Can it safely be deferred?
-git status
+
 Features outside the current scope should be deferred rather than implemented
 speculatively.
 
