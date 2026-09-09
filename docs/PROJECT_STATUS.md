@@ -23,10 +23,9 @@ Optional V2 work is outside this completion line.
 
 - Current development branch: `feat/m5-failure-analysis-replay`
 - Latest accepted slice: M5.3 — Replay + CLI + E2E
+- M5 whole-branch review: accepted
 - Exact current feature-branch commit: obtain from
   `git log -1 --oneline --decorate`
-- Historical accepted commits: `068b585` (status checkpoint) and `f9a09a9`
-  (M4.1 implementation)
 - `main` and `origin/main`: `9ae4375`, the merge of completed M4
 
 M4 — Repeated Experiments is complete and merged to `main`. M5.1 —
@@ -34,8 +33,8 @@ Deterministic Failure Classification is accepted on the current M5 feature
 branch and is not yet merged to `main`. M5.2 — PASS-vs-FAIL Comparison is also
 accepted on the current M5 feature branch and is not yet merged to `main`.
 M5.3 — Replay + CLI + E2E is also accepted on the current M5 feature branch and
-is not yet merged to `main`. All three M5 slices require whole-branch milestone
-review before M5 is merged.
+is not yet merged to `main`. M5 has passed whole-branch review, is complete on
+the feature branch, and is ready for push, pull request, and merge.
 
 ## Completed Milestones
 
@@ -45,6 +44,7 @@ M1 — Reproducible Local Run             complete
 M2 — Docker Evaluation                  complete
 M3 — Real Agent Execution               complete
 M4 — Repeated Experiments                complete and merged to main
+M5 — Minimal Failure Analysis & Replay   complete on feature branch; not merged
 ```
 
 ## Current Capabilities
@@ -88,12 +88,11 @@ M4 — Repeated Experiments                complete and merged to main
 
 ## Current M4 State
 
-- **M4.1 — Experiment Domain + Aggregation:** accepted on the current M4
-  feature branch and merged through M4.
-- **M4.2 — Sequential Experiment Orchestration:** accepted on the current M4
-  feature branch and merged through M4.
-- **M4.3 — Experiment CLI + Persistence + E2E:** accepted on the current M4
-  feature branch and merged through M4.
+- **M4.1 — Experiment Domain + Aggregation:** accepted and merged through M4.
+- **M4.2 — Sequential Experiment Orchestration:** accepted and merged through
+  M4.
+- **M4.3 — Experiment CLI + Persistence + E2E:** accepted and merged through
+  M4.
 
 M4 — Repeated Experiments passed whole-branch review and is complete and merged
 to `main` at `9ae4375`.
@@ -150,8 +149,9 @@ whole-branch blockers remain.
 - **M5.3 — Replay + CLI + E2E:** accepted on the current M5 feature branch; not
   yet merged to `main`.
 
-All three M5 slices are accepted on the feature branch. M5 still requires
-whole-branch review and milestone documentation finalization before merge.
+All three M5 slices and the M5 whole-branch review are accepted. M5 is complete
+on the feature branch and ready for push, pull request, and merge; it is not yet
+merged to `main`.
 
 M5.1 introduces `FailureCategory`, `FailureAnalysis`, and the pure
 `classify_run_failure()` boundary. It reports only ordered, directly observable
@@ -218,7 +218,6 @@ remains separate.
 
 ## Deferred Work
 
-- M5 whole-branch review and milestone documentation finalization.
 - Later M5 work: failure/comparison CLI and persistence.
 - Later comparison work: automatic pair selection, Experiment-wide comparison,
   and structural or semantic patch analysis.
@@ -381,4 +380,4 @@ status changes. Do not document every small implementation detail.
 
 ## Exact Next Action
 
-Perform M5 whole-branch review and milestone documentation finalization.
+Commit the accepted M5 milestone documentation finalization, then push the feature branch and open the M5 pull request.
