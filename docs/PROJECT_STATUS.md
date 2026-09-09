@@ -22,7 +22,9 @@ Optional V2 work is outside this completion line.
 ## Git / Development State
 
 - Current development branch: `feat/m6-demo-docs-polish`
-- Latest accepted slice: M6.1 — Public Demo & README
+- Latest accepted slice: M6.2 — Documentation / Interview / Resume Polish
+- M6.1 commit: `974ba5a docs: complete M6.1 public demo`
+- Exact M6.2 commit identity: obtain from Git after commit
 - M5 whole-branch review: accepted before merge
 - Exact current feature-branch commit: obtain from
   `git log -1 --oneline --decorate`
@@ -32,8 +34,11 @@ Optional V2 work is outside this completion line.
 
 M4 — Repeated Experiments and M5 — Minimal Failure Analysis & Replay are
 complete and merged to `main`. All three M5 slices and the M5 whole-branch
-review were accepted before merge. M6.1 is complete on the current feature
-branch; M6.2 has not started, and M6 as a whole is not complete or merged.
+review were accepted before merge. M6.1 is complete and committed on the
+current feature branch. M6.2 has passed human review and is complete on the
+current feature branch; its exact commit identity should be obtained from Git
+after commit. Both M6 slices are complete, but M6 whole-milestone review is
+pending, M6 is not yet FINAL ACCEPTED, and it is not merged to `main`.
 
 ## Completed Milestones
 
@@ -172,13 +177,17 @@ v1 does not claim complete historical environment reconstruction.
 ## Current M6 State
 
 - **M6.1 — Public Demo & README:** complete on the current
-  `feat/m6-demo-docs-polish` feature branch.
-- **M6.2 — Documentation / Interview / Resume Polish:** not started.
+  `feat/m6-demo-docs-polish` feature branch at
+  `974ba5a docs: complete M6.1 public demo`.
+- **M6.2 — Documentation / Interview / Resume Polish:** human review accepted;
+  complete on the current feature branch. Obtain its exact commit identity from
+  Git after commit.
 
 M6.1 provides the reviewed public README entry point for the reliability
 problem, Run-to-Replay workflow, verified Quickstart, programmatic analysis
 APIs, artifact ownership, semantic boundaries, and current project scope. M6 as
-a whole is not complete and has not been merged to `main`.
+a whole has both slices complete, but whole-milestone review is pending, M6 is
+not yet FINAL ACCEPTED, and M6 has not been merged to `main`.
 
 ## Architecture Invariants
 
@@ -230,7 +239,8 @@ remains separate.
   and structural or semantic patch analysis.
 - Later failure-analysis work: semantic categories, evaluator timeout
   classification, and infrastructure-abort evidence.
-- M6.2: documentation, interview material, and resume polish.
+- M6 whole-milestone review, branch push / PR / merge, and post-merge status
+  synchronization.
 - Optional V2: repository-aware context, large benchmark ingestion,
   parallel/distributed execution, multi-agent support, and database/dashboard
   work.
@@ -381,6 +391,18 @@ fixture after verification:    clean at expected base commit
 temporary workspaces:          cleaned
 ```
 
+M6.2 documentation evidence:
+
+```text
+canonical docs:               reviewed and synchronized
+interview notes:              reviewed and consolidated
+resume bullets:               reviewed without unsupported claims
+production/test changes:      none
+Git diff validation:          PASS
+M6.2 review state:             accepted
+M6 whole review:              pending
+```
+
 ## Documentation Map
 
 - `docs/PROJECT_STATUS.md`: canonical current truth, handoff, and exact next
@@ -407,4 +429,4 @@ status changes. Do not document every small implementation detail.
 
 ## Exact Next Action
 
-Design and scope-lock M6.2 — Documentation / Interview / Resume Polish.
+Perform M6 whole-milestone review.

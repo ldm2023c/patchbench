@@ -246,10 +246,11 @@ isolation, not a production-grade hostile multi-tenant security boundary.
 
 Milestones 0–5 are complete and merged to `main`. M6 is the current
 demo/documentation/presentation milestone. M6.1 — Public Demo & README is
-complete on `feat/m6-demo-docs-polish`; M6.2 — Documentation / Interview /
-Resume Polish has not started yet. M6 as a whole is not yet complete and has
-not been merged to `main`. See [Project Status](docs/PROJECT_STATUS.md) for
-canonical milestone evidence and the exact next action.
+complete and committed on `feat/m6-demo-docs-polish`. M6.2 — Documentation /
+Interview / Resume Polish is complete and accepted on the same feature branch.
+M6 whole-milestone review is still pending. M6 has not yet been merged to
+`main`. See [Project Status](docs/PROJECT_STATUS.md) for canonical milestone
+evidence and the exact next action.
 
 Historical patch Replay has been validated end to end with both a FakeAgent
 source Run and a real Codex source Run using Docker evaluation. The real

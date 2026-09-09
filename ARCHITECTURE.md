@@ -16,34 +16,19 @@ The architecture must remain simple enough for a local MVP while preserving clea
 ## 2. High-level Architecture
 
 ```text
-                         CLI
-                          │
-                          ▼
-                 Experiment Runner
-                          │
-          ┌───────────────┼────────────────┐
-          │               │                │
-          ▼               ▼                ▼
- Repository Manager   Agent Adapter     Evaluator
-          │               │                │
-          │               ▼                │
-          │           Sandbox API          │
-          │               │                │
-          │               ▼                │
-          │         Docker Sandbox         │
-          │                                │
-          └───────────────┬────────────────┘
-                          │
-                          ▼
-                   Artifact Store
-                          │
-                          ▼
-                       results/
+CLI
+ ↓
+Application: Run / Experiment / Replay
+ ├─ GitRepositoryManager
+ ├─ Agent (host)
+ ├─ Evaluator → optional DockerSandbox
+ └─ FilesystemArtifactStore → results/
 ```
 
 The CLI should contain almost no business logic.
 
-The Experiment Runner owns orchestration.
+The application layer owns single-Run, sequential-Experiment, and Replay
+orchestration. A Run remains the atomic execution unit.
 
 Infrastructure-specific logic belongs in adapters.
 
@@ -137,7 +122,7 @@ not claim to reconstruct the complete historical execution environment.
 
 Responsibilities:
 
-- locate or clone a repository;
+- verify an existing local repository;
 - verify the configured base commit;
 - create an independent Run workspace;
 - restore the workspace to the base commit;
@@ -163,27 +148,23 @@ This directory must not be committed to Git.
 
 The Sandbox interface represents an execution environment.
 
-Conceptually it should support operations such as:
+The current contract supports:
 
 ```text
 create()
 exec()
-copy_in()
-copy_out()
 destroy()
 ```
 
-Snapshot support may be added later but is not required for the first version.
+The current implementation is `DockerSandbox`. It bind-mounts at most one Run
+workspace at `/workspace` and is used by `SandboxCommandEvaluator`; Agents
+remain host-side. It supports bounded argv-style execution, optional CPU and
+memory limits, and force-removes the disposable container after an execution
+timeout.
 
-Initial implementation:
-
-```text
-DockerSandbox
-```
-
-Potential future implementations may use other sandbox providers.
-
-PatchBench core logic must not depend directly on Docker-specific behavior.
+PatchBench application logic depends on the Sandbox protocol rather than
+Docker-specific behavior. This boundary provides practical evaluator isolation,
+not a production-grade hostile multi-tenant security boundary.
 
 ---
 
@@ -197,22 +178,29 @@ Initial real implementation:
 CodexAdapter
 ```
 
-Before Codex integration, a deterministic:
+The deterministic orchestration test double is:
 
 ```text
 FakeAgent
 ```
 
-will be used to validate the orchestration pipeline.
+It validates the orchestration pipeline without external model behavior.
 
-The adapter should eventually:
+The current application-facing contract is:
 
-- construct the agent invocation;
-- execute the agent non-interactively;
-- provide the task prompt;
-- capture stdout/stderr or structured events;
-- record execution metadata;
-- return a normalized `AgentResult`.
+```text
+Agent.run(AgentRunRequest) -> AgentRunResult
+
+AgentRunRequest:
+  workspace, prompt, timeout_seconds
+
+AgentRunResult:
+  status, exit_code, stdout, stderr, duration_seconds
+```
+
+Only executions that genuinely start return `COMPLETED`, `COMMAND_FAILED`, or
+`TIMED_OUT`. Setup, startup, and unsafe process-management failures remain
+exceptions. Agent execution is host-side; Docker is not an Agent runtime.
 
 The experiment system must not parse Codex-specific behavior outside `CodexAdapter`.
 
@@ -222,15 +210,19 @@ Future agents should therefore be addable without rewriting the experiment engin
 
 ## 7. Codex Execution Model
 
-PatchBench should use Codex's non-interactive execution interface rather than attempting to automate the interactive terminal UI.
+`CodexAdapter` uses Codex's non-interactive host-side execution interface rather
+than automating the interactive terminal UI.
 
-Conceptually:
+Current invocation shape:
 
 ```text
-codex exec <prompt>
+codex exec -C <workspace> --sandbox workspace-write --ephemeral \
+  --ignore-user-config --json -m <model> -
 ```
 
-The exact invocation flags and authentication strategy must be implemented and tested separately.
+The model is explicit. A version and login-status preflight runs before Agent
+execution, while prompt text is supplied on stdin. Timeout cleanup terminates
+and reaps the entire host process group.
 
 Authentication secrets must never be committed into the PatchBench repository or persisted into Run artifacts.
 
@@ -240,13 +232,14 @@ Authentication secrets must never be committed into the PatchBench repository or
 
 The Evaluator determines whether the resulting repository satisfies the task.
 
-Initial implementation:
+Current implementations:
 
 ```text
-PytestEvaluator
+CommandEvaluator
+SandboxCommandEvaluator
 ```
 
-The evaluator executes the Task's configured command, for example:
+Both execute the Task's configured argv-style command, for example:
 
 ```text
 pytest -q
@@ -257,20 +250,21 @@ and returns normalized information such as:
 ```text
 exit_code
 passed
-duration
+duration_seconds
 stdout
 stderr
 ```
 
-A Run's PASS/FAIL must be determined by explicit evaluator behavior rather than by the coding agent claiming success.
+A Run's PASS/FAIL is determined by evaluator exit code rather than by the coding
+agent claiming success.
 
 ---
 
 ## 9. Artifact Store
 
-The first storage backend should be filesystem-based.
+The current storage backend is filesystem-based.
 
-Initial implementation:
+Implementation:
 
 ```text
 FilesystemArtifactStore
@@ -343,7 +337,7 @@ Invalid configuration should fail early with a readable error message.
 
 ---
 
-## 11. Proposed Package Structure
+## 11. Package Structure
 
 ```text
 patchbench/
@@ -354,6 +348,8 @@ patchbench/
 ├── .gitignore
 │
 ├── docs/
+│   ├── DEVELOPMENT.md
+│   ├── PROJECT_STATUS.md
 │   └── interview_notes.md
 │
 ├── src/
@@ -363,7 +359,10 @@ patchbench/
 │       │
 │       ├── domain/
 │       │   ├── __init__.py
-│       │   └── models.py
+│       │   ├── models.py
+│       │   ├── aggregation.py
+│       │   ├── failure.py
+│       │   └── comparison.py
 │       │
 │       ├── config/
 │       │   ├── __init__.py
@@ -371,7 +370,9 @@ patchbench/
 │       │
 │       ├── application/
 │       │   ├── __init__.py
-│       │   └── experiment_runner.py
+│       │   ├── local_run.py
+│       │   ├── experiment.py
+│       │   └── replay.py
 │       │
 │       ├── repository/
 │       │   ├── __init__.py
@@ -389,8 +390,8 @@ patchbench/
 │       │
 │       ├── evaluators/
 │       │   ├── __init__.py
-│       │   ├── base.py
-│       │   └── pytest_evaluator.py
+│       │   ├── command.py
+│       │   └── sandbox.py
 │       │
 │       └── storage/
 │           ├── __init__.py
@@ -398,13 +399,10 @@ patchbench/
 │
 ├── tests/
 ├── tasks/
-├── experiments/
+├── fixtures/
+├── scripts/
 └── results/
 ```
-
-Not every module should be created or implemented immediately.
-
-Directories and abstractions should only be added when required by the current milestone.
 
 ---
 
@@ -440,7 +438,7 @@ This boundary keeps infrastructure replaceable and the system understandable.
 
 ## 13. Run Lifecycle
 
-The target MVP Run lifecycle is:
+The implemented Run lifecycle is:
 
 ```text
 1. Create run_id
@@ -453,32 +451,33 @@ The target MVP Run lifecycle is:
 
 5. Verify clean Git state
 
-6. Create Sandbox
+6. Execute Agent on the host
 
-7. Execute Agent
+7. Capture agent stdout/stderr
 
-8. Capture agent output
+8. Stage workspace changes and capture a binary-capable canonical Git patch
 
-9. Capture git diff
+9. Execute the Evaluator on the host or in a disposable Docker sandbox
 
-10. Execute Evaluator
+10. Determine PASS / FAIL independently from Agent status
 
-11. Determine PASS / FAIL
+11. Destroy an optional evaluation Sandbox
 
 12. Persist:
       metadata.json
+      prompt.txt
       agent.log
+      agent.stderr.log
       test.log
       patch.diff
 
-13. Destroy Sandbox
+13. Delete the temporary workspace
 
-14. Delete temporary workspace
-
-15. Return RunRecord
+14. Return RunRecord
 ```
 
-Cleanup must execute even when the Agent or Evaluator fails.
+Cleanup executes across normal failure outcomes and hard exceptions. Agent
+setup/infrastructure exceptions propagate and do not fabricate a RunRecord.
 
 ---
 
@@ -488,7 +487,7 @@ For:
 
 ```bash
 patchbench experiment \
-    --task bug_001 \
+    --task tasks/example/task.yaml \
     --agent codex \
     --model <model> \
     --runs 5
@@ -563,26 +562,25 @@ existing lifecycle boundaries.
 
 ---
 
-## 15. Error Handling
+## 15. Failure and Error Semantics
 
-Infrastructure errors and coding-task failures must be distinguishable.
+Infrastructure errors and completed reliability observations are distinct.
 
-Potential statuses include:
+Agent executions that genuinely start return exactly:
 
 ```text
-CONFIG_ERROR
-REPOSITORY_ERROR
-SANDBOX_ERROR
-AGENT_ERROR
-AGENT_TIMEOUT
-EVALUATION_ERROR
-TASK_FAILED
-INTERNAL_ERROR
+COMPLETED
+COMMAND_FAILED
+TIMED_OUT
 ```
 
-A failed Run should still attempt to persist useful logs and metadata.
+All returned Agent outcomes continue through patch capture and evaluation;
+therefore `COMMAND_FAILED` or `TIMED_OUT` does not imply Evaluation FAIL.
+Evaluation PASS/FAIL is recorded separately from Agent status.
 
-Errors must not destroy evidence required for later failure analysis.
+Task loading, repository, Agent setup/infrastructure, Sandbox lifecycle, patch
+application, and artifact-storage failures remain exceptions. They abort the
+active lifecycle rather than becoming a synthetic Run failure category.
 
 ---
 
@@ -596,7 +594,7 @@ Initial rules:
 - avoid mounting arbitrary host directories;
 - use dedicated temporary workspaces;
 - destroy containers after execution;
-- define CPU, memory, and timeout limits when Docker execution is implemented;
+- apply bounded evaluator execution and optional Docker CPU/memory limits;
 - do not assume Docker provides a production-grade hostile multi-tenant security boundary.
 
 PatchBench MVP focuses on reproducibility and practical isolation, not production multi-tenant sandbox security.
@@ -672,7 +670,19 @@ Implement:
 - average duration;
 - experiment report.
 
-After Milestone 4, PatchBench reaches MVP v0.1.
+### Milestone 5 — Minimal Failure Analysis & Replay
+
+Implemented:
+
+- deterministic directly-observable failure classification;
+- explicit descriptive PASS-vs-FAIL comparison;
+- historical patch Replay with zero Agent executions.
+
+### Milestone 6 — Demo and Documentation
+
+Public README/demo work and implementation-grounded documentation polish form
+the final job-search presentation milestone. Optional V2 features remain
+outside this completion line.
 
 ---
 
