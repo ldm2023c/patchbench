@@ -7,16 +7,22 @@ rather than a single successful run.
 
 ## Current status
 
-Milestones 0–3 are complete and merged to `main`. PatchBench supports
+Milestones 0–4 are complete and merged to `main`. PatchBench supports
 reproducible single Runs with FakeAgent or a real host-side CodexAdapter, actual
 Git patch capture, host or Docker-backed evaluation, and structured per-Run
 artifacts.
 
-**Milestone 4 — Repeated Experiments** is complete on the current
-`feat/m4-repeated-experiments` development branch. M4.1–M4.3 are accepted on
-that branch, but M4 has not yet been merged to `main`. See
-[Project Status](docs/PROJECT_STATUS.md) for the canonical review/merge state
-and exact next action.
+**Milestone 5 — Minimal Failure Analysis & Replay** is complete on the current
+`feat/m5-failure-analysis-replay` feature branch. Its three slices are
+implemented, reviewed, and accepted, and M5 has passed whole-branch code
+review. M5 is not yet merged to `main`. See [Project
+Status](docs/PROJECT_STATUS.md) for the canonical review/merge state and exact
+next action.
+
+M5 adds deterministic classification of directly observable Run failure
+conditions, explicit deterministic descriptive comparison of one PASS and one
+FAIL Run, and historical patch Replay. Classification does not infer semantic
+root causes, and comparison does not establish causality.
 
 Coding agents still execute on the host; `--docker` selects Docker-backed task
 evaluation. Arbitrary repository dependencies are not automatically
@@ -108,3 +114,18 @@ agent.stderr.log
 test.log
 patch.diff
 ```
+
+Replay a historical Run's canonical patch without invoking an Agent:
+
+```bash
+patchbench replay \
+  --task tasks/example/task.yaml \
+  --run-id <historical-run-id>
+```
+
+Add `--docker` to use Docker-backed evaluation. Replay creates a fresh detached
+worktree at the base commit from the caller-supplied TaskSpec, applies the saved
+patch, and writes separate Replay metadata and evaluation output under
+`results/replays/<replay-id>/`. Replay v1 uses the currently selected evaluation
+backend and does not claim to reconstruct the complete historical execution
+environment.

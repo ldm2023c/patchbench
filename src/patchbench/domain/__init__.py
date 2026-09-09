@@ -4,6 +4,16 @@ from patchbench.domain.aggregation import (
     ExperimentAggregationError,
     aggregate_runs,
 )
+from patchbench.domain.comparison import (
+    PassFailComparison,
+    PassFailComparisonError,
+    compare_pass_fail_runs,
+)
+from patchbench.domain.failure import (
+    FailureAnalysis,
+    FailureCategory,
+    classify_run_failure,
+)
 from patchbench.domain.models import (
     AgentExecutionMetadata,
     ArtifactPaths,
@@ -12,6 +22,7 @@ from patchbench.domain.models import (
     ExperimentAggregate,
     ExperimentConfiguration,
     ExperimentRecord,
+    ReplayRecord,
     RepositoryConfig,
     RunRecord,
     RunStatus,
@@ -29,11 +40,18 @@ __all__ = [
     "ExperimentAggregationError",
     "ExperimentConfiguration",
     "ExperimentRecord",
+    "FailureAnalysis",
+    "FailureCategory",
+    "PassFailComparison",
+    "PassFailComparisonError",
     "RepositoryConfig",
+    "ReplayRecord",
     "RunRecord",
     "RunStatus",
     "TaskMetadata",
     "TaskPromptConfig",
     "TaskSpec",
     "aggregate_runs",
+    "classify_run_failure",
+    "compare_pass_fail_runs",
 ]

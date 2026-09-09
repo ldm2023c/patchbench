@@ -15,8 +15,9 @@ from patchbench.application.experiment import (
     run_experiment,
 )
 from patchbench.application.local_run import run_task
+from patchbench.application.replay import ReplayError, replay_run
 from patchbench.config.task_loader import TaskLoadError, load_task
-from patchbench.domain import ExperimentConfiguration, ExperimentRecord
+from patchbench.domain import ExperimentConfiguration, ExperimentRecord, ReplayRecord
 from patchbench.evaluators.command import EvaluationError
 from patchbench.repository.git_repository import RepositoryError
 from patchbench.sandbox.base import Sandbox
@@ -25,7 +26,7 @@ from patchbench.storage.filesystem import ArtifactStoreError, FilesystemArtifact
 
 
 app = typer.Typer(
-    help="Validate tasks and execute PatchBench Runs and Experiments.",
+    help="Validate tasks and execute PatchBench Runs, Experiments, and Replays.",
     no_args_is_help=True,
 )
 
@@ -96,6 +97,27 @@ def _echo_experiment_summary(record: ExperimentRecord, metadata: Path) -> None:
     typer.echo(f"  Total child: {aggregate.total_duration_seconds:.3f}s")
     typer.echo(f"  Mean run:    {aggregate.mean_duration_seconds:.3f}s")
     typer.echo(f"  Experiment:  {record.duration_seconds:.3f}s")
+    typer.echo()
+    typer.echo("Artifacts:")
+    typer.echo(f"  {metadata}")
+
+
+def _echo_replay_summary(record: ReplayRecord, metadata: Path) -> None:
+    """Print the completed Replay outcome without implying Agent execution."""
+
+    source_outcome = "PASS" if record.source_evaluation_passed else "FAIL"
+    replay_outcome = "PASS" if record.replay_evaluation_passed else "FAIL"
+    match = "YES" if record.outcome_matches else "NO"
+    typer.echo(f"Replay ID:      {record.replay_id}")
+    typer.echo(f"Source Run ID:  {record.source_run_id}")
+    typer.echo(f"Task ID:        {record.task_id}")
+    typer.echo()
+    typer.echo(f"Source Evaluation: {source_outcome}")
+    typer.echo(f"Replay Evaluation: {replay_outcome}")
+    typer.echo(f"Outcome Match:     {match}")
+    typer.echo()
+    typer.echo(f"Evaluation Backend: {record.evaluation_backend}")
+    typer.echo(f"Duration:           {record.duration_seconds:.3f}s")
     typer.echo()
     typer.echo("Artifacts:")
     typer.echo(f"  {metadata}")
@@ -263,6 +285,52 @@ def experiment(
         raise typer.Exit(code=1) from error
 
     _echo_experiment_summary(record, metadata)
+
+
+@app.command("replay")
+def replay(
+    task_path: Annotated[
+        Path, typer.Option("--task", help="Path to a YAML task definition.")
+    ],
+    run_id: Annotated[
+        str, typer.Option("--run-id", help="Historical Run ID to replay.")
+    ],
+    docker: Annotated[
+        bool,
+        typer.Option("--docker", help="Evaluate the historical patch inside Docker."),
+    ] = False,
+) -> None:
+    """Replay and persist one historical Run patch without invoking an Agent."""
+
+    results_root = Path.cwd() / "results"
+    artifact_store = FilesystemArtifactStore(results_root)
+    try:
+        task = load_task(task_path)
+        source_run = artifact_store.load_run_record(run_id)
+        patch_text = artifact_store.load_run_patch(run_id)
+        execution = replay_run(
+            task,
+            source_run,
+            patch_text,
+            sandbox=_sandbox_for(docker),
+        )
+        metadata = artifact_store.save_replay(
+            execution.record,
+            execution.evaluation_result,
+            task.evaluation.command,
+        )
+    except (
+        ArtifactStoreError,
+        DockerSandboxError,
+        EvaluationError,
+        ReplayError,
+        RepositoryError,
+        TaskLoadError,
+    ) as error:
+        typer.echo(f"Error: {error}", err=True)
+        raise typer.Exit(code=1) from error
+
+    _echo_replay_summary(execution.record, metadata)
 
 
 if __name__ == "__main__":

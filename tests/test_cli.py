@@ -7,14 +7,18 @@ from typer.testing import CliRunner
 
 from patchbench.agents.base import AgentInfrastructureError, AgentRunStatus
 from patchbench.agents.fake import FakeAgent
+from patchbench.application.replay import ReplayExecution
 from patchbench.cli import app
 from patchbench.domain import (
+    EvaluationResult,
     ExperimentAggregate,
     ExperimentConfiguration,
     ExperimentRecord,
+    ReplayRecord,
 )
 from patchbench.storage import ArtifactStoreError, FilesystemArtifactStore
 from tests.helpers import create_fixture_repository, git, write_run_task
+from tests.test_replay import FIX_PATCH, make_run, persist_source
 from tests.test_task_loader import VALID_TASK
 
 
@@ -596,3 +600,257 @@ def test_experiment_metadata_collision_is_rejected_without_overwrite(
         store.save_experiment(record)
 
     assert metadata.read_text(encoding="utf-8") == original
+
+
+def completed_replay(
+    *,
+    source_passed: bool = True,
+    replay_passed: bool = True,
+) -> ReplayExecution:
+    record = ReplayRecord(
+        replay_id="replay-123",
+        source_run_id="source-run",
+        task_id="calculator_bug",
+        base_commit_used="abc123",
+        evaluation_backend="host",
+        source_evaluation_passed=source_passed,
+        replay_evaluation_passed=replay_passed,
+        outcome_matches=source_passed == replay_passed,
+        duration_seconds=1.25,
+    )
+    return ReplayExecution(
+        record=record,
+        evaluation_result=EvaluationResult(
+            exit_code=0 if replay_passed else 1,
+            passed=replay_passed,
+            duration_seconds=1.0,
+            stdout="evaluation output",
+            stderr="",
+        ),
+    )
+
+
+def test_replay_cli_surface_has_only_replay_options() -> None:
+    result = runner.invoke(app, ["replay", "--help"])
+
+    assert result.exit_code == 0
+    assert "--task" in result.output
+    assert "--run-id" in result.output
+    assert "--docker" in result.output
+    unsupported_options = (
+        "--agent",
+        "--model",
+        "--agent-timeout",
+        "--runs",
+        "--retry",
+    )
+    for unsupported in unsupported_options:
+        assert unsupported not in result.output
+
+
+def test_replay_host_cli_persists_result_and_never_constructs_agent(
+    tmp_path: Path, monkeypatch
+) -> None:
+    source_repository, base_commit = create_fixture_repository(tmp_path)
+    task_path = write_run_task(tmp_path, source_repository, base_commit)
+    results_root = tmp_path / "results"
+    source = make_run(results_root)
+    persist_source(source, FIX_PATCH)
+    metadata_before = source.artifacts.metadata.read_bytes()
+    patch_before = source.artifacts.patch.read_bytes()
+    monkeypatch.chdir(tmp_path)
+    monkeypatch.setattr(
+        "patchbench.cli.FakeAgent",
+        lambda: pytest.fail("Replay must not construct FakeAgent"),
+    )
+    monkeypatch.setattr(
+        "patchbench.cli.CodexAdapter",
+        lambda **kwargs: pytest.fail("Replay must not construct CodexAdapter"),
+    )
+    monkeypatch.setattr(
+        "patchbench.cli.DockerSandbox",
+        lambda: pytest.fail("host Replay must not construct DockerSandbox"),
+    )
+
+    result = runner.invoke(
+        app,
+        ["replay", "--task", str(task_path), "--run-id", source.run_id],
+    )
+
+    assert result.exit_code == 0, result.output
+    assert "Source Run ID:  source-run" in result.output
+    assert "Source Evaluation: PASS" in result.output
+    assert "Replay Evaluation: PASS" in result.output
+    assert "Outcome Match:     YES" in result.output
+    assert "Evaluation Backend: host" in result.output
+    assert "Agent:" not in result.output
+    replay_metadata = list(results_root.glob("replays/*/metadata.json"))
+    assert len(replay_metadata) == 1
+    replay_directory = replay_metadata[0].parent
+    assert {path.name for path in replay_directory.iterdir()} == {
+        "metadata.json",
+        "test.log",
+    }
+    assert source.artifacts.metadata.read_bytes() == metadata_before
+    assert source.artifacts.patch.read_bytes() == patch_before
+    assert list((tmp_path / ".workspaces").iterdir()) == []
+    assert git(source_repository, "status", "--porcelain") == ""
+
+
+def test_replay_docker_flag_supplies_sandbox_without_agent_options(
+    tmp_path: Path, monkeypatch
+) -> None:
+    sandbox = object()
+    source_run = make_run(tmp_path / "results")
+    execution = completed_replay()
+    received: dict[str, object] = {}
+
+    monkeypatch.chdir(tmp_path)
+    monkeypatch.setattr(
+        "patchbench.cli.load_task",
+        lambda path: SimpleNamespace(
+            evaluation=SimpleNamespace(command="pytest -q")
+        ),
+    )
+    monkeypatch.setattr(
+        "patchbench.cli.FilesystemArtifactStore.load_run_record",
+        lambda self, run_id: source_run,
+    )
+    monkeypatch.setattr(
+        "patchbench.cli.FilesystemArtifactStore.load_run_patch",
+        lambda self, run_id: FIX_PATCH,
+    )
+    monkeypatch.setattr("patchbench.cli.DockerSandbox", lambda: sandbox)
+
+    def fake_replay_run(task, source, patch, *, sandbox=None):
+        received.update(
+            {"task": task, "source": source, "patch": patch, "sandbox": sandbox}
+        )
+        return execution
+
+    monkeypatch.setattr("patchbench.cli.replay_run", fake_replay_run)
+    monkeypatch.setattr(
+        "patchbench.cli.FilesystemArtifactStore.save_replay",
+        lambda self, record, evaluation, command: tmp_path / "metadata.json",
+    )
+
+    result = runner.invoke(
+        app,
+        [
+            "replay",
+            "--task",
+            str(tmp_path / "task.yaml"),
+            "--run-id",
+            "source-run",
+            "--docker",
+        ],
+    )
+
+    assert result.exit_code == 0, result.output
+    assert received["source"] is source_run
+    assert received["patch"] == FIX_PATCH
+    assert received["sandbox"] is sandbox
+
+
+@pytest.mark.parametrize(
+    ("source_passed", "replay_passed", "source_text", "replay_text", "match"),
+    [
+        (False, False, "FAIL", "FAIL", "YES"),
+        (True, False, "PASS", "FAIL", "NO"),
+        (False, True, "FAIL", "PASS", "NO"),
+    ],
+)
+def test_completed_failures_and_mismatches_are_cli_success(
+    tmp_path: Path,
+    monkeypatch,
+    source_passed: bool,
+    replay_passed: bool,
+    source_text: str,
+    replay_text: str,
+    match: str,
+) -> None:
+    execution = completed_replay(
+        source_passed=source_passed,
+        replay_passed=replay_passed,
+    )
+    monkeypatch.chdir(tmp_path)
+    monkeypatch.setattr("patchbench.cli.load_task", lambda path: SimpleNamespace(
+        evaluation=SimpleNamespace(command="pytest -q")
+    ))
+    monkeypatch.setattr(
+        "patchbench.cli.FilesystemArtifactStore.load_run_record",
+        lambda self, run_id: object(),
+    )
+    monkeypatch.setattr(
+        "patchbench.cli.FilesystemArtifactStore.load_run_patch",
+        lambda self, run_id: "",
+    )
+    monkeypatch.setattr("patchbench.cli.replay_run", lambda *args, **kwargs: execution)
+    monkeypatch.setattr(
+        "patchbench.cli.FilesystemArtifactStore.save_replay",
+        lambda self, record, evaluation, command: tmp_path / "metadata.json",
+    )
+
+    result = runner.invoke(
+        app,
+        ["replay", "--task", "task.yaml", "--run-id", "source-run"],
+    )
+
+    assert result.exit_code == 0, result.output
+    assert f"Source Evaluation: {source_text}" in result.output
+    assert f"Replay Evaluation: {replay_text}" in result.output
+    assert f"Outcome Match:     {match}" in result.output
+
+
+def test_replay_artifact_failure_is_nonzero_without_completed_summary(
+    tmp_path: Path, monkeypatch
+) -> None:
+    source_repository, base_commit = create_fixture_repository(tmp_path)
+    task_path = write_run_task(tmp_path, source_repository, base_commit)
+    monkeypatch.chdir(tmp_path)
+
+    result = runner.invoke(
+        app,
+        ["replay", "--task", str(task_path), "--run-id", "missing-run"],
+    )
+
+    assert result.exit_code == 1
+    assert "Unable to load Run metadata" in result.output
+    assert "Replay ID:" not in result.output
+    assert not (tmp_path / "results/replays").exists()
+
+
+def test_replay_persistence_failure_is_cli_failure(
+    tmp_path: Path, monkeypatch
+) -> None:
+    execution = completed_replay()
+    error = ArtifactStoreError("simulated Replay persistence failure")
+    monkeypatch.chdir(tmp_path)
+    monkeypatch.setattr(
+        "patchbench.cli.load_task",
+        lambda path: SimpleNamespace(
+            evaluation=SimpleNamespace(command="pytest -q")
+        ),
+    )
+    monkeypatch.setattr(
+        "patchbench.cli.FilesystemArtifactStore.load_run_record",
+        lambda self, run_id: object(),
+    )
+    monkeypatch.setattr(
+        "patchbench.cli.FilesystemArtifactStore.load_run_patch",
+        lambda self, run_id: FIX_PATCH,
+    )
+    monkeypatch.setattr("patchbench.cli.replay_run", lambda *args, **kwargs: execution)
+    monkeypatch.setattr(
+        "patchbench.cli.FilesystemArtifactStore.save_replay",
+        lambda *args, **kwargs: (_ for _ in ()).throw(error),
+    )
+
+    result = runner.invoke(
+        app,
+        ["replay", "--task", "task.yaml", "--run-id", "source-run"],
+    )
+
+    assert result.exit_code == 1
+    assert "simulated Replay persistence failure" in result.output
+    assert "Replay ID:" not in result.output

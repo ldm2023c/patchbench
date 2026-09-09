@@ -80,6 +80,13 @@ class GitRepositoryManager:
             "HEAD",
         ).stdout
 
+    def apply_patch(self, workspace: GitWorkspace, patch_text: str) -> None:
+        """Apply one canonical Git patch to a Replay workspace without staging it."""
+
+        if not patch_text.strip():
+            return
+        self._git(workspace.path, "apply", "--binary", "-", input_text=patch_text)
+
     def _verify_source(self, source: Path, configured_commit: str) -> str:
         if not source.is_dir():
             raise RepositoryError(f"Local repository does not exist: {source}")
@@ -121,12 +128,17 @@ class GitRepositoryManager:
         )
 
     @staticmethod
-    def _git(repository: Path, *arguments: str) -> subprocess.CompletedProcess[str]:
+    def _git(
+        repository: Path,
+        *arguments: str,
+        input_text: str | None = None,
+    ) -> subprocess.CompletedProcess[str]:
         try:
             return subprocess.run(
                 ["git", "-C", str(repository), *arguments],
                 capture_output=True,
                 text=True,
+                input=input_text,
                 check=True,
             )
         except (OSError, subprocess.CalledProcessError) as error:

@@ -21,19 +21,20 @@ Optional V2 work is outside this completion line.
 
 ## Git / Development State
 
-- Current development branch: `feat/m4-repeated-experiments`
-- Latest accepted slice: M4.3 — Experiment CLI + Persistence + E2E
+- Current development branch: `feat/m5-failure-analysis-replay`
+- Latest accepted slice: M5.3 — Replay + CLI + E2E
+- M5 whole-branch review: accepted
 - Exact current feature-branch commit: obtain from
   `git log -1 --oneline --decorate`
-- Historical accepted commits: `068b585` (status checkpoint) and `f9a09a9`
-  (M4.1 implementation)
-- `main` and `origin/main`: `bdeaec6`, the merge of completed M3
+- `main` and `origin/main`: `9ae4375`, the merge of completed M4
 
-M4.3 is accepted on the current M4 feature branch; it is not yet merged to
-`main`. M4 — Repeated Experiments is complete on the current feature branch;
-the whole-branch review is accepted, and M4 is ready for push, PR, and merge to
-`main`. M4 is not yet merged to or complete on `main`; completed M3 remains the
-latest milestone merged there.
+M4 — Repeated Experiments is complete and merged to `main`. M5.1 —
+Deterministic Failure Classification is accepted on the current M5 feature
+branch and is not yet merged to `main`. M5.2 — PASS-vs-FAIL Comparison is also
+accepted on the current M5 feature branch and is not yet merged to `main`.
+M5.3 — Replay + CLI + E2E is also accepted on the current M5 feature branch and
+is not yet merged to `main`. M5 has passed whole-branch review, is complete on
+the feature branch, and is ready for push, pull request, and merge.
 
 ## Completed Milestones
 
@@ -42,9 +43,8 @@ M0 — Foundation                         complete
 M1 — Reproducible Local Run             complete
 M2 — Docker Evaluation                  complete
 M3 — Real Agent Execution               complete
-M4.1 — Experiment Domain + Aggregation  accepted on current M4 branch
-M4.2 — Sequential Experiment Orchestration  accepted on current M4 branch
-M4.3 — Experiment CLI + Persistence + E2E  accepted on current M4 branch
+M4 — Repeated Experiments                complete and merged to main
+M5 — Minimal Failure Analysis & Replay   complete on feature branch; not merged
 ```
 
 ## Current Capabilities
@@ -69,24 +69,33 @@ M4.3 — Experiment CLI + Persistence + E2E  accepted on current M4 branch
 - Completed Experiment metadata persistence at
   `results/experiments/<experiment-id>/metadata.json`, referencing standalone
   child Run artifacts by `run_ids`.
+- Pure deterministic multi-label classification from a completed `RunRecord`
+  plus already-loaded patch evidence into `FailureAnalysis`, using the directly
+  observable `AGENT_COMMAND_FAILED`, `AGENT_TIMED_OUT`, `NO_PATCH`, and
+  `TEST_FAILED` categories.
+- Pure deterministic descriptive comparison of one explicit PASS `RunRecord`
+  and one explicit FAIL `RunRecord` from the same task plus already-loaded
+  patch evidence into `PassFailComparison`.
+- Historical-patch Replay from one persisted Run artifact into a fresh
+  TaskSpec-base worktree, using the existing host or Docker evaluator without
+  invoking an Agent, with completed metadata under
+  `results/replays/<replay-id>/metadata.json`.
 
 ### Not Yet Implemented
 
-- Failure classification.
-- PASS-vs-FAIL comparison.
-- Replay.
+- Failure-analysis or comparison CLI and persistence.
+- Automatic pair selection or Experiment-wide comparison.
 
 ## Current M4 State
 
-- **M4.1 — Experiment Domain + Aggregation:** accepted on the current M4
-  feature branch.
-- **M4.2 — Sequential Experiment Orchestration:** accepted on the current M4
-  feature branch; not yet merged to `main`.
-- **M4.3 — Experiment CLI + Persistence + E2E:** accepted on the current M4
-  feature branch; not yet merged to `main`.
+- **M4.1 — Experiment Domain + Aggregation:** accepted and merged through M4.
+- **M4.2 — Sequential Experiment Orchestration:** accepted and merged through
+  M4.
+- **M4.3 — Experiment CLI + Persistence + E2E:** accepted and merged through
+  M4.
 
-M4 — Repeated Experiments has passed whole-branch review and is complete on the
-current feature branch. It is ready for push, PR, and merge to `main`.
+M4 — Repeated Experiments passed whole-branch review and is complete and merged
+to `main` at `9ae4375`.
 
 M4.1 implemented domain surface:
 
@@ -130,6 +139,39 @@ Two blockers were found, fixed, and incrementally reviewed:
 The resulting CLI invariant is that the selected Codex model is normalized once
 before both Agent construction and Run/Experiment metadata composition. No M4
 whole-branch blockers remain.
+
+## Current M5 State
+
+- **M5.1 — Deterministic Failure Classification:** accepted on the current M5
+  feature branch; not yet merged to `main`.
+- **M5.2 — PASS-vs-FAIL Comparison:** accepted on the current M5 feature branch;
+  not yet merged to `main`.
+- **M5.3 — Replay + CLI + E2E:** accepted on the current M5 feature branch; not
+  yet merged to `main`.
+
+All three M5 slices and the M5 whole-branch review are accepted. M5 is complete
+on the feature branch and ready for push, pull request, and merge; it is not yet
+merged to `main`.
+
+M5.1 introduces `FailureCategory`, `FailureAnalysis`, and the pure
+`classify_run_failure()` boundary. It reports only ordered, directly observable
+conditions and does not infer semantic root causes.
+
+M5.2 introduces `PassFailComparison`, `PassFailComparisonError`, and the pure
+`compare_pass_fail_runs()` boundary. Callers explicitly supply PASS and FAIL
+roles plus already-loaded patch evidence; the result is descriptive and does
+not claim causal attribution.
+
+Valid pairs use the same task and different Run IDs. M5.1 remains the sole
+failure-taxonomy source; patch presence uses stripped semantic presence, patch
+equality uses exact artifact text, and duration is recorded as FAIL minus PASS.
+
+M5.3 adds `ReplayRecord` and `patchbench replay --task ... --run-id ...
+[--docker]`. Replay loads the canonical historical patch, creates a fresh
+worktree at the caller-supplied TaskSpec base commit, applies or skips that
+patch, and invokes the existing evaluator with zero Agent executions. Outcome
+mismatch and replay evaluation FAIL are normal completed observations. Replay
+v1 does not claim complete historical environment reconstruction.
 
 ## Architecture Invariants
 
@@ -176,9 +218,11 @@ remains separate.
 
 ## Deferred Work
 
-- M4 completion workflow: commit the accepted review fixes, push, PR, merge to
-  `main`, and synchronize local `main`.
-- M5: PASS-vs-FAIL comparison, deterministic failure classification, and replay.
+- Later M5 work: failure/comparison CLI and persistence.
+- Later comparison work: automatic pair selection, Experiment-wide comparison,
+  and structural or semantic patch analysis.
+- Later failure-analysis work: semantic categories, evaluator timeout
+  classification, and infrastructure-abort evidence.
 - M6: realistic demo tasks, an experiment dataset, README polish, architecture
   diagram, resume bullets, and interview-note consolidation.
 - Optional V2: repository-aware context, large benchmark ingestion,
@@ -246,6 +290,70 @@ compileall:     PASS
 git diff --check: PASS
 ```
 
+Accepted M5.1 verification evidence:
+
+```text
+focused:         8 passed
+full regression: 146 passed, 7 skipped
+```
+
+M5.1 required no networked, Codex, or Docker end-to-end execution.
+
+Accepted M5.2 verification evidence:
+
+```text
+focused:         12 passed
+full regression: 158 passed, 7 skipped
+```
+
+M5.2 required no networked, Codex, or Docker end-to-end execution.
+
+Accepted M5.3 automated verification evidence:
+
+```text
+focused:         60 passed
+full regression: 192 passed, 7 skipped
+compileall:      PASS
+git diff --check: PASS
+```
+
+Accepted M5.3 human runtime evidence:
+
+```text
+FakeAgent source → Docker Replay:
+  source Run ID:       f196f4f0235f40268bfaffd2eeab8d97
+  Replay ID:           d1c4c2480c534fa6ad0872352ce41e1e
+  source evaluation:   PASS
+  Replay evaluation:   PASS
+  outcome match:       true
+  evaluation backend:  docker
+  source patch:         243 bytes, non-empty
+  base commit used:     4ed891e6144bdb78941160726ada95fa7a710f3c
+
+Real Codex source → Docker Replay:
+  source Run ID:       de1717bc5b5f4420850e5f79e7350835
+  Replay ID:           567ee76acce241fcbbcf52e3ab654bff
+  source agent:        codex
+  requested model:     gpt-6-astra
+  agent status:        COMPLETED
+  source evaluation:   PASS
+  Replay evaluation:   PASS
+  outcome match:       true
+  evaluation backend:  docker
+  source patch:         1906 bytes
+  base commit used:     4ed891e6144bdb78941160726ada95fa7a710f3c
+```
+
+The real Codex patch included the calculator source fix and canonical Git
+binary patch content for Python `__pycache__` files; Replay applied it and
+passed Docker evaluation. This is known artifact-cleanliness debt, not a new
+M5.3 feature.
+
+For both E2Es, source metadata and patch hashes remained unchanged, Replay
+directories contained only `metadata.json` and `test.log`, the fixture remained
+clean, temporary workspaces were removed, and no PatchBench sandbox containers
+remained. Replay invoked no second Codex execution.
+
 ## Documentation Map
 
 - `docs/PROJECT_STATUS.md`: canonical current truth, handoff, and exact next
@@ -272,4 +380,4 @@ status changes. Do not document every small implementation detail.
 
 ## Exact Next Action
 
-Commit the accepted M4 whole-branch review fixes, then push the feature branch and open the M4 pull request.
+Commit the accepted M5 milestone documentation finalization, then push the feature branch and open the M5 pull request.
