@@ -22,7 +22,7 @@ Optional V2 work is outside this completion line.
 ## Git / Development State
 
 - Current development branch: `feat/m5-failure-analysis-replay`
-- Latest accepted slice: M5.1 — Deterministic Failure Classification
+- Latest accepted slice: M5.2 — PASS-vs-FAIL Comparison
 - Exact current feature-branch commit: obtain from
   `git log -1 --oneline --decorate`
 - Historical accepted commits: `068b585` (status checkpoint) and `f9a09a9`
@@ -31,7 +31,8 @@ Optional V2 work is outside this completion line.
 
 M4 — Repeated Experiments is complete and merged to `main`. M5.1 —
 Deterministic Failure Classification is accepted on the current M5 feature
-branch and is not yet merged to `main`.
+branch and is not yet merged to `main`. M5.2 — PASS-vs-FAIL Comparison is also
+accepted on the current M5 feature branch and is not yet merged to `main`.
 
 ## Completed Milestones
 
@@ -69,11 +70,14 @@ M4 — Repeated Experiments                complete and merged to main
   plus already-loaded patch evidence into `FailureAnalysis`, using the directly
   observable `AGENT_COMMAND_FAILED`, `AGENT_TIMED_OUT`, `NO_PATCH`, and
   `TEST_FAILED` categories.
+- Pure deterministic descriptive comparison of one explicit PASS `RunRecord`
+  and one explicit FAIL `RunRecord` from the same task plus already-loaded
+  patch evidence into `PassFailComparison`.
 
 ### Not Yet Implemented
 
-- Failure-analysis CLI or persistence.
-- PASS-vs-FAIL comparison.
+- Failure-analysis or comparison CLI and persistence.
+- Automatic pair selection or Experiment-wide comparison.
 - Replay.
 
 ## Current M4 State
@@ -135,12 +139,22 @@ whole-branch blockers remain.
 
 - **M5.1 — Deterministic Failure Classification:** accepted on the current M5
   feature branch; not yet merged to `main`.
-- **M5.2 — PASS-vs-FAIL Comparison:** not implemented.
+- **M5.2 — PASS-vs-FAIL Comparison:** accepted on the current M5 feature branch;
+  not yet merged to `main`.
 - **M5.3 — Replay + CLI + E2E:** not implemented.
 
 M5.1 introduces `FailureCategory`, `FailureAnalysis`, and the pure
 `classify_run_failure()` boundary. It reports only ordered, directly observable
 conditions and does not infer semantic root causes.
+
+M5.2 introduces `PassFailComparison`, `PassFailComparisonError`, and the pure
+`compare_pass_fail_runs()` boundary. Callers explicitly supply PASS and FAIL
+roles plus already-loaded patch evidence; the result is descriptive and does
+not claim causal attribution.
+
+Valid pairs use the same task and different Run IDs. M5.1 remains the sole
+failure-taxonomy source; patch presence uses stripped semantic presence, patch
+equality uses exact artifact text, and duration is recorded as FAIL minus PASS.
 
 ## Architecture Invariants
 
@@ -187,8 +201,10 @@ remains separate.
 
 ## Deferred Work
 
-- M5.2: PASS-vs-FAIL comparison.
-- M5.3: replay, failure CLI/persistence, and end-to-end verification.
+- M5.3: replay, failure/comparison CLI and persistence, and end-to-end
+  verification.
+- Later comparison work: automatic pair selection, Experiment-wide comparison,
+  and structural or semantic patch analysis.
 - Later failure-analysis work: semantic categories, evaluator timeout
   classification, and infrastructure-abort evidence.
 - M6: realistic demo tasks, an experiment dataset, README polish, architecture
@@ -267,6 +283,15 @@ full regression: 146 passed, 7 skipped
 
 M5.1 required no networked, Codex, or Docker end-to-end execution.
 
+Accepted M5.2 verification evidence:
+
+```text
+focused:         12 passed
+full regression: 158 passed, 7 skipped
+```
+
+M5.2 required no networked, Codex, or Docker end-to-end execution.
+
 ## Documentation Map
 
 - `docs/PROJECT_STATUS.md`: canonical current truth, handoff, and exact next
@@ -293,4 +318,4 @@ status changes. Do not document every small implementation detail.
 
 ## Exact Next Action
 
-Design and scope-lock M5.2 — PASS-vs-FAIL Comparison.
+Design and scope-lock M5.3 — Replay + CLI + E2E.

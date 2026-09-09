@@ -94,6 +94,22 @@ The classifier does not read artifacts or invoke Git, Agents, evaluators,
 Sandboxes, network services, or LLMs. Agent outcomes and Evaluation outcomes
 remain independent labels, and semantic root-cause inference is deferred.
 
+M5.2 adds an explicit descriptive comparison boundary:
+
+```text
+PASS RunRecord + FAIL RunRecord + already-loaded patch text
+                           ↓
+              compare_pass_fail_runs()
+                           ↓
+                 PassFailComparison
+```
+
+The comparison reuses M5.1 as its sole failure-taxonomy source. Patch presence
+uses stripped text while patch equality preserves exact artifact text.
+Descriptive comparison records observed differences; it does not establish
+causal attribution. Pair selection and filesystem I/O remain outside the
+domain function.
+
 ---
 
 ## 4. Repository Manager

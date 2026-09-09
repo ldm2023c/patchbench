@@ -4,6 +4,11 @@ from patchbench.domain.aggregation import (
     ExperimentAggregationError,
     aggregate_runs,
 )
+from patchbench.domain.comparison import (
+    PassFailComparison,
+    PassFailComparisonError,
+    compare_pass_fail_runs,
+)
 from patchbench.domain.failure import (
     FailureAnalysis,
     FailureCategory,
@@ -36,6 +41,8 @@ __all__ = [
     "ExperimentRecord",
     "FailureAnalysis",
     "FailureCategory",
+    "PassFailComparison",
+    "PassFailComparisonError",
     "RepositoryConfig",
     "RunRecord",
     "RunStatus",
@@ -44,4 +51,5 @@ __all__ = [
     "TaskSpec",
     "aggregate_runs",
     "classify_run_failure",
+    "compare_pass_fail_runs",
 ]
