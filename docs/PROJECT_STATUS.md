@@ -21,18 +21,19 @@ Optional V2 work is outside this completion line.
 
 ## Git / Development State
 
-- Current branch: `main`
-- Latest accepted slice: M5.3 — Replay + CLI + E2E
+- Current development branch: `feat/m6-demo-docs-polish`
+- Latest accepted slice: M6.1 — Public Demo & README
 - M5 whole-branch review: accepted before merge
-- Exact current commit: obtain from
+- Exact current feature-branch commit: obtain from
   `git log -1 --oneline --decorate`
-- `main` and `origin/main`: `223e5de`
+- `main` and `origin/main`: `0e5db79 — docs: sync M5 post-merge status`
 - M5 merge: `223e5de Merge pull request #7 from
   ldm2023c/feat/m5-failure-analysis-replay`
 
 M4 — Repeated Experiments and M5 — Minimal Failure Analysis & Replay are
 complete and merged to `main`. All three M5 slices and the M5 whole-branch
-review were accepted before merge.
+review were accepted before merge. M6.1 is complete on the current feature
+branch; M6.2 has not started, and M6 as a whole is not complete or merged.
 
 ## Completed Milestones
 
@@ -168,6 +169,17 @@ patch, and invokes the existing evaluator with zero Agent executions. Outcome
 mismatch and replay evaluation FAIL are normal completed observations. Replay
 v1 does not claim complete historical environment reconstruction.
 
+## Current M6 State
+
+- **M6.1 — Public Demo & README:** complete on the current
+  `feat/m6-demo-docs-polish` feature branch.
+- **M6.2 — Documentation / Interview / Resume Polish:** not started.
+
+M6.1 provides the reviewed public README entry point for the reliability
+problem, Run-to-Replay workflow, verified Quickstart, programmatic analysis
+APIs, artifact ownership, semantic boundaries, and current project scope. M6 as
+a whole is not complete and has not been merged to `main`.
+
 ## Architecture Invariants
 
 - Run is the atomic execution unit.
@@ -218,8 +230,7 @@ remains separate.
   and structural or semantic patch analysis.
 - Later failure-analysis work: semantic categories, evaluator timeout
   classification, and infrastructure-abort evidence.
-- M6: realistic demo tasks, an experiment dataset, README polish, architecture
-  diagram, resume bullets, and interview-note consolidation.
+- M6.2: documentation, interview material, and resume polish.
 - Optional V2: repository-aware context, large benchmark ingestion,
   parallel/distributed execution, multi-agent support, and database/dashboard
   work.
@@ -349,6 +360,27 @@ directories contained only `metadata.json` and `test.log`, the fixture remained
 clean, temporary workspaces were removed, and no PatchBench sandbox containers
 remained. Replay invoked no second Codex execution.
 
+Accepted M6.1 review and human copy-paste verification evidence:
+
+```text
+README implementation:        complete
+CLI/API claims:                verified
+staged full-diff review:       complete
+wording blocker:               unsupported "versioned TaskSpec" claim removed
+incremental blocker review:    accepted
+human copy-paste demo:          PASS
+
+Run ID:                        bc6eec282c7647a7a904d049cc45b177
+Run agent/evaluation:          COMPLETED / PASS
+Experiment ID:                 7671f3fbec42421aa527f9deffa004f4
+Experiment results:            3 PASS, 0 FAIL, 100.0% pass rate
+Replay ID:                     ab4a46c6559e43c98ffd314558c571b0
+Replay source/result/match:    PASS / PASS / YES
+Replay evaluation backend:     host
+fixture after verification:    clean at expected base commit
+temporary workspaces:          cleaned
+```
+
 ## Documentation Map
 
 - `docs/PROJECT_STATUS.md`: canonical current truth, handoff, and exact next
@@ -375,4 +407,4 @@ status changes. Do not document every small implementation detail.
 
 ## Exact Next Action
 
-Design and scope-lock M6 — Demo / README / Documentation / Resume polish.
+Design and scope-lock M6.2 — Documentation / Interview / Resume Polish.
