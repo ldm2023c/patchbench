@@ -6,6 +6,7 @@ from pathlib import Path
 from pydantic import ValidationError
 
 from patchbench.agents.base import AgentRunResult
+from patchbench.domain.evaluation_evidence import render_evaluation_log
 from patchbench.domain.models import (
     ArtifactPaths,
     EvaluationResult,
@@ -159,15 +160,4 @@ class FilesystemArtifactStore:
             raise ArtifactStoreError(f"Unsafe Run ID for artifact lookup: '{run_id}'")
         return candidate
 
-    @staticmethod
-    def _evaluation_log(
-        evaluation_result: EvaluationResult,
-        evaluation_command: str,
-    ) -> str:
-        return (
-            f"Command: {evaluation_command}\n"
-            f"Exit code: {evaluation_result.exit_code}\n"
-            f"Duration seconds: {evaluation_result.duration_seconds:.6f}\n\n"
-            f"STDOUT:\n{evaluation_result.stdout}\n"
-            f"STDERR:\n{evaluation_result.stderr}"
-        )
+    _evaluation_log = staticmethod(render_evaluation_log)

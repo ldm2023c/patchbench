@@ -152,6 +152,89 @@ class RunProvenance(DomainModel):
     evaluation_backend: Literal["host", "docker"]
 
 
+class PatchFileSummary(DomainModel):
+    """Exact identity and observable changes of one Git diff section."""
+
+    model_config = ConfigDict(extra="forbid", str_strip_whitespace=False)
+
+    path: NonEmptyString
+    role: Literal["non_test", "test", "generated"]
+    change_type: Literal["added", "modified", "deleted", "renamed", "copied"]
+    binary: bool
+    added_lines: int | None
+    deleted_lines: int | None
+    diff_sha256: Sha256Hex
+
+    @model_validator(mode="after")
+    def validate_line_counts(self) -> Self:
+        counts = (self.added_lines, self.deleted_lines)
+        if self.binary:
+            if counts != (None, None):
+                raise ValueError("binary files must have null line counts")
+        elif any(count is None or count < 0 for count in counts):
+            raise ValueError("text files require nonnegative line counts")
+        return self
+
+
+class PatchSummary(DomainModel):
+    """Exact patch identity and totals over per-file evidence."""
+
+    patch_sha256: Sha256Hex
+    patch_bytes: int = Field(ge=0)
+    changed_file_count: int = Field(ge=0)
+    text_added_lines: int = Field(ge=0)
+    text_deleted_lines: int = Field(ge=0)
+    files: list[PatchFileSummary]
+
+    @model_validator(mode="after")
+    def validate_totals(self) -> Self:
+        if self.changed_file_count != len(self.files):
+            raise ValueError("changed_file_count must equal len(files)")
+        if self.text_added_lines != sum(f.added_lines for f in self.files if not f.binary):
+            raise ValueError("text_added_lines must equal text file total")
+        if self.text_deleted_lines != sum(f.deleted_lines for f in self.files if not f.binary):
+            raise ValueError("text_deleted_lines must equal text file total")
+        return self
+
+
+class EvaluationCaseEvidence(DomainModel):
+    """A directly reported unittest failure or error identifier."""
+
+    name: NonEmptyString
+    outcome: Literal["fail", "error"]
+
+
+class EvaluationEvidence(DomainModel):
+    """Deterministic observations from a canonical evaluation log."""
+
+    model_config = ConfigDict(extra="forbid", str_strip_whitespace=False)
+
+    test_log_sha256: Sha256Hex
+    exit_code: int
+    passed: bool
+    duration_seconds: float = Field(ge=0, allow_inf_nan=False)
+    framework: Literal["unittest", "unknown"]
+    tests_run: int | None
+    failure_count: int | None
+    error_count: int | None
+    failing_cases: list[EvaluationCaseEvidence]
+    output_tail: list[str] = Field(max_length=20)
+
+    @model_validator(mode="after")
+    def validate_observations(self) -> Self:
+        if self.passed != (self.exit_code == 0):
+            raise ValueError("passed must agree with exit_code")
+        counts = (self.tests_run, self.failure_count, self.error_count)
+        if self.framework == "unknown":
+            if counts != (None, None, None) or self.failing_cases:
+                raise ValueError("unknown framework must not claim unittest results")
+        elif any(count is None or count < 0 for count in counts):
+            raise ValueError("unittest requires nonnegative counts")
+        if any(not line.strip() for line in self.output_tail):
+            raise ValueError("output_tail must contain non-empty lines")
+        return self
+
+
 class RunRecord(DomainModel):
     """Summary of one completed PatchBench Run."""
 
@@ -163,6 +246,17 @@ class RunRecord(DomainModel):
     agent: AgentExecutionMetadata
     artifacts: ArtifactPaths
     provenance: RunProvenance | None = None
+    patch_summary: PatchSummary | None = None
+    evaluation_evidence: EvaluationEvidence | None = None
+
+    @model_validator(mode="after")
+    def validate_evidence(self) -> Self:
+        if (self.patch_summary is None) != (self.evaluation_evidence is None):
+            raise ValueError("patch and evaluation evidence must both be present or absent")
+        if (self.evaluation_evidence is not None
+                and self.evaluation_evidence.passed != self.evaluation_passed):
+            raise ValueError("evaluation evidence must agree with Run outcome")
+        return self
 
 
 class ReplayRecord(DomainModel):

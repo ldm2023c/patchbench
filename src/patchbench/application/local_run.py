@@ -14,6 +14,10 @@ from patchbench.domain.models import (
     TaskSpec,
 )
 from patchbench.domain.provenance import compute_task_fingerprint
+from patchbench.domain.patch_evidence import summarize_patch
+from patchbench.domain.evaluation_evidence import (
+    render_evaluation_log, summarize_evaluation_log,
+)
 from patchbench.evaluators.command import CommandEvaluator
 from patchbench.evaluators.sandbox import SandboxCommandEvaluator
 from patchbench.repository.git_repository import GitRepositoryManager
@@ -98,6 +102,9 @@ def _execute_single_run(
                 evaluation_result = SandboxCommandEvaluator(sandbox).evaluate(
                     handle, task.evaluation
                 )
+        test_log = render_evaluation_log(evaluation_result, task.evaluation.command)
+        patch_summary = summarize_patch(patch)
+        evaluation_evidence = summarize_evaluation_log(test_log)
         artifact_paths = artifact_store.create_paths(run_id)
         record = RunRecord(
             run_id=run_id,
@@ -118,6 +125,8 @@ def _execute_single_run(
             ),
             artifacts=artifact_paths,
             provenance=provenance,
+            patch_summary=patch_summary,
+            evaluation_evidence=evaluation_evidence,
         )
         artifact_store.persist(
             record,

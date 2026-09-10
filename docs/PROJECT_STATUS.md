@@ -28,9 +28,11 @@ reliability evidence, not platform expansion. Optional V2 remains deferred.
 
 V1.1.0 — Pilot Task Discovery: **complete**.
 Pilot Evidence Review + Schema Design Gate: **complete**, as confirmed by the owner.
-Current slice: **V1.1.1 — Minimal Provenance**. Implementation and local
-self-review are complete; independent review is pending. Optional V2 remains
-deferred.
+V1.1.1 — Minimal Provenance: **externally accepted** at
+`f2b7020 feat: add minimal run provenance`.
+Current slice: **V1.1.2 — Deterministic Patch + Evaluation Evidence**.
+Implementation and local self-review are complete; external review is pending.
+V1.1.3 Analyze Workflow has not started. Optional V2 remains deferred.
 
 Locked sequence:
 
@@ -89,13 +91,38 @@ full regression **226 passed, 7 skipped** (Docker integration opt-in). Compile
 check and `git diff --check` passed. Ordinary tests use a stub sandbox for Docker
 provenance; no real Codex execution or pilot-artifact migration occurred.
 
-PatchSummary, EvaluationEvidence, Analyze, suite freeze, and final experiments
-remain later slices. No V1.1.2 functionality is implemented here.
+V1.1.2 adds deterministic evidence to new Run metadata:
+
+- Whole-patch identity alone was insufficient in the pilot. PatchSummary now
+  captures exact UTF-8 whole-patch and complete per-file diff hashes, affected
+  paths, change types, binary status, and textual hunk line counts.
+- Path-based roles distinguish generated, test, and non-test files, in that
+  precedence order. These are descriptive signals, not semantic solution IDs.
+- EvaluationEvidence hashes the exact shared-renderer test log, records wrapper
+  exit code/duration, extracts recognizable unittest summaries and failure/error
+  identifiers from stdout/stderr, and keeps at most 20 non-empty trailing lines.
+  Unrecognized frameworks remain unknown; malformed evidence raises a narrow
+  parsing error.
+- Raw `patch.diff` and `test.log` remain canonical, with unchanged formatting and
+  artifact layout. Historical records may omit both evidence fields; no
+  artifacts are migrated. Experiment children reuse single-Run integration,
+  and Replay gains no new evidence fields.
+
+V1.1.2 validation: **68 evidence tests passed**; combined evidence/provenance/
+Run/Experiment/Replay checks **137 passed**; full regression **294 passed,
+7 skipped** (Docker integration opt-in). Compile and `git diff --check` passed.
+Tests verify hashes against persisted artifact bytes, real temporary Git binary
+patches, stub-sandbox integration, and historical load/Replay compatibility.
+No real Codex runs or pilot-artifact changes were made.
+
+Analyze, suite freeze, and final experiments remain later slices. No V1.1.3
+functionality is implemented here.
 
 ## Git / Development State
 
 - Current branch: `feat/v1.1-evidence-release` (observed during V1.1.0 validation)
-- Latest completed slice: V1.1.0 — Pilot Task Discovery (owner confirmed)
+- Latest accepted slice: V1.1.1 — Minimal Provenance
+- V1.1.1 commit: `f2b7020 feat: add minimal run provenance`
 - V1.1.0 commit: `51f92a5 feat: add v1.1.0 pilot task discovery`
 - M6.1 commit: `974ba5a docs: complete M6.1 public demo`
 - M6.2 commit: `fd17c92 docs: complete M6.2 project materials`
@@ -505,8 +532,8 @@ status changes. Do not document every small implementation detail.
 
 ## Exact Next Action
 
-The V1.1.1 self-review packet is ready. The owner then stages intended files,
+The V1.1.2 self-review packet is ready. The owner then stages intended files,
 creates a checkpoint commit, pushes the feature branch, and requests independent
 GitHub review. Feature-branch checkpoints are the review substrate; only `main`
-requires accepted code. Do not begin V1.1.2 in this slice. Optional V2 remains
+requires accepted code. Do not begin V1.1.3 in this slice. Optional V2 remains
 deferred. Runtime results and pilot archives must not enter the checkpoint.

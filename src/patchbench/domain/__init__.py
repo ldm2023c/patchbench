@@ -17,6 +17,10 @@ from patchbench.domain.failure import (
 from patchbench.domain.models import (
     AgentExecutionMetadata,
     ArtifactPaths,
+    EvaluationCaseEvidence,
+    EvaluationEvidence,
+    PatchFileSummary,
+    PatchSummary,
     EvaluationConfig,
     EvaluationResult,
     ExperimentAggregate,
@@ -35,7 +39,19 @@ from patchbench.domain.models import (
 
 from patchbench.domain.provenance import compute_task_fingerprint
 
+from patchbench.domain.evidence_errors import EvidenceParsingError
+from patchbench.domain.patch_evidence import summarize_patch
+from patchbench.domain.evaluation_evidence import render_evaluation_log, summarize_evaluation_log
+
 __all__ = [
+    "EvidenceParsingError",
+    "EvaluationCaseEvidence",
+    "EvaluationEvidence",
+    "PatchFileSummary",
+    "PatchSummary",
+    "summarize_patch",
+    "render_evaluation_log",
+    "summarize_evaluation_log",
     "AgentExecutionMetadata",
     "ArtifactPaths",
     "EvaluationConfig",
