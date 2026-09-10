@@ -1,0 +1,21 @@
+schema_version: 1
+id: pilot_roundtrip
+repository:
+  type: local
+  path: ../../../fixtures/pilot/.prepared/roundtrip
+  base_commit: d48df6eac29c89fbdd02ac47a2199e0372ee7992
+task:
+  prompt: |
+    Bookmark backups do not reliably survive export and import: titles or URLs
+    containing a vertical bar fail to load, and an explicitly empty note becomes
+    an absent note. Restore lossless round-trips for all documented supported
+    text, including backslashes, delimiters, and escaped line breaks. Keep old
+    simple records compatible, preserve whitespace and optional-field meaning,
+    and retain malformed-input errors with document line numbers. See the
+    repository format contract. Add regression coverage if needed and keep the
+    complete suite passing.
+evaluation:
+  command: "python -B -m unittest -v"
+  timeout_seconds: 120
+metadata:
+  language: python

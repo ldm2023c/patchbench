@@ -20,9 +20,61 @@ M6 — Demo / README / Documentation / Resume polish
 PatchBench v1 and the current job-search completion line are **COMPLETE**.
 Optional V2 work has not started and remains outside this completion line.
 
+## Active Post-v1 Milestone
+
+The owner has reopened development for **PatchBench V1.1 — Evidence Release**.
+V1 remains historically complete. V1.1 seeks real, reproducible, inspectable
+reliability evidence, not platform expansion. Optional V2 remains deferred.
+
+Current slice: **V1.1.0 — Pilot Task Discovery**. Implementation and local
+solvability validation are ready for human review; acceptance is pending.
+Production architecture and `src/patchbench/` are unchanged.
+
+Locked sequence:
+
+```text
+V1.1.0 Pilot Task Discovery
+→ Pilot Evidence Review + Schema Design Gate
+→ V1.1.1 Minimal Provenance
+→ V1.1.2 Deterministic Patch + Evaluation Evidence
+→ V1.1.3 Analyze Workflow
+→ V1.1.4 Real Task Suite A
+→ V1.1.5 Real Task Suite B + Freeze
+→ V1.1.6 Final Experiments + Evidence Release
+```
+
+Two standard-library pilot candidates are available under `tasks/pilot/`:
+
+- Configuration precedence: 16 tests; buggy base has 9 assertion failures;
+  temporary reference repair passes all 16 tests.
+- Bookmark parsing/serialization: 14 tests; buggy base has 2 assertion failures
+  and 5 errors; temporary reference repair passes all 14 tests.
+
+Tracked fixture templates live under `fixtures/pilot/`. Preparation copies them
+into ignored `.prepared/` repositories with fixed commits declared by TaskSpecs;
+no nested Git metadata enters the parent repository. Focused tests cover
+independent deterministic preparations, repeat preparation, unsafe-state refusal,
+base failures, reference solvability, and worktree cleanup. Both canonical
+runtime fixtures end clean at their configured buggy bases.
+
+Local V1.1.0 regression: **201 passed, 7 skipped** (Docker integration remains
+opt-in); this includes 9 new pilot preparation/solvability cases. Both TaskSpecs
+validate, and `git diff --check` passes. No real-Agent benchmark claims follow
+from these checks.
+
+See `tasks/pilot/README.md` for preparation, manual execution, and observation
+instructions. No real Codex pilot executions have been performed for this slice.
+The next four human Runs (two per task) are **NON-FINAL evidence discovery** and
+must never count toward the final V1.1 dataset, even if task definitions remain
+unchanged. Record their Run IDs explicitly in a separate pilot ledger.
+
+Provenance, PatchSummary, EvaluationEvidence, Analyze schemas/CLI, suite freeze,
+final experiments, and release claims remain deferred until the evidence gate.
+Do not begin V1.1.1 during this slice.
+
 ## Git / Development State
 
-- Current branch: `main`
+- Current branch: `feat/v1.1-evidence-release` (observed during V1.1.0 validation)
 - Latest accepted slice: M6.2 — Documentation / Interview / Resume Polish
 - M6.1 commit: `974ba5a docs: complete M6.1 public demo`
 - M6.2 commit: `fd17c92 docs: complete M6.2 project materials`
@@ -30,8 +82,8 @@ Optional V2 work has not started and remains outside this completion line.
 - M5 whole-branch review: accepted before merge
 - Exact current commit: obtain from
   `git log -1 --oneline --decorate`
-- `main` and `origin/main`: `e9cdc76 — Merge pull request #8 from
-  ldm2023c/feat/m6-demo-docs-polish`
+- Last observed `main` and local `origin/main`: `c92db34 — docs: mark PatchBench v1 complete`
+  (before the uncommitted V1.1.0 slice; recheck Git for current state).
 - M6 merge: `e9cdc76 Merge pull request #8 from
   ldm2023c/feat/m6-demo-docs-polish`
 - M5 merge: `223e5de Merge pull request #7 from
@@ -432,4 +484,7 @@ status changes. Do not document every small implementation detail.
 
 ## Exact Next Action
 
-PatchBench v1 is complete. Keep Optional V2 deferred unless a concrete need justifies reopening development.
+Review the V1.1.0 pilot slice, then have the owner manually execute two real
+Codex Runs per task using `tasks/pilot/README.md`. Preserve all four Run IDs as
+NON-FINAL pilot evidence. Inspect actual artifacts at the Pilot Evidence Review
++ Schema Design Gate before authorizing V1.1.1. Optional V2 remains deferred.
