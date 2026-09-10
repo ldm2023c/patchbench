@@ -140,10 +140,31 @@ reports Evaluation PASS/FAIL separately from Agent command failures/timeouts,
 along with aggregate duration metrics. Add `--docker` to evaluate each Run in
 Docker.
 
+### Analyze a persisted Experiment
+
+```bash
+patchbench analyze --experiment <EXPERIMENT_ID>
+patchbench analyze --experiment <EXPERIMENT_ID> --json
+```
+
+Analyze is read-only: it reloads canonical child `patch.diff` and `test.log`,
+recomputes evidence, and verifies stored summaries, outcomes, configuration,
+aggregate, and common provenance. It reports exact patch variants, failure
+observations, and the first PASS / first FAIL pair in Experiment Run order.
+Exact patch variants are not semantic strategy variants; patches may differ
+only in test edits or formatting. All-PASS and all-FAIL analyses are successful
+and have no example pair.
+
+Historical records with parseable raw artifacts can be analyzed without stored
+summaries; absent provenance is shown as unavailable, never invented. Analysis
+writes no artifacts and invokes no Agent, evaluator, Docker, or Git worktree.
+Use `--json` for the full structured result.
+
 ### Inspect failure and comparison APIs
 
-Failure classification and PASS-vs-FAIL comparison are programmatic APIs; no
-classification or comparison CLI is currently provided.
+Failure classification and PASS-vs-FAIL comparison remain available as
+programmatic APIs. Analyze composes them for a persisted Experiment; standalone
+per-Run classification/comparison commands are not provided.
 
 ```python
 from patchbench.domain import classify_run_failure, compare_pass_fail_runs

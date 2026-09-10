@@ -18,7 +18,7 @@ The architecture must remain simple enough for a local MVP while preserving clea
 ```text
 CLI
  ↓
-Application: Run / Experiment / Replay
+Application: Run / Experiment / Replay / Analyze
  ├─ GitRepositoryManager
  ├─ Agent (host)
  ├─ Evaluator → optional DockerSandbox
@@ -28,7 +28,7 @@ Application: Run / Experiment / Replay
 The CLI should contain almost no business logic.
 
 The application layer owns single-Run, sequential-Experiment, and Replay
-orchestration. A Run remains the atomic execution unit.
+orchestration, plus read-only Analyze composition. A Run remains the atomic execution unit.
 
 Infrastructure-specific logic belongs in adapters.
 
@@ -559,6 +559,31 @@ Patch-application and infrastructure failures propagate without a completed
 ReplayRecord. A replayed test failure or outcome mismatch is a valid completed
 Replay and remains CLI success. Worktree and optional Sandbox cleanup use the
 existing lifecycle boundaries.
+
+---
+
+### Analyze Lifecycle
+
+```text
+persisted Experiment + ordered child raw Run evidence
+                         ↓
+              read-only integrity checks
+                         ↓
+                 ExperimentAnalysis
+```
+
+The filesystem store loads Experiment metadata and child metadata, patches,
+and test logs through safe ID namespaces. Analyze recomputes evidence from raw
+artifacts and cross-checks cached summaries when present. It verifies Run
+outcomes, child configuration, common provenance, and the recomputed aggregate.
+Historical records may lack summaries or provenance; evidence is reconstructed
+in memory and missing provenance remains unavailable. Mixed or conflicting
+provenance is rejected.
+
+The result preserves child order, counts exact patch hashes, reuses the existing
+failure classifier, and compares the first PASS and first FAIL when both exist.
+CLI renders text or JSON. Analyze does not invoke execution infrastructure or
+persist results; the raw artifacts remain unchanged and canonical.
 
 ---
 

@@ -30,9 +30,11 @@ V1.1.0 — Pilot Task Discovery: **complete**.
 Pilot Evidence Review + Schema Design Gate: **complete**, as confirmed by the owner.
 V1.1.1 — Minimal Provenance: **externally accepted** at
 `f2b7020 feat: add minimal run provenance`.
-Current slice: **V1.1.2 — Deterministic Patch + Evaluation Evidence**.
+V1.1.2 — Deterministic Patch + Evaluation Evidence: **externally accepted** at
+`7222535 feat: add deterministic run evidence`.
+Current slice: **V1.1.3 — Analyze Workflow**.
 Implementation and local self-review are complete; external review is pending.
-V1.1.3 Analyze Workflow has not started. Optional V2 remains deferred.
+V1.1.4 task-suite work has not started. Optional V2 remains deferred.
 
 Locked sequence:
 
@@ -115,13 +117,26 @@ Tests verify hashes against persisted artifact bytes, real temporary Git binary
 patches, stub-sandbox integration, and historical load/Replay compatibility.
 No real Codex runs or pilot-artifact changes were made.
 
-Analyze, suite freeze, and final experiments remain later slices. No V1.1.3
-functionality is implemented here.
+V1.1.3 adds `patchbench analyze --experiment <ID> [--json]`: read-only loading,
+raw patch/log re-summarization, cached evidence checks, outcome/configuration/
+provenance/aggregate verification, exact patch variant counts, existing failure
+observations, and the deterministic first PASS/first FAIL example pair. Child
+order is preserved. Historical missing summaries are reconstructed in memory;
+missing provenance remains unavailable. No artifacts are written or migrated.
+V1.1.4 task-suite expansion, suite freeze, and final experiments remain deferred.
+
+V1.1.3 validation: analysis/storage focused **45 passed**, CLI **49 passed**;
+combined **94 passed**. Full regression **357 passed, 7 skipped**; compile and
+`git diff --check` passed. Tests verify results-tree directories and file bytes
+remain unchanged, reject input inconsistencies, and cover clean JSON plus both
+installed-command composition and the Python module entry point. No real Codex
+or Docker execution was required.
 
 ## Git / Development State
 
 - Current branch: `feat/v1.1-evidence-release` (observed during V1.1.0 validation)
-- Latest accepted slice: V1.1.1 — Minimal Provenance
+- Latest accepted slice: V1.1.2 — Deterministic Patch + Evaluation Evidence
+- V1.1.2 commit: `7222535 feat: add deterministic run evidence`
 - V1.1.1 commit: `f2b7020 feat: add minimal run provenance`
 - V1.1.0 commit: `51f92a5 feat: add v1.1.0 pilot task discovery`
 - M6.1 commit: `974ba5a docs: complete M6.1 public demo`
@@ -193,8 +208,8 @@ M6 — Demo / README / Documentation / Resume polish
 
 ### Not Yet Implemented
 
-- Failure-analysis or comparison CLI and persistence.
-- Automatic pair selection or Experiment-wide comparison.
+- Standalone per-Run failure/comparison CLI and analysis persistence.
+- Pair ranking and comparisons beyond Analyze's first PASS/first FAIL example.
 
 ## Current M4 State
 
@@ -339,8 +354,8 @@ remains separate.
 
 ## Deferred Work
 
-- Post-M5 deferred work: failure/comparison CLI and persistence.
-- Later comparison work: automatic pair selection, Experiment-wide comparison,
+- Post-M5 deferred work: standalone failure/comparison CLI and analysis persistence.
+- Later comparison work: pair ranking, exhaustive Experiment-wide comparison,
   and structural or semantic patch analysis.
 - Later failure-analysis work: semantic categories, evaluator timeout
   classification, and infrastructure-abort evidence.
@@ -532,8 +547,8 @@ status changes. Do not document every small implementation detail.
 
 ## Exact Next Action
 
-The V1.1.2 self-review packet is ready. The owner then stages intended files,
+The V1.1.3 self-review packet is ready. The owner then stages intended files,
 creates a checkpoint commit, pushes the feature branch, and requests independent
 GitHub review. Feature-branch checkpoints are the review substrate; only `main`
-requires accepted code. Do not begin V1.1.3 in this slice. Optional V2 remains
+requires accepted code. Do not begin V1.1.4 in this slice. Optional V2 remains
 deferred. Runtime results and pilot archives must not enter the checkpoint.

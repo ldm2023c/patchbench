@@ -43,7 +43,11 @@ from patchbench.domain.evidence_errors import EvidenceParsingError
 from patchbench.domain.patch_evidence import summarize_patch
 from patchbench.domain.evaluation_evidence import render_evaluation_log, summarize_evaluation_log
 
+from patchbench.domain.analysis import ExperimentAnalysis, RunEvidence
+
 __all__ = [
+    "ExperimentAnalysis",
+    "RunEvidence",
     "EvidenceParsingError",
     "EvaluationCaseEvidence",
     "EvaluationEvidence",

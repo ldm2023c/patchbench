@@ -10,6 +10,7 @@ import typer
 from patchbench.agents.base import Agent, AgentInfrastructureError, AgentSetupError
 from patchbench.agents.codex import CodexAdapter
 from patchbench.agents.fake import FakeAgent
+from patchbench.application.analysis import AnalysisError, analyze_experiment
 from patchbench.application.experiment import (
     ExperimentOrchestrationError,
     run_experiment,
@@ -26,7 +27,7 @@ from patchbench.storage.filesystem import ArtifactStoreError, FilesystemArtifact
 
 
 app = typer.Typer(
-    help="Validate tasks and execute PatchBench Runs, Experiments, and Replays.",
+    help="Validate tasks, execute Runs/Experiments/Replays, and analyze persisted evidence.",
     no_args_is_help=True,
 )
 
@@ -331,6 +332,55 @@ def replay(
         raise typer.Exit(code=1) from error
 
     _echo_replay_summary(execution.record, metadata)
+
+
+@app.command("analyze")
+def analyze(
+    experiment_id: Annotated[str, typer.Option("--experiment", help="Persisted Experiment ID.")],
+    json_output: Annotated[bool, typer.Option("--json", help="Print only structured analysis JSON.")] = False,
+) -> None:
+    """Verify and analyze persisted Experiment evidence without executing tasks."""
+    try:
+        result = analyze_experiment(
+            experiment_id, artifact_store=FilesystemArtifactStore(Path.cwd() / "results"),
+        )
+    except (ArtifactStoreError, AnalysisError) as error:
+        typer.echo(f"Error: {error}", err=True)
+        raise typer.Exit(code=1) from error
+    if json_output:
+        typer.echo(result.model_dump_json(indent=2))
+        return
+    aggregate, config = result.aggregate, result.configuration
+    typer.echo(f"Experiment: {result.experiment_id}\nTask: {result.task_id}")
+    typer.echo(f"\nEvaluation:\n  Runs: {aggregate.run_count}\n  PASS: {aggregate.evaluation_pass_count}"
+               f"\n  FAIL: {aggregate.evaluation_fail_count}\n  Pass rate: {aggregate.evaluation_pass_rate:.1%}")
+    timeout = "-" if config.agent_timeout_seconds is None else f"{config.agent_timeout_seconds:g}s"
+    typer.echo(f"\nConfiguration:\n  Agent: {config.agent_name}\n  Model: {config.requested_model or '-'}"
+               f"\n  Timeout: {timeout}\n  Backend: {config.evaluation_backend}")
+    typer.echo("\nProvenance:")
+    if result.provenance is None:
+        typer.echo("  unavailable (historical Run metadata)")
+    else:
+        typer.echo(f"  Base: {result.provenance.base_commit_used}"
+                   f"\n  Task SHA256: {result.provenance.task_fingerprint_sha256}")
+    typer.echo(f"\nPatch evidence:\n  Exact patch variants: {result.exact_patch_variant_count}\n\nRuns:")
+    for run in result.runs:
+        outcome = "PASS" if run.evaluation_passed else "FAIL"
+        tests = "?" if run.evaluation.tests_run is None else run.evaluation.tests_run
+        typer.echo(f"  {run.run_id}  {outcome}  {run.agent_status.name}  "
+                   f"files={run.patch.changed_file_count}  +{run.patch.text_added_lines}/"
+                   f"-{run.patch.text_deleted_lines}  tests={tests}")
+    typer.echo("\nFailure observations:")
+    for category, count in result.failure_category_counts.items():
+        typer.echo(f"  {category}: {count}")
+    typer.echo("\nExample PASS/FAIL pair:")
+    if result.example_pair is None:
+        typer.echo("  unavailable (requires both PASS and FAIL)")
+    else:
+        pair = result.example_pair
+        typer.echo(f"  PASS: {pair.pass_run_id}\n  FAIL: {pair.fail_run_id}"
+                   f"\n  Patches equal: {'YES' if pair.patches_equal else 'NO'}"
+                   f"\n  FAIL-PASS duration: {pair.fail_minus_pass_duration_seconds:g}s")
 
 
 if __name__ == "__main__":

@@ -75,11 +75,37 @@ class FilesystemArtifactStore:
 
         patch = self._run_directory(run_id) / "patch.diff"
         try:
-            return patch.read_text(encoding="utf-8")
+            return patch.read_bytes().decode("utf-8")
         except (OSError, UnicodeError) as error:
             raise ArtifactStoreError(
                 f"Unable to load Run patch '{patch}': {error}"
             ) from error
+
+    def load_experiment_record(self, experiment_id: str) -> ExperimentRecord:
+        """Load one Experiment from its safe direct-child namespace."""
+        root = self.results_root / "experiments"
+        directory = (root / experiment_id).resolve()
+        if (Path(experiment_id).is_absolute() or directory.parent != root
+                or directory.name != experiment_id):
+            raise ArtifactStoreError(f"Unsafe Experiment ID: '{experiment_id}'")
+        metadata = directory / "metadata.json"
+        try:
+            record = ExperimentRecord.model_validate_json(metadata.read_bytes())
+        except (OSError, UnicodeError) as error:
+            raise ArtifactStoreError(f"Unable to load Experiment metadata '{metadata}': {error}") from error
+        except ValidationError as error:
+            raise ArtifactStoreError(f"Invalid Experiment metadata '{metadata}': {error}") from error
+        if record.experiment_id != experiment_id:
+            raise ArtifactStoreError("Experiment metadata ID does not match requested ID")
+        return record
+
+    def load_run_test_log(self, run_id: str) -> str:
+        """Read canonical UTF-8 log bytes, ignoring metadata artifact locators."""
+        path = self._run_directory(run_id) / "test.log"
+        try:
+            return path.read_bytes().decode("utf-8")
+        except (OSError, UnicodeError) as error:
+            raise ArtifactStoreError(f"Unable to load Run test log '{path}': {error}") from error
 
     def persist(
         self,

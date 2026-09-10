@@ -854,3 +854,93 @@ def test_replay_persistence_failure_is_cli_failure(
     assert result.exit_code == 1
     assert "simulated Replay persistence failure" in result.output
     assert "Replay ID:" not in result.output
+
+
+def test_analyze_help_exposes_options():
+    result = runner.invoke(app, ["analyze", "--help"])
+    assert result.exit_code == 0
+    assert "--experiment" in result.output and "--json" in result.output
+
+
+@pytest.mark.parametrize("outcomes", [(True, True), (True, False), (False, False)])
+@pytest.mark.parametrize("json_output", [False, True])
+def test_analyze_cli_success_and_read_only(tmp_path, monkeypatch, outcomes, json_output):
+    from tests.test_analysis import write_experiment, snapshot
+    _, experiment = write_experiment(tmp_path / "results", outcomes)
+    monkeypatch.chdir(tmp_path)
+    before = snapshot(tmp_path)
+    args = ["analyze", "--experiment", experiment.experiment_id]
+    if json_output:
+        args.append("--json")
+    result = runner.invoke(app, args)
+    assert result.exit_code == 0, result.output
+    assert result.stderr == ""
+    if json_output:
+        payload = json.loads(result.stdout)
+        assert payload["experiment_id"] == experiment.experiment_id
+        assert set(payload) == {"experiment_id", "task_id", "configuration", "aggregate", "provenance",
+                                "exact_patch_variant_count", "failure_category_counts", "runs", "example_pair"}
+        assert [r["run_id"] for r in payload["runs"]] == experiment.run_ids
+        assert payload["aggregate"]["evaluation_pass_count"] == outcomes.count(True)
+        assert payload["aggregate"]["evaluation_fail_count"] == outcomes.count(False)
+    else:
+        for label in ("Experiment:", "Task:", "Evaluation:", "Configuration:", "Provenance:",
+                      "Exact patch variants:", "Runs:", "Failure observations:", "Example PASS/FAIL pair:",
+                      "agent_command_failed:", "agent_timed_out:", "no_patch:", "test_failed:"):
+            assert label in result.output
+        assert f"PASS: {outcomes.count(True)}" in result.output
+        assert f"FAIL: {outcomes.count(False)}" in result.output
+        assert "Model: -" in result.output and "Timeout: -" in result.output
+        assert "Task SHA256: " + "b" * 64 in result.output
+        assert all(run_id in result.output for run_id in experiment.run_ids)
+    assert snapshot(tmp_path) == before
+
+
+def test_analyze_cli_historical_unknown_output(tmp_path, monkeypatch):
+    from tests.test_analysis import write_experiment
+    _, experiment = write_experiment(tmp_path / "results", historical=True, provenance=False, unknown=True)
+    monkeypatch.chdir(tmp_path)
+    result = runner.invoke(app, ["analyze", "--experiment", experiment.experiment_id])
+    assert result.exit_code == 0, result.output
+    assert "unavailable (historical Run metadata)" in result.output
+    assert "tests=?" in result.output
+
+
+@pytest.mark.parametrize("experiment_id", ["missing", "../x", "a/b", "/absolute"])
+def test_analyze_cli_bad_lookup(tmp_path, monkeypatch, experiment_id):
+    monkeypatch.chdir(tmp_path)
+    result = runner.invoke(app, ["analyze", "--experiment", experiment_id, "--json"])
+    assert result.exit_code == 1
+    assert result.stderr.startswith("Error:")
+    assert result.stdout == ""
+    assert not (tmp_path / "results").exists()
+
+
+@pytest.mark.parametrize("problem", ["missing_patch", "missing_log", "bad_summary", "bad_experiment", "bad_log"])
+def test_analyze_cli_input_errors(tmp_path, monkeypatch, problem):
+    from tests.test_analysis import write_experiment, mutate
+    _, experiment = write_experiment(tmp_path / "results")
+    directory = tmp_path / "results" / experiment.run_ids[0]
+    if problem == "missing_patch":
+        (directory / "patch.diff").unlink()
+    elif problem == "missing_log":
+        (directory / "test.log").unlink()
+    elif problem == "bad_summary":
+        mutate(directory / "metadata.json", lambda r: r["patch_summary"].update(patch_sha256="c" * 64))
+    elif problem == "bad_experiment":
+        (tmp_path / "results" / "experiments" / experiment.experiment_id / "metadata.json").write_text("{")
+    else:
+        (directory / "test.log").write_text("invalid")
+    monkeypatch.chdir(tmp_path)
+    result = runner.invoke(app, ["analyze", "--experiment", experiment.experiment_id])
+    assert result.exit_code == 1
+    assert result.stderr.startswith("Error:") and result.stdout == ""
+
+
+def test_analyze_available_through_python_module():
+    import subprocess
+    import sys
+    result = subprocess.run([sys.executable, "-m", "patchbench.cli", "analyze", "--help"],
+                            capture_output=True, text=True, check=False)
+    assert result.returncode == 0, result.stderr
+    assert "--experiment" in result.stdout and "--json" in result.stdout
