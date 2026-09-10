@@ -26,9 +26,11 @@ The owner has reopened development for **PatchBench V1.1 — Evidence Release**.
 V1 remains historically complete. V1.1 seeks real, reproducible, inspectable
 reliability evidence, not platform expansion. Optional V2 remains deferred.
 
-Current slice: **V1.1.0 — Pilot Task Discovery**. Implementation and local
-solvability validation are ready for human review; acceptance is pending.
-Production architecture and `src/patchbench/` are unchanged.
+V1.1.0 — Pilot Task Discovery: **complete**.
+Pilot Evidence Review + Schema Design Gate: **complete**, as confirmed by the owner.
+Current slice: **V1.1.1 — Minimal Provenance**. Implementation and local
+self-review are complete; independent review is pending. Optional V2 remains
+deferred.
 
 Locked sequence:
 
@@ -62,20 +64,39 @@ opt-in); this includes 9 new pilot preparation/solvability cases. Both TaskSpecs
 validate, and `git diff --check` passes. No real-Agent benchmark claims follow
 from these checks.
 
-See `tasks/pilot/README.md` for preparation, manual execution, and observation
-instructions. No real Codex pilot executions have been performed for this slice.
-The next four human Runs (two per task) are **NON-FINAL evidence discovery** and
-must never count toward the final V1.1 dataset, even if task definitions remain
-unchanged. Record their Run IDs explicitly in a separate pilot ledger.
+The owner's completed NON-FINAL pilot review reported 6/6 valid Runs completed
+and passed. Exact successful patches and test edits varied across repeats,
+including different successful implementations of the same task. These are
+pilot design observations, not final V1.1 benchmark results. Pilot artifacts
+remain unchanged and excluded from the final dataset.
 
-Provenance, PatchSummary, EvaluationEvidence, Analyze schemas/CLI, suite freeze,
-final experiments, and release claims remain deferred until the evidence gate.
-Do not begin V1.1.1 during this slice.
+Locked evidence-driven provenance decisions:
+
+- Evaluator backend is independent of `agent.backend`, which remains `host`.
+- Task fingerprints exclude machine-specific `repository.path` and use the
+  actual resolved workspace base commit, exact validated prompt, evaluation
+  command/timeout, schema version, task ID, repository type, and task metadata.
+- Canonical serialization is sorted compact JSON with `ensure_ascii=False`,
+  encoded as UTF-8 and hashed with SHA-256.
+- Historical v1 Runs may omit provenance or have null provenance.
+- Every newly executed V1.1 Run persists `RunProvenance`: resolved base commit,
+  task fingerprint, evaluation command, timeout, and host/Docker backend.
+- Experiment children reuse single-Run construction; storage layout and Replay
+  semantics are unchanged. No old artifacts are migrated.
+
+V1.1.1 validation: focused provenance/Run/Experiment/Replay checks **69 passed**;
+full regression **226 passed, 7 skipped** (Docker integration opt-in). Compile
+check and `git diff --check` passed. Ordinary tests use a stub sandbox for Docker
+provenance; no real Codex execution or pilot-artifact migration occurred.
+
+PatchSummary, EvaluationEvidence, Analyze, suite freeze, and final experiments
+remain later slices. No V1.1.2 functionality is implemented here.
 
 ## Git / Development State
 
 - Current branch: `feat/v1.1-evidence-release` (observed during V1.1.0 validation)
-- Latest accepted slice: M6.2 — Documentation / Interview / Resume Polish
+- Latest completed slice: V1.1.0 — Pilot Task Discovery (owner confirmed)
+- V1.1.0 commit: `51f92a5 feat: add v1.1.0 pilot task discovery`
 - M6.1 commit: `974ba5a docs: complete M6.1 public demo`
 - M6.2 commit: `fd17c92 docs: complete M6.2 project materials`
 - M6 whole-milestone review: accepted before merge
@@ -484,7 +505,8 @@ status changes. Do not document every small implementation detail.
 
 ## Exact Next Action
 
-Review the V1.1.0 pilot slice, then have the owner manually execute two real
-Codex Runs per task using `tasks/pilot/README.md`. Preserve all four Run IDs as
-NON-FINAL pilot evidence. Inspect actual artifacts at the Pilot Evidence Review
-+ Schema Design Gate before authorizing V1.1.1. Optional V2 remains deferred.
+The V1.1.1 self-review packet is ready. The owner then stages intended files,
+creates a checkpoint commit, pushes the feature branch, and requests independent
+GitHub review. Feature-branch checkpoints are the review substrate; only `main`
+requires accepted code. Do not begin V1.1.2 in this slice. Optional V2 remains
+deferred. Runtime results and pilot archives must not enter the checkpoint.

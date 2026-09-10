@@ -4,12 +4,17 @@ from enum import Enum
 from pathlib import Path
 from typing import Annotated, Literal, Self
 
-from pydantic import BaseModel, ConfigDict, Field, model_validator
+from pydantic import BaseModel, ConfigDict, Field, StringConstraints, model_validator
 
 from patchbench.agents.base import AgentRunStatus
 
 
 NonEmptyString = Annotated[str, Field(min_length=1)]
+Sha256Hex = Annotated[
+    str,
+    StringConstraints(strict=True, strip_whitespace=False,
+                      min_length=64, max_length=64, pattern=r"^[0-9a-f]{64}$"),
+]
 
 
 class DomainModel(BaseModel):
@@ -137,6 +142,16 @@ class ArtifactPaths(DomainModel):
     patch: Path
 
 
+class RunProvenance(DomainModel):
+    """Frozen task and evaluation configuration used by a newly executed Run."""
+
+    base_commit_used: NonEmptyString
+    task_fingerprint_sha256: Sha256Hex
+    evaluation_command: NonEmptyString
+    evaluation_timeout_seconds: int = Field(gt=0)
+    evaluation_backend: Literal["host", "docker"]
+
+
 class RunRecord(DomainModel):
     """Summary of one completed PatchBench Run."""
 
@@ -147,6 +162,7 @@ class RunRecord(DomainModel):
     duration_seconds: float = Field(ge=0)
     agent: AgentExecutionMetadata
     artifacts: ArtifactPaths
+    provenance: RunProvenance | None = None
 
 
 class ReplayRecord(DomainModel):

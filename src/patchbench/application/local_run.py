@@ -8,10 +8,12 @@ from patchbench.agents.base import Agent, AgentRunRequest
 from patchbench.config.task_loader import load_task
 from patchbench.domain.models import (
     AgentExecutionMetadata,
+    RunProvenance,
     RunRecord,
     RunStatus,
     TaskSpec,
 )
+from patchbench.domain.provenance import compute_task_fingerprint
 from patchbench.evaluators.command import CommandEvaluator
 from patchbench.evaluators.sandbox import SandboxCommandEvaluator
 from patchbench.repository.git_repository import GitRepositoryManager
@@ -69,6 +71,15 @@ def _execute_single_run(
     artifact_store = FilesystemArtifactStore(results_root or Path.cwd() / "results")
 
     with repository_manager.workspace(task.repository, run_id) as workspace:
+        provenance = RunProvenance(
+            base_commit_used=workspace.base_commit,
+            task_fingerprint_sha256=compute_task_fingerprint(
+                task, base_commit_used=workspace.base_commit,
+            ),
+            evaluation_command=task.evaluation.command,
+            evaluation_timeout_seconds=task.evaluation.timeout_seconds,
+            evaluation_backend="host" if sandbox is None else "docker",
+        )
         effective_prompt = task.task.prompt
         agent_result = agent.run(
             AgentRunRequest(
@@ -106,6 +117,7 @@ def _execute_single_run(
                 requested_model=requested_model,
             ),
             artifacts=artifact_paths,
+            provenance=provenance,
         )
         artifact_store.persist(
             record,

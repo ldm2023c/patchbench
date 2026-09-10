@@ -24,12 +24,16 @@ from patchbench.domain.models import (
     ExperimentRecord,
     ReplayRecord,
     RepositoryConfig,
+    RunProvenance,
     RunRecord,
+    Sha256Hex,
     RunStatus,
     TaskMetadata,
     TaskPromptConfig,
     TaskSpec,
 )
+
+from patchbench.domain.provenance import compute_task_fingerprint
 
 __all__ = [
     "AgentExecutionMetadata",
@@ -46,11 +50,14 @@ __all__ = [
     "PassFailComparisonError",
     "RepositoryConfig",
     "ReplayRecord",
+    "RunProvenance",
     "RunRecord",
+    "Sha256Hex",
     "RunStatus",
     "TaskMetadata",
     "TaskPromptConfig",
     "TaskSpec",
+    "compute_task_fingerprint",
     "aggregate_runs",
     "classify_run_failure",
     "compare_pass_fail_runs",
