@@ -28,7 +28,12 @@ def test_preparation_and_behavioral_baseline(tmp_path, name):
     assert task.id == name
     assert Path(task.repository.path) == FIXTURE_ROOT / ".prepared" / name
     assert re.fullmatch(r"[0-9a-f]{40}", task.repository.base_commit)
-    assert task.evaluation.command == "python -B -m unittest -v"
+    assert task.evaluation.command == "python -I -S -B .patchbench-eval/runner.py"
+    assert task.evaluation.frozen_unittest.version == 1
+    assert task.evaluation.frozen_unittest.test_files == [{
+        "streaming_events": "test_eventstream.py", "request_signing": "test_websign.py",
+        "atomic_batch": "test_batchstore.py", "cache_revalidation": "test_cacheclient.py",
+    }[name]]
     assert task.evaluation.timeout_seconds == 120
     with TemporaryDirectory(dir=tmp_path) as temporary:
         base = Path(temporary)
@@ -43,7 +48,7 @@ def test_preparation_and_behavioral_baseline(tmp_path, name):
         repository = task.repository.model_copy(update={"path": str(first)})
         manager = GitRepositoryManager(base / "workspaces")
         with manager.workspace(repository, "baseline") as workspace:
-            result = subprocess.run(shlex.split(task.evaluation.command), cwd=workspace.path,
+            result = subprocess.run(shlex.split("python -B -m unittest -v"), cwd=workspace.path,
                                     env={**os.environ, "PATH": str(Path(sys.executable).parent) + os.pathsep + os.environ["PATH"]},
                                     capture_output=True, text=True, timeout=task.evaluation.timeout_seconds)
             assert result.returncode == 1, result.stderr

@@ -4,7 +4,7 @@ from enum import Enum
 from pathlib import Path
 from typing import Annotated, Literal, Self
 
-from pydantic import BaseModel, ConfigDict, Field, StringConstraints, model_validator
+from pydantic import BaseModel, ConfigDict, Field, StringConstraints, field_validator, model_validator
 
 from patchbench.agents.base import AgentRunStatus
 
@@ -37,11 +37,58 @@ class TaskPromptConfig(DomainModel):
     prompt: NonEmptyString
 
 
+FROZEN_UNITTEST_COMMAND = "python -I -S -B .patchbench-eval/runner.py"
+
+
+class FrozenUnittestConfig(DomainModel):
+    """Version-one evaluator contract: ordered, root-level Python test files."""
+
+    model_config = ConfigDict(extra="forbid", str_strip_whitespace=False)
+
+    version: Literal[1]
+    test_files: list[Annotated[str, StringConstraints(strict=True)]] = Field(min_length=1)
+
+    @field_validator("version", mode="before")
+    @classmethod
+    def validate_version(cls, value):
+        if type(value) is not int or value != 1:
+            raise ValueError("frozen unittest version must be integer 1")
+        return value
+
+    @field_validator("test_files")
+    @classmethod
+    def validate_test_files(cls, paths: list[str]) -> list[str]:
+        if len(set(paths)) != len(paths):
+            raise ValueError("frozen test filenames must be unique")
+        for path in paths:
+            if (not path.endswith(".py") or len(path) <= 3
+                    or path != path.strip() or path in (".", "..", ".patchbench-eval")
+                    or any(char in path for char in "/\\:")
+                    or any(ord(char) < 32 or ord(char) == 127 for char in path)):
+                raise ValueError("frozen tests must be repository-root Python filenames")
+        return paths
+
+
 class EvaluationConfig(DomainModel):
     """Command and time limit used to evaluate a task."""
 
     command: NonEmptyString
     timeout_seconds: int = Field(gt=0)
+    frozen_unittest: FrozenUnittestConfig | None = None
+
+    @model_validator(mode="before")
+    @classmethod
+    def validate_exact_frozen_command(cls, data):
+        if (isinstance(data, dict) and data.get("frozen_unittest") is not None
+                and data.get("command") != FROZEN_UNITTEST_COMMAND):
+            raise ValueError(f"frozen unittest requires command: {FROZEN_UNITTEST_COMMAND}")
+        return data
+
+    @model_validator(mode="after")
+    def validate_frozen_command(self) -> Self:
+        if self.frozen_unittest is not None and self.command != FROZEN_UNITTEST_COMMAND:
+            raise ValueError(f"frozen unittest requires command: {FROZEN_UNITTEST_COMMAND}")
+        return self
 
 
 class TaskMetadata(DomainModel):

@@ -70,6 +70,11 @@ class GitRepositoryManager:
     def capture_diff(self, workspace: GitWorkspace) -> str:
         """Return a binary-capable Git diff containing every workspace change."""
 
+        actual = self._git(workspace.path, "rev-parse", "HEAD").stdout.strip()
+        if actual != workspace.base_commit:
+            raise RepositoryError(
+                f"Workspace HEAD moved: expected {workspace.base_commit}, found {actual}"
+            )
         self._git(workspace.path, "add", "-A")
         return self._git(
             workspace.path,

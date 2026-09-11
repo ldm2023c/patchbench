@@ -36,10 +36,13 @@ V1.1.3 — Analyze Workflow: **externally accepted** at
 `c9a9d2e feat: add experiment analysis workflow`.
 V1.1.4 — Real Task Suite A: **externally accepted** at
 `9af2d28 feat: add v1.1 reliability suite A`.
-Current slice: **V1.1.5a — Real Task Suite B Candidates**.
+V1.1.5a — Real Task Suite B Candidates: **externally accepted** at
+`2440af2 feat: add v1.1 reliability suite B candidates`.
+Current slice: **V1.1.5b1 — Frozen Evaluator Contract**.
 Implementation and local self-review are complete; external review is pending.
-Platform capability work is frozen for this phase. No final V1.1 TaskSpec has
-been frozen. V1.1.5b Suite Freeze and Optional V2 remain deferred.
+This narrow evaluator-integrity change is authorized before final evidence.
+No final V1.1 TaskSpec has been frozen. Next is V1.1.5b2 — Suite Freeze + Manifest;
+Optional V2 remains deferred.
 
 Locked sequence:
 
@@ -51,8 +54,9 @@ V1.1.0 Pilot Task Discovery
 → V1.1.3 Analyze Workflow
 → V1.1.4 Real Task Suite A
 → V1.1.5a Real Task Suite B Candidates
-→ NON-FINAL Suite B calibration (after external review)
-→ V1.1.5b Suite Freeze
+→ NON-FINAL Suite B calibration (complete)
+→ V1.1.5b1 Frozen Evaluator Contract
+→ V1.1.5b2 Suite Freeze + Manifest
 → V1.1.6 Final Experiments + Evidence Release
 ```
 
@@ -157,7 +161,7 @@ Focused preparation checks: **9 passed**. Full regression: **366 passed,
 passed. Both canonical prepared repositories remain clean at TaskSpec bases.
 
 No real Codex calibration ran during V1.1.4 implementation. Candidates may change
-after calibration; final selection/freeze requires the V1.1.5b gate. V1.1.4 calibration
+after calibration; final selection/freeze requires the V1.1.5b2 gate. V1.1.4 calibration
 Runs are **NON-FINAL forever**. The older V1.1.0 Pilot remains discovery-only
 and can never become final evidence. These checks establish baseline quality
 and solvability, not coding-agent benchmark pass rates.
@@ -167,10 +171,11 @@ The owner's completed Suite A NON-FINAL calibration reported streaming_events
 patch variants**. Both pairs differed in their production-module diffs. Both
 candidates showed successful implementation variation; neither produced PASS/FAIL
 outcome variation in two Runs. Do not infer statistical reliability from n=2.
-Suite A templates, TaskSpecs and prepared base commits remain unchanged.
+Suite A templates and prepared base commits remain unchanged; V1.1.5b1 updates
+TaskSpec evaluation semantics without modifying historical artifacts.
 
 V1.1.5a adds `atomic_batch` and `cache_revalidation` as purpose-built Suite B
-candidates, **not calibrated and not frozen**. Their visible standard-library
+candidates, initially uncalibrated and still not frozen. Their visible standard-library
 tests exercise store/journal/idempotency transaction consistency and cached
 representation/freshness/backend-error consistency. The existing reliability
 preparation script now covers all four candidates using the same hardened helper.
@@ -186,12 +191,55 @@ regression: **374 passed, 7 skipped** (platform Docker integration opt-in).
 Compile and tracked/untracked whitespace checks passed. All four prepared
 repositories remain clean at their TaskSpec bases with no extra worktrees.
 No real Codex execution occurred in V1.1.5a. All later Suite B calibration Runs
-remain **NON-FINAL forever**; final suitability and difficulty await calibration.
+remain **NON-FINAL forever**.
+
+The owner's completed Suite B calibration reported atomic_batch **2/2 PASS**
+and cache_revalidation **2/2 PASS**. All four tasks passed 2/2 each, for **8/8
+NON-FINAL calibration Runs**. Every Run edited its visible test file; this does
+not prove cheating or weakened tests. Production-level variation was observed
+for streaming_events and request_signing. Atomic batch's two whole-patch variants
+were caused only by different test edits; production diffs were identical.
+Cache revalidation varied in client.py while cache.py repairs matched. No
+statistical reliability claim follows from n=2 per task.
+
+V1.1.5b1 adds optional schema-version-1 `evaluation.frozen_unittest` configuration
+with protocol version 1 and an ordered, unique, nonempty list of root-level Python
+test filenames. Its command is fixed to
+`python -I -S -B .patchbench-eval/runner.py`. After capturing the complete Agent
+patch, shared Run/Replay evaluation creates another exact-base worktree, retains
+its pristine test bytes, applies the full patch, restores declared tests safely,
+and replaces the reserved runner directory with platform-owned content. Only
+declared tests execute; zero-test success is rejected. Host/Docker use the same
+view, with unchanged Docker mounts. Experiments inherit the Run path.
+
+Patch evidence remains the pre-evaluation Agent patch. Official Run outcome,
+test.log and EvaluationEvidence derive from the frozen evaluator. No RunRecord
+fields changed. Frozen fingerprints include protocol version and ordered files;
+legacy fingerprints and evaluation remain unchanged. Replay preserves caller-
+provided TaskSpec semantics without strict source fingerprint rejection. Capture
+now rejects moved workspace HEAD before staging. All four reliability TaskSpecs
+use the new protocol; fixture templates and all four base commits are unchanged.
+
+This protects official test selection from Agent test edits, deletion, skip and
+discovery manipulation, not arbitrary hostile production Python in its own test
+process. Historical v1/Pilot/calibration artifacts remain untouched. No real
+Codex execution, final manifest, final freeze or final experiments occurred in
+this slice.
+
+V1.1.5b1 validation: focused frozen-contract/Run/Replay/repository/provenance/
+preparation checks **128 passed, 2 Docker cases skipped**; explicit frozen
+Host/Docker parity **2 passed**. Full regression **421 passed, 9 skipped**
+(Docker opt-in). All four official frozen buggy baselines retain their original
+test/failure/error counts. Compile and `git diff --check` passed; prepared
+repositories remain clean at unchanged bases. Integrity checks cover weakened,
+deleted, skipped, added and structurally replaced tests, runner collisions,
+zero tests, moved HEAD, patch preservation and exception cleanup.
 
 ## Git / Development State
 
 - Current branch: `feat/v1.1-evidence-release` (observed during V1.1.0 validation)
-- Latest accepted slice: V1.1.4 — Real Task Suite A
+- Latest accepted slice: V1.1.5a — Real Task Suite B Candidates
+- V1.1.5a commit: `2440af2 feat: add v1.1 reliability suite B candidates`
 - V1.1.4 commit: `9af2d28 feat: add v1.1 reliability suite A`
 - V1.1.3 commit: `c9a9d2e feat: add experiment analysis workflow`
 - V1.1.2 commit: `7222535 feat: add deterministic run evidence`
@@ -605,11 +653,10 @@ status changes. Do not document every small implementation detail.
 
 ## Exact Next Action
 
-The V1.1.5a Suite B candidate self-review packet is ready. The owner then stages intended files,
+The V1.1.5b1 Frozen Evaluator Contract self-review packet is ready. The owner stages intended files,
 creates a checkpoint commit, pushes the feature branch, and requests independent
 GitHub review. Feature-branch checkpoints are the review substrate; only `main`
-requires accepted code. After external review, separately authorized Suite B
-calibration remains NON-FINAL forever. V1.1.5b Suite Freeze follows calibration;
+requires accepted code. After acceptance, V1.1.5b2 Suite Freeze + Manifest is next;
 V1.1.6 Final Experiments + Evidence Release follows that gate. Do not freeze
 tasks or create final manifests in this slice.
 Optional V2 remains deferred. Runtime results, prepared repositories and pilot

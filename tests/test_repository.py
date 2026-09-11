@@ -1,7 +1,7 @@
 import pytest
 
 from patchbench.domain.models import RepositoryConfig
-from patchbench.repository.git_repository import GitRepositoryManager, GitWorkspace
+from patchbench.repository.git_repository import GitRepositoryManager, GitWorkspace, RepositoryError
 from tests.helpers import create_fixture_repository, git
 
 
@@ -117,3 +117,27 @@ def test_apply_patch_skips_git_for_empty_patch(tmp_path, monkeypatch) -> None:
     )
 
     manager.apply_patch(workspace, " \n\t")
+
+
+@pytest.mark.parametrize("movement", ["commit", "reset"])
+def test_capture_diff_rejects_head_movement_before_staging(tmp_path, movement):
+    source, base_commit = create_fixture_repository(tmp_path)
+    # A second fixture commit provides a different reachable reset target.
+    git(source, "-c", "user.name=Test", "-c", "user.email=test@example.invalid",
+        "-c", "commit.gpgsign=false", "commit", "--allow-empty", "-qm", "second")
+    newer = git(source, "rev-parse", "HEAD")
+    manager = GitRepositoryManager(tmp_path / "workspaces")
+    configuration = RepositoryConfig(type="local", path=str(source), base_commit=newer)
+    with manager.workspace(configuration, "head-movement") as workspace:
+        if movement == "commit":
+            git(workspace.path, "-c", "user.name=Test", "-c", "user.email=test@example.invalid",
+                "-c", "commit.gpgsign=false", "commit", "--allow-empty", "-qm", "Agent commit")
+        else:
+            git(workspace.path, "reset", "--hard", base_commit)
+        (workspace.path / "unstaged.txt").write_text("must not be staged")
+        before = git(workspace.path, "status", "--porcelain")
+        with pytest.raises(RepositoryError, match="HEAD moved"):
+            manager.capture_diff(workspace)
+        assert git(workspace.path, "status", "--porcelain") == before
+    assert git(source, "rev-parse", "HEAD") == newer
+    assert git(source, "worktree", "list", "--porcelain").count("worktree ") == 1

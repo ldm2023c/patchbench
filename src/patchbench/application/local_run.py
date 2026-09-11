@@ -18,10 +18,9 @@ from patchbench.domain.patch_evidence import summarize_patch
 from patchbench.domain.evaluation_evidence import (
     render_evaluation_log, summarize_evaluation_log,
 )
-from patchbench.evaluators.command import CommandEvaluator
-from patchbench.evaluators.sandbox import SandboxCommandEvaluator
+from patchbench.application.evaluation import evaluate_patch
 from patchbench.repository.git_repository import GitRepositoryManager
-from patchbench.sandbox.base import Sandbox, sandbox_scope
+from patchbench.sandbox.base import Sandbox
 from patchbench.storage.filesystem import FilesystemArtifactStore
 
 
@@ -93,15 +92,9 @@ def _execute_single_run(
             )
         )
         patch = repository_manager.capture_diff(workspace)
-        if sandbox is None:
-            evaluation_result = CommandEvaluator().evaluate(
-                workspace.path, task.evaluation
-            )
-        else:
-            with sandbox_scope(sandbox, workspace=workspace.path) as handle:
-                evaluation_result = SandboxCommandEvaluator(sandbox).evaluate(
-                    handle, task.evaluation
-                )
+        evaluation_result = evaluate_patch(
+            repository_manager, workspace, task.evaluation, patch, sandbox=sandbox,
+        )
         test_log = render_evaluation_log(evaluation_result, task.evaluation.command)
         patch_summary = summarize_patch(patch)
         evaluation_evidence = summarize_evaluation_log(test_log)

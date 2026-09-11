@@ -22,6 +22,8 @@ def compute_task_fingerprint(task: TaskSpec, *, base_commit_used: str) -> str:
         },
         "metadata": task.metadata.model_dump(mode="json"),
     }
+    if task.evaluation.frozen_unittest is not None:
+        payload["evaluation"]["frozen_unittest"] = task.evaluation.frozen_unittest.model_dump(mode="json")
     canonical = json.dumps(
         payload, sort_keys=True, separators=(",", ":"), ensure_ascii=False,
     ).encode("utf-8")

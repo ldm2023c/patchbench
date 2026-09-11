@@ -15,7 +15,11 @@ task:
     documented contract. Add regression coverage if useful and keep the complete
     suite passing.
 evaluation:
-  command: "python -B -m unittest -v"
+  command: "python -I -S -B .patchbench-eval/runner.py"
   timeout_seconds: 120
+  frozen_unittest:
+    version: 1
+    test_files:
+      - test_eventstream.py
 metadata:
   language: python

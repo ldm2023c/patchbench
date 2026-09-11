@@ -8,6 +8,7 @@ from pydantic import ValidationError
 
 from patchbench.agents.base import AgentRunStatus
 from patchbench.application import replay as replay_module
+from patchbench.application import evaluation as evaluation_module
 from patchbench.application.replay import ReplayError, replay_run
 from patchbench.domain import (
     AgentExecutionMetadata,
@@ -150,7 +151,7 @@ def test_patch_apply_failure_skips_evaluation_and_cleans_worktree(
     source_repository, base_commit = create_fixture_repository(tmp_path)
     workspace_root = tmp_path / "workspaces"
     monkeypatch.setattr(
-        replay_module.CommandEvaluator,
+        evaluation_module.CommandEvaluator,
         "evaluate",
         lambda *args, **kwargs: pytest.fail("evaluator must not run"),
     )

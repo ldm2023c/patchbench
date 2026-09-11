@@ -6,10 +6,9 @@ from time import perf_counter
 from uuid import uuid4
 
 from patchbench.domain import EvaluationResult, ReplayRecord, RunRecord, TaskSpec
-from patchbench.evaluators.command import CommandEvaluator
-from patchbench.evaluators.sandbox import SandboxCommandEvaluator
+from patchbench.application.evaluation import evaluate_patch
 from patchbench.repository.git_repository import GitRepositoryManager
-from patchbench.sandbox.base import Sandbox, sandbox_scope
+from patchbench.sandbox.base import Sandbox
 
 
 class ReplayError(ValueError):
@@ -48,17 +47,10 @@ def replay_run(
 
     with repository_manager.workspace(task.repository, replay_id) as workspace:
         repository_manager.apply_patch(workspace, patch_text)
-        if sandbox is None:
-            evaluation_result = CommandEvaluator().evaluate(
-                workspace.path, task.evaluation
-            )
-            evaluation_backend = "host"
-        else:
-            with sandbox_scope(sandbox, workspace=workspace.path) as handle:
-                evaluation_result = SandboxCommandEvaluator(sandbox).evaluate(
-                    handle, task.evaluation
-                )
-            evaluation_backend = "docker"
+        evaluation_result = evaluate_patch(
+            repository_manager, workspace, task.evaluation, patch_text, sandbox=sandbox,
+        )
+        evaluation_backend = "host" if sandbox is None else "docker"
 
         replay_passed = evaluation_result.passed
         record = ReplayRecord(
