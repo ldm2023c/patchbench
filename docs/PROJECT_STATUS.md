@@ -38,11 +38,15 @@ V1.1.4 — Real Task Suite A: **externally accepted** at
 `9af2d28 feat: add v1.1 reliability suite A`.
 V1.1.5a — Real Task Suite B Candidates: **externally accepted** at
 `2440af2 feat: add v1.1 reliability suite B candidates`.
-Current slice: **V1.1.5b1 — Frozen Evaluator Contract**.
+V1.1.5b1 — Frozen Evaluator Contract: **externally accepted** at
+`802c4d3 feat: add frozen evaluator contract`
+(`802c4d3dcc09d89400ca306eae253b5ef585d442`).
+Current slice: **V1.1.5b2 — Suite Freeze + Manifest**.
 Implementation and local self-review are complete; external review is pending.
-This narrow evaluator-integrity change is authorized before final evidence.
-No final V1.1 TaskSpec has been frozen. Next is V1.1.5b2 — Suite Freeze + Manifest;
-Optional V2 remains deferred.
+Freeze readiness is implemented, but V1.1.5b2 is not externally accepted or
+finally frozen. The owner creates the freeze tag only after acceptance.
+V1.1.6 — Final Experiments + Evidence Release follows; no final Runs exist from
+this slice. Optional V2 remains deferred.
 
 Locked sequence:
 
@@ -235,10 +239,45 @@ repositories remain clean at unchanged bases. Integrity checks cover weakened,
 deleted, skipped, added and structurally replaced tests, runner collisions,
 zero tests, moved HEAD, patch preservation and exception cleanup.
 
+V1.1.5b2 adds the static `evidence/v1.1/freeze-manifest.json` and read-only
+`scripts/verify_v11_freeze.py`. The manifest pins the four ordered tasks, exact
+TaskSpec bytes and semantic fingerprints, unchanged base commits, official test
+blob hashes, accepted evaluator commit/protocol, final execution configuration,
+Codex CLI version and the existing Docker image ID/RepoDigest. No accepted source,
+fixture or frozen TaskSpec semantics changed from `802c4d3`.
+
+The final configuration is locked to `python -m patchbench.cli`, agent codex,
+model gpt-6-astra, 600-second Agent timeout, Docker evaluation and 8 independent
+Runs per task: 4 tasks, 32 planned final Runs. Completed FAILs are final evidence;
+no retry is authorized merely for FAIL. Genuine infrastructure failures require
+separate review rather than silent retry. No final execution occurred here.
+
+`patchbench_evaluator_commit` pins the already accepted implementation. The
+separate `freeze_ref`, `refs/tags/v1.1-evidence-freeze`, will identify the accepted
+V1.1.5b2 checkout after external review. Embedding that future commit's own SHA
+inside its manifest would change its bytes and commit ID recursively; the tag
+avoids that self-reference. It has not been created by this slice.
+
+Static verification permits review-document changes and an absent tag while
+checking semantic identities, prepared bases, package import origin, Docker and
+Codex identity, and absence of workspace/container residue. Strict preflight adds
+a clean root, available freeze tag, HEAD equal to its resolved commit, and no
+protected semantic changes since the evaluator checkpoint. It never prepares,
+cleans, pulls, modifies artifacts, or creates/moves tags. The model identifier
+and CLI version are pinned; remote service implementation is not immutable.
+
+V1.1.5b2 validation: focused verifier checks **34 passed**; full regression
+**455 passed, 9 skipped** (Docker opt-in); `compileall` and `git diff --check`
+passed. Real `--static` verification passed, while strict preflight correctly
+reported the missing `refs/tags/v1.1-evidence-freeze`. Protected semantic diff
+against `802c4d3` is empty. Prepared HEADs remain clean and unchanged, with no
+`.workspaces` children or running PatchBench sandbox containers.
+
 ## Git / Development State
 
 - Current branch: `feat/v1.1-evidence-release` (observed during V1.1.0 validation)
-- Latest accepted slice: V1.1.5a — Real Task Suite B Candidates
+- Latest accepted slice: V1.1.5b1 — Frozen Evaluator Contract
+- V1.1.5b1 commit: `802c4d3 feat: add frozen evaluator contract`
 - V1.1.5a commit: `2440af2 feat: add v1.1 reliability suite B candidates`
 - V1.1.4 commit: `9af2d28 feat: add v1.1 reliability suite A`
 - V1.1.3 commit: `c9a9d2e feat: add experiment analysis workflow`
@@ -653,11 +692,12 @@ status changes. Do not document every small implementation detail.
 
 ## Exact Next Action
 
-The V1.1.5b1 Frozen Evaluator Contract self-review packet is ready. The owner stages intended files,
+The V1.1.5b2 Suite Freeze + Manifest self-review packet is ready. The owner stages intended files,
 creates a checkpoint commit, pushes the feature branch, and requests independent
 GitHub review. Feature-branch checkpoints are the review substrate; only `main`
-requires accepted code. After acceptance, V1.1.5b2 Suite Freeze + Manifest is next;
-V1.1.6 Final Experiments + Evidence Release follows that gate. Do not freeze
-tasks or create final manifests in this slice.
+requires accepted code. After V1.1.5b2 external acceptance, the owner creates
+`refs/tags/v1.1-evidence-freeze` at that accepted commit. Strict preflight must
+pass from that exact clean checkout before separately authorized V1.1.6 final
+execution. Do not create the tag or run final experiments in this slice.
 Optional V2 remains deferred. Runtime results, prepared repositories and pilot
 archives must not enter the checkpoint.
