@@ -1,0 +1,21 @@
+schema_version: 1
+id: request_signing
+repository:
+  type: local
+  path: ../../../fixtures/reliability/.prepared/request_signing
+  base_commit: b1331d203fa9643a5fdf6cf38e53101ecb56025b
+task:
+  prompt: |
+    Webhook signature verification disagrees with signing when real requests
+    contain repeated or empty query parameters, literal plus/percent escapes, or
+    repeated headers with different casing and optional whitespace. Repair canonical
+    request construction so signer and verifier share the documented deterministic
+    query/header/body rules without collapsing duplicates or changing legacy simple
+    requests. Preserve malformed-input errors and constant-time signature comparison.
+    See the repository's documented contract. Add regression coverage if useful and
+    keep the complete suite passing.
+evaluation:
+  command: "python -B -m unittest -v"
+  timeout_seconds: 120
+metadata:
+  language: python

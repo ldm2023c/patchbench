@@ -32,9 +32,12 @@ V1.1.1 — Minimal Provenance: **externally accepted** at
 `f2b7020 feat: add minimal run provenance`.
 V1.1.2 — Deterministic Patch + Evaluation Evidence: **externally accepted** at
 `7222535 feat: add deterministic run evidence`.
-Current slice: **V1.1.3 — Analyze Workflow**.
+V1.1.3 — Analyze Workflow: **externally accepted** at
+`c9a9d2e feat: add experiment analysis workflow`.
+Current slice: **V1.1.4 — Real Task Suite A**.
 Implementation and local self-review are complete; external review is pending.
-V1.1.4 task-suite work has not started. Optional V2 remains deferred.
+Platform capability work is frozen for this phase. Suite A candidates are not
+frozen. V1.1.5 — Real Task Suite B + Freeze and Optional V2 remain deferred.
 
 Locked sequence:
 
@@ -123,7 +126,7 @@ provenance/aggregate verification, exact patch variant counts, existing failure
 observations, and the deterministic first PASS/first FAIL example pair. Child
 order is preserved. Historical missing summaries are reconstructed in memory;
 missing provenance remains unavailable. No artifacts are written or migrated.
-V1.1.4 task-suite expansion, suite freeze, and final experiments remain deferred.
+Suite freeze and final experiments remain deferred.
 
 V1.1.3 validation: analysis/storage focused **45 passed**, CLI **49 passed**;
 combined **94 passed**. Full regression **357 passed, 7 skipped**; compile and
@@ -132,10 +135,34 @@ remain unchanged, reject input inconsistencies, and cover clean JSON plus both
 installed-command composition and the Python module entry point. No real Codex
 or Docker execution was required.
 
+V1.1.4 adds two purpose-built realistic candidate repositories, `streaming_events`
+and `request_signing`, under `fixtures/reliability/`, with TaskSpecs under
+`tasks/reliability/`. They model incremental NDJSON import and webhook request
+canonicalization respectively; they are not imported upstream or observed
+production bugs. Preparation reuses the hardened Pilot helper and creates only
+ignored `.prepared/` repositories, with deterministic commits and safe existing
+state verification. Pilot fixtures and platform source remain unchanged.
+
+Host and `python:3.12-slim` Docker baseline checks agree: streaming_events has
+33 tests, 8 failures and 6 errors; request_signing has 35 tests and 17 assertion
+failures (including subtests). Both retain meaningful passing legacy coverage.
+Temporary repairs outside the project passed all 33 and 35 tests respectively
+and were deleted; no complete Suite A repair is shipped or added to Git history.
+Focused preparation checks: **9 passed**. Full regression: **366 passed,
+7 skipped** (platform Docker integration opt-in). Compile and `git diff --check`
+passed. Both canonical prepared repositories remain clean at TaskSpec bases.
+
+No real Codex calibration has run in this slice. Candidates may change after
+calibration; final selection/freeze requires the V1.1.5 gate. V1.1.4 calibration
+Runs are **NON-FINAL forever**. The older V1.1.0 Pilot remains discovery-only
+and can never become final evidence. These checks establish baseline quality
+and solvability, not coding-agent benchmark pass rates.
+
 ## Git / Development State
 
 - Current branch: `feat/v1.1-evidence-release` (observed during V1.1.0 validation)
-- Latest accepted slice: V1.1.2 — Deterministic Patch + Evaluation Evidence
+- Latest accepted slice: V1.1.3 — Analyze Workflow
+- V1.1.3 commit: `c9a9d2e feat: add experiment analysis workflow`
 - V1.1.2 commit: `7222535 feat: add deterministic run evidence`
 - V1.1.1 commit: `f2b7020 feat: add minimal run provenance`
 - V1.1.0 commit: `51f92a5 feat: add v1.1.0 pilot task discovery`
@@ -547,8 +574,10 @@ status changes. Do not document every small implementation detail.
 
 ## Exact Next Action
 
-The V1.1.3 self-review packet is ready. The owner then stages intended files,
+The V1.1.4 Suite A candidate self-review packet is ready. The owner then stages intended files,
 creates a checkpoint commit, pushes the feature branch, and requests independent
 GitHub review. Feature-branch checkpoints are the review substrate; only `main`
-requires accepted code. Do not begin V1.1.4 in this slice. Optional V2 remains
-deferred. Runtime results and pilot archives must not enter the checkpoint.
+requires accepted code. Real Codex calibration requires separate authorization
+and remains NON-FINAL forever. Do not begin V1.1.5 or freeze tasks in this slice.
+Optional V2 remains deferred. Runtime results, prepared repositories and pilot
+archives must not enter the checkpoint.
