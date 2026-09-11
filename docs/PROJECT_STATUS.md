@@ -34,10 +34,12 @@ V1.1.2 — Deterministic Patch + Evaluation Evidence: **externally accepted** at
 `7222535 feat: add deterministic run evidence`.
 V1.1.3 — Analyze Workflow: **externally accepted** at
 `c9a9d2e feat: add experiment analysis workflow`.
-Current slice: **V1.1.4 — Real Task Suite A**.
+V1.1.4 — Real Task Suite A: **externally accepted** at
+`9af2d28 feat: add v1.1 reliability suite A`.
+Current slice: **V1.1.5a — Real Task Suite B Candidates**.
 Implementation and local self-review are complete; external review is pending.
-Platform capability work is frozen for this phase. Suite A candidates are not
-frozen. V1.1.5 — Real Task Suite B + Freeze and Optional V2 remain deferred.
+Platform capability work is frozen for this phase. No final V1.1 TaskSpec has
+been frozen. V1.1.5b Suite Freeze and Optional V2 remain deferred.
 
 Locked sequence:
 
@@ -48,7 +50,9 @@ V1.1.0 Pilot Task Discovery
 → V1.1.2 Deterministic Patch + Evaluation Evidence
 → V1.1.3 Analyze Workflow
 → V1.1.4 Real Task Suite A
-→ V1.1.5 Real Task Suite B + Freeze
+→ V1.1.5a Real Task Suite B Candidates
+→ NON-FINAL Suite B calibration (after external review)
+→ V1.1.5b Suite Freeze
 → V1.1.6 Final Experiments + Evidence Release
 ```
 
@@ -152,16 +156,43 @@ Focused preparation checks: **9 passed**. Full regression: **366 passed,
 7 skipped** (platform Docker integration opt-in). Compile and `git diff --check`
 passed. Both canonical prepared repositories remain clean at TaskSpec bases.
 
-No real Codex calibration has run in this slice. Candidates may change after
-calibration; final selection/freeze requires the V1.1.5 gate. V1.1.4 calibration
+No real Codex calibration ran during V1.1.4 implementation. Candidates may change
+after calibration; final selection/freeze requires the V1.1.5b gate. V1.1.4 calibration
 Runs are **NON-FINAL forever**. The older V1.1.0 Pilot remains discovery-only
 and can never become final evidence. These checks establish baseline quality
 and solvability, not coding-agent benchmark pass rates.
 
+The owner's completed Suite A NON-FINAL calibration reported streaming_events
+**2/2 PASS, 2 exact patch variants** and request_signing **2/2 PASS, 2 exact
+patch variants**. Both pairs differed in their production-module diffs. Both
+candidates showed successful implementation variation; neither produced PASS/FAIL
+outcome variation in two Runs. Do not infer statistical reliability from n=2.
+Suite A templates, TaskSpecs and prepared base commits remain unchanged.
+
+V1.1.5a adds `atomic_batch` and `cache_revalidation` as purpose-built Suite B
+candidates, **not calibrated and not frozen**. Their visible standard-library
+tests exercise store/journal/idempotency transaction consistency and cached
+representation/freshness/backend-error consistency. The existing reliability
+preparation script now covers all four candidates using the same hardened helper.
+No platform source, Pilot definitions or existing Run artifacts changed.
+
+Suite B host and `python:3.12-slim` Docker baselines agree: atomic_batch has
+36 tests with 10 failures; cache_revalidation has 39 tests with 19 failures and
+1 error. Both retain meaningful PASS coverage and fail behavioral contracts,
+without import/setup failures. Temporary repairs outside the project passed
+all 36 and 39 tests and were deleted; no complete repair is shipped or added
+to prepared Git history. Focused preparation checks: **17 passed**. Full
+regression: **374 passed, 7 skipped** (platform Docker integration opt-in).
+Compile and tracked/untracked whitespace checks passed. All four prepared
+repositories remain clean at their TaskSpec bases with no extra worktrees.
+No real Codex execution occurred in V1.1.5a. All later Suite B calibration Runs
+remain **NON-FINAL forever**; final suitability and difficulty await calibration.
+
 ## Git / Development State
 
 - Current branch: `feat/v1.1-evidence-release` (observed during V1.1.0 validation)
-- Latest accepted slice: V1.1.3 — Analyze Workflow
+- Latest accepted slice: V1.1.4 — Real Task Suite A
+- V1.1.4 commit: `9af2d28 feat: add v1.1 reliability suite A`
 - V1.1.3 commit: `c9a9d2e feat: add experiment analysis workflow`
 - V1.1.2 commit: `7222535 feat: add deterministic run evidence`
 - V1.1.1 commit: `f2b7020 feat: add minimal run provenance`
@@ -574,10 +605,12 @@ status changes. Do not document every small implementation detail.
 
 ## Exact Next Action
 
-The V1.1.4 Suite A candidate self-review packet is ready. The owner then stages intended files,
+The V1.1.5a Suite B candidate self-review packet is ready. The owner then stages intended files,
 creates a checkpoint commit, pushes the feature branch, and requests independent
 GitHub review. Feature-branch checkpoints are the review substrate; only `main`
-requires accepted code. Real Codex calibration requires separate authorization
-and remains NON-FINAL forever. Do not begin V1.1.5 or freeze tasks in this slice.
+requires accepted code. After external review, separately authorized Suite B
+calibration remains NON-FINAL forever. V1.1.5b Suite Freeze follows calibration;
+V1.1.6 Final Experiments + Evidence Release follows that gate. Do not freeze
+tasks or create final manifests in this slice.
 Optional V2 remains deferred. Runtime results, prepared repositories and pilot
 archives must not enter the checkpoint.

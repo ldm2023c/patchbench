@@ -1,4 +1,4 @@
-"""Suite A preparation and visible buggy-base checks; no reference repairs."""
+"""Reliability preparation and visible buggy-base checks; no reference repairs."""
 import os
 from pathlib import Path
 import re
@@ -47,12 +47,18 @@ def test_preparation_and_behavioral_baseline(tmp_path, name):
                                     env={**os.environ, "PATH": str(Path(sys.executable).parent) + os.pathsep + os.environ["PATH"]},
                                     capture_output=True, text=True, timeout=task.evaluation.timeout_seconds)
             assert result.returncode == 1, result.stderr
-            failures = (["test_split_json_record", "test_split_utf8", "test_unicode_byte_limit"]
-                        if name == "streaming_events" else
-                        ["test_duplicate_query_values", "test_literal_plus", "test_header_ows_collapsed"])
+            failures = {
+                "streaming_events": ["test_split_json_record", "test_split_utf8", "test_unicode_byte_limit"],
+                "request_signing": ["test_duplicate_query_values", "test_literal_plus", "test_header_ows_collapsed"],
+                "atomic_batch": ["test_mid_batch_store_rollback", "test_mid_batch_journal_rollback",
+                                 "test_changed_payload_conflict", "test_failed_key_corrected_retry"],
+                "cache_revalidation": ["test_304_preserves_validator", "test_replacement_validator",
+                                       "test_failed_refresh_does_not_change_entry", "test_expired_error_propagates"],
+            }[name]
             for case in failures:
                 assert re.search(rf"^{case} \([^\n]+\) \.\.\. (FAIL|ERROR)$", result.stderr, re.MULTILINE), result.stderr
-            legacy = "test_simple_ascii" if name == "streaming_events" else "test_simple_legacy_request"
+            legacy = {"streaming_events": "test_simple_ascii", "request_signing": "test_simple_legacy_request",
+                      "atomic_batch": "test_single_commit", "cache_revalidation": "test_fresh_hit"}[name]
             assert re.search(rf"^{legacy} \([^\n]+\) \.\.\. ok$", result.stderr, re.MULTILINE)
             assert "ImportError" not in result.stderr and "ModuleNotFoundError" not in result.stderr
             assert len(re.findall(r" \.\.\. ok$", result.stderr, re.MULTILINE)) >= 10

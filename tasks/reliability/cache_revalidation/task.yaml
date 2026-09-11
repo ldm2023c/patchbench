@@ -1,0 +1,22 @@
+schema_version: 1
+id: cache_revalidation
+repository:
+  type: local
+  path: ../../../fixtures/reliability/.prepared/cache_revalidation
+  base_commit: 49d6f8f0c2547c5d0a9d45141a0f0e128e8ee3ca
+task:
+  prompt: |
+    Our cached resource client mishandles stale entries during conditional
+    revalidation: freshness can be refreshed at the wrong time, validators can
+    become inconsistent, and backend failures may serve data outside the permitted
+    stale window or suppress later revalidation. Repair the cache/client behavior
+    to follow the repository's documented fresh, stale, expired,
+    stale-if-error, validator, and backend-error contract using the injected clock
+    and backend. Preserve simple cache miss/fresh-hit behavior and deterministic
+    tests. See the repository's documented contract. Add regression coverage if
+    useful and keep the complete suite passing.
+evaluation:
+  command: "python -B -m unittest -v"
+  timeout_seconds: 120
+metadata:
+  language: python

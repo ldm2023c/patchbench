@@ -1,0 +1,22 @@
+schema_version: 1
+id: atomic_batch
+repository:
+  type: local
+  path: ../../../fixtures/reliability/.prepared/atomic_batch
+  base_commit: 1ee42b7784c8ead2e22281865191f820b6dc86fb
+task:
+  prompt: |
+    Our batch mutation service can leave store state, journal entries, and
+    idempotency state inconsistent when a later operation in a batch fails or when
+    an idempotency key is retried. Repair batch application so each request obeys
+    the repository's documented atomic commit, journal, validation, and idempotency
+    contract. Failed batches must leave no partial committed effects, successful
+    replays must not apply twice, and reusing a key for a different logical request
+    must be rejected without mutation. Preserve existing simple behavior and domain
+    errors. See the repository's documented contract. Add regression coverage if
+    useful and keep the complete suite passing.
+evaluation:
+  command: "python -B -m unittest -v"
+  timeout_seconds: 120
+metadata:
+  language: python

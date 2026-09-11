@@ -1,7 +1,7 @@
-"""Prepare Suite A candidates using the established hardened fixture workflow.
+"""Prepare reliability candidates using the established hardened fixture workflow.
 
 Run from the PatchBench root: python -m scripts.prepare_reliability_fixtures
-Only ignored Suite A repositories are created; Pilot state is never prepared.
+Only ignored reliability repositories are created; Pilot state is never prepared.
 """
 from pathlib import Path
 import subprocess
@@ -11,7 +11,7 @@ from scripts.prepare_pilot_fixtures import (
     FixturePreparationError, PROJECT_ROOT, git, prepare_fixture, template_files,
 )
 
-CANDIDATES = ("streaming_events", "request_signing")
+CANDIDATES = ("streaming_events", "request_signing", "atomic_batch", "cache_revalidation")
 FIXTURE_ROOT = PROJECT_ROOT / "fixtures" / "reliability"
 
 
