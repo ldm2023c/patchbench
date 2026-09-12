@@ -7,7 +7,8 @@ repository tasks. Frozen evaluation passed for 30/32 Runs (93.75% end-to-end).
 All 30 normally completed Codex executions passed frozen evaluation (30/30,
 100.00% conditional repair success). Two executions ended in external Codex
 usage-quota command failures before producing patches. There were zero timeouts.
-V1.1 implementation/evidence is complete, pending final external review.
+V1.1 implementation and evidence are complete. The final evidence release was
+externally accepted at `7a99c2c`.
 
 ## Frozen Protocol
 

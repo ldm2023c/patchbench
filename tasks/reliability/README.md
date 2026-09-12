@@ -145,8 +145,9 @@ signatures, not semantic algorithm equivalence.
 
 See [final-results.json](../../evidence/v1.1/final-results.json) for canonical
 Run order and compact evidence, and [FINAL_REPORT.md](../../evidence/v1.1/FINAL_REPORT.md)
-for interpretation and limitations. Release evidence is complete and pending
-final external review. Raw results and the freeze manifest/tag remain unchanged.
+for interpretation and limitations. The final V1.1 evidence release was externally
+accepted at `7a99c2c`; PatchBench V1.1 is complete. Raw results and the freeze
+manifest/tag remain unchanged.
 
 For read-only audit, use `python -m patchbench.cli analyze --experiment <ID> --json`
 on the four existing Experiments. Do not rerun them. Strict

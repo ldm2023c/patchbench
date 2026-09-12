@@ -33,7 +33,8 @@ See the [frozen protocol](evidence/v1.1/freeze-manifest.json),
 [machine-readable results](evidence/v1.1/final-results.json) and
 [final report](evidence/v1.1/FINAL_REPORT.md). This bounded sample covers four
 purpose-built realistic tasks and one model/environment; it does not establish
-general coding-agent reliability. Evidence is complete, pending final external review.
+general coding-agent reliability. PatchBench V1.1 is complete. The final evidence
+release was externally accepted at `7a99c2c`.
 
 ## Why PatchBench?
 

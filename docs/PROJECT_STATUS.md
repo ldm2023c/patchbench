@@ -47,8 +47,11 @@ Freeze tag: `v1.1-evidence-freeze`, commit
 `94cd2873c42af7f5c697e6316316c9cb59fc6d8b`.
 Strict preflight passed before final execution and again on the clean freeze
 checkout before release edits.
-Current slice: **V1.1.6 — Final Evidence Release**.
-**Implementation/evidence complete, pending final external review.**
+V1.1.6 — Final Evidence Release: **externally accepted** at
+`7a99c2c docs: publish v1.1 final evidence`
+(`7a99c2ca580ac34a2ca9cc248ec2f8977656c495`).
+**PatchBench V1.1: COMPLETE.**
+Current slice: **none — V1.1 is complete**.
 The 32 final Runs are complete; no replacement Runs or new Agent executions
 are part of this release slice. Optional V2 remains deferred.
 
@@ -311,7 +314,8 @@ passed before edits; release-file changes intentionally make that checkout dirty
 ## Git / Development State
 
 - Current branch: `feat/v1.1-evidence-release` (observed during V1.1.0 validation)
-- Latest accepted slice: V1.1.5b2 — Suite Freeze + Manifest
+- Latest accepted slice: V1.1.6 — Final Evidence Release
+- V1.1.6 commit: `7a99c2c docs: publish v1.1 final evidence`
 - V1.1.5b2 commit: `94cd287 feat: freeze v1.1 evidence suite`
 - V1.1.5b1 commit: `802c4d3 feat: add frozen evaluator contract`
 - V1.1.5a commit: `2440af2 feat: add v1.1 reliability suite B candidates`
@@ -728,9 +732,8 @@ status changes. Do not document every small implementation detail.
 
 ## Exact Next Action
 
-The V1.1.6 release/evidence self-review packet is ready. The owner stages only
-intended release files, creates and pushes a checkpoint, then requests final
-external review. V1.1 is not marked externally accepted until that review.
+PatchBench V1.1 is complete and ready to merge into `main` by the human owner.
+No further V1.1 implementation or experiment work is required.
 Do not move the freeze tag, rerun Agents/experiments, replace failed Runs, or
 include raw results/pilot/calibration artifacts in the checkpoint. Strict freeze
 preflight intentionally rejects the dirty release checkout; protected semantics
