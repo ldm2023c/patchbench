@@ -14,6 +14,27 @@ study that variation:
 Run → Repeat → Classify → Compare → Replay
 ```
 
+## V1.1 Evidence Release
+
+The frozen final sample contains **4 tasks × 8 = 32 Runs**: **30/32 PASS
+(93.75%) end-to-end**. All **30/30 normally completed Agent executions** passed
+the frozen evaluator; the other two ended in Codex quota-driven command failures
+without patches. There were no timeouts or replacement Runs. Conditional repair
+success is not an unconditional 100% reliability claim.
+
+Successful exact production signatures were **8 / 8 / 4 / 1** for
+streaming_events, request_signing, atomic_batch and cache_revalidation respectively.
+Whole-patch diversity can overstate production diversity because test edits also
+vary. These are task-local diff signatures, not semantic algorithm identities.
+Official evaluation restores frozen baseline tests in a separate worktree while
+preserving Agent test edits in patch evidence.
+
+See the [frozen protocol](evidence/v1.1/freeze-manifest.json),
+[machine-readable results](evidence/v1.1/final-results.json) and
+[final report](evidence/v1.1/FINAL_REPORT.md). This bounded sample covers four
+purpose-built realistic tasks and one model/environment; it does not establish
+general coding-agent reliability. Evidence is complete, pending final external review.
+
 ## Why PatchBench?
 
 PatchBench separates five practical reliability questions:

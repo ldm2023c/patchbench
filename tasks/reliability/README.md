@@ -1,11 +1,12 @@
-# Reliability task candidates — Suites A and B
+# Frozen V1.1 reliability suite — Suites A and B
 
 These are purpose-built realistic software repositories. They are not imported
 upstream bug reports or observed production bugs and claim no external provenance.
-They are candidate reliability tasks, not yet frozen final V1.1 evidence.
-All Suite A and Suite B calibration Runs are **NON-FINAL forever**, even if a candidate is later
-selected unchanged. Final selection and freeze happen only after calibration
-and the V1.1.5b2 Suite Freeze + Manifest gate. No final V1.1 TaskSpec has been frozen yet.
+The four tasks were frozen at `v1.1-evidence-freeze`, commit
+`94cd2873c42af7f5c697e6316316c9cb59fc6d8b`, after V1.1.5b2 acceptance.
+All Suite A/B calibration Runs remain **NON-FINAL forever**, even where the
+fixture definitions were selected unchanged. Pilot/calibration Runs are excluded
+from the final 32-Run sample.
 
 `streaming_events` models an NDJSON event-log importer: incremental byte-stream
 state, record framing, UTF-8 boundaries, byte limits, error reporting and reader
@@ -34,7 +35,7 @@ two whole-patch variants differed only in test edits; production diffs matched.
 Cache revalidation showed variation in client.py while cache.py repairs matched.
 All four candidates passed two calibration Runs each (8/8 total), all with
 visible test edits. This does not prove test weakening or statistical reliability.
-The tasks remain candidates pending V1.1.5b2, not a frozen final suite.
+Those calibration observations remain historical; final suite results are below.
 
 ## Prepare and validate
 
@@ -113,53 +114,43 @@ templates, scripts, tests, documentation or prepared Git history.
 No real Codex execution is part of preparation or parent validation. Keep all
 calibration artifacts excluded from final evidence.
 
-## V1.1.5b2 freeze readiness (pending external acceptance)
+## Accepted freeze and completed final sample
 
-`evidence/v1.1/freeze-manifest.json` pins the four ordered TaskSpecs and their
-exact byte hashes/fingerprints, repository bases, official test Git blob bytes,
-frozen evaluator protocol, Codex CLI version and current Docker image identity.
-Evaluator semantics are the accepted `802c4d3dcc09d89400ca306eae253b5ef585d442`.
-Fixture templates and the four TaskSpecs are unchanged in this freeze slice.
+The [freeze manifest](../../evidence/v1.1/freeze-manifest.json) pins four ordered
+TaskSpecs, exact byte hashes/fingerprints, repository bases, official test Git
+blob hashes, evaluator protocol, Codex CLI version and Docker image identity.
+Evaluator semantics are accepted at `802c4d3dcc09d89400ca306eae253b5ef585d442`;
+the separate freeze tag identifies the accepted manifest/verifier checkout,
+avoiding a commit SHA embedded recursively inside its own manifest.
 
-The locked execution configuration is agent `codex`, model `gpt-6-astra`,
-Agent timeout 600 seconds, Docker evaluation, and 8 independent Runs for each
-task, in order: streaming_events, request_signing, atomic_batch, cache_revalidation.
-That is 32 planned final Runs. Use `python -m patchbench.cli` from the verified
-Python environment so the package comes from this checkout. The manifest records
-the model identifier and CLI version; it cannot freeze remote model/service
-implementation. No final Runs or final result summaries exist from this slice.
+Final configuration: agent codex, model gpt-6-astra, Codex CLI 0.153.4,
+600-second Agent timeout, Docker evaluation and eight independent Runs per task.
+Strict preflight passed on the clean tagged checkout before final execution.
+The model identifier/CLI version are pinned, not remote service implementation.
 
-For pre-commit review, after preparing repositories:
+| Task | Final Experiment | PASS / FAIL | Whole-patch variants | Successful production signatures |
+|---|---|---|---|---|
+| streaming_events | f5eb757a1caf466d8d49be3a55dbcb58 | 8 / 0 | 8 | 8 |
+| request_signing | 71c041b4bc554269b371fdbf98406b50 | 8 / 0 | 8 | 8 |
+| atomic_batch | e8ace47d9fef4fae8214ee47c1a8679e | 8 / 0 | 8 | 4 |
+| cache_revalidation | 51d9c031f8344db0a64bd8cfddc9c6aa | 6 / 2 | 7 | 1 |
 
-```bash
-python -m scripts.verify_v11_freeze --static
-```
+The immutable final sample is 32 Runs: 30 PASS, 2 FAIL (93.75% end-to-end).
+All 30 normally completed Agent executions passed frozen evaluation; the two
+command failures reported Codex usage quota limits before producing patches.
+They remain in the sample with no replacements. Conditional 30/30 success is
+not unconditional reliability, and cache_revalidation's 6/8 is not a semantic
+repair success rate. Production counts are exact task-local non_test diff
+signatures, not semantic algorithm equivalence.
 
-This read-only check validates the manifest, accepted protected paths, task/base
-identities, clean prepared repositories, local Docker reference/image ID and
-optional RepoDigest, Codex version, PatchBench import origin, empty `.workspaces`
-and absence of running PatchBench sandbox containers. It permits uncommitted
-review files and requires no freeze tag. Missing prepared repositories must be
-prepared explicitly; residues are reported, never removed by the verifier.
+See [final-results.json](../../evidence/v1.1/final-results.json) for canonical
+Run order and compact evidence, and [FINAL_REPORT.md](../../evidence/v1.1/FINAL_REPORT.md)
+for interpretation and limitations. Release evidence is complete and pending
+final external review. Raw results and the freeze manifest/tag remain unchanged.
 
-After external acceptance, the human owner creates
-`refs/tags/v1.1-evidence-freeze` pointing to the accepted V1.1.5b2 commit.
-The manifest pins the earlier evaluator commit separately: putting the manifest's
-own future commit SHA inside itself would change that SHA. The post-review tag
-instead identifies the complete accepted manifest/verifier/docs checkout.
-
-Immediately before final execution, run the strict preflight:
-
-```bash
-python -m scripts.verify_v11_freeze
-```
-
-It adds a clean root, an existing freeze ref, HEAD equal to the tag's resolved
-commit, and unchanged protected semantics since the evaluator checkpoint. The
-current `python:3.12-slim` tag must still resolve to the pinned image ID; do not
-pull/update it to bypass a mismatch. No verifier mode creates or moves tags.
-Before that tag exists, strict mode must fail explicitly for the missing ref.
-
-V1.1.5b2 is not accepted/finally frozen yet. Final experiments require that gate
-and separate execution authorization. A completed FAIL is final evidence, not
-a reason to retry; genuine infrastructure failures require separate review.
+For read-only audit, use `python -m patchbench.cli analyze --experiment <ID> --json`
+on the four existing Experiments. Do not rerun them. Strict
+`python -m scripts.verify_v11_freeze` requires a clean checkout at the freeze tag;
+it intentionally fails after release-documentation edits. Verify protected-path
+diffs against the freeze commit when reviewing this release. The verifier never
+cleans residues, pulls images, creates tags or prepares missing repositories.

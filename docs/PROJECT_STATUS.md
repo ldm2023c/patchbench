@@ -41,12 +41,16 @@ V1.1.5a — Real Task Suite B Candidates: **externally accepted** at
 V1.1.5b1 — Frozen Evaluator Contract: **externally accepted** at
 `802c4d3 feat: add frozen evaluator contract`
 (`802c4d3dcc09d89400ca306eae253b5ef585d442`).
-Current slice: **V1.1.5b2 — Suite Freeze + Manifest**.
-Implementation and local self-review are complete; external review is pending.
-Freeze readiness is implemented, but V1.1.5b2 is not externally accepted or
-finally frozen. The owner creates the freeze tag only after acceptance.
-V1.1.6 — Final Experiments + Evidence Release follows; no final Runs exist from
-this slice. Optional V2 remains deferred.
+V1.1.5b2 — Suite Freeze + Manifest: **externally accepted** at
+`94cd287 feat: freeze v1.1 evidence suite`.
+Freeze tag: `v1.1-evidence-freeze`, commit
+`94cd2873c42af7f5c697e6316316c9cb59fc6d8b`.
+Strict preflight passed before final execution and again on the clean freeze
+checkout before release edits.
+Current slice: **V1.1.6 — Final Evidence Release**.
+**Implementation/evidence complete, pending final external review.**
+The 32 final Runs are complete; no replacement Runs or new Agent executions
+are part of this release slice. Optional V2 remains deferred.
 
 Locked sequence:
 
@@ -250,13 +254,13 @@ The final configuration is locked to `python -m patchbench.cli`, agent codex,
 model gpt-6-astra, 600-second Agent timeout, Docker evaluation and 8 independent
 Runs per task: 4 tasks, 32 planned final Runs. Completed FAILs are final evidence;
 no retry is authorized merely for FAIL. Genuine infrastructure failures require
-separate review rather than silent retry. No final execution occurred here.
+separate review rather than silent retry. No final execution occurred during V1.1.5b2 implementation.
 
 `patchbench_evaluator_commit` pins the already accepted implementation. The
 separate `freeze_ref`, `refs/tags/v1.1-evidence-freeze`, will identify the accepted
 V1.1.5b2 checkout after external review. Embedding that future commit's own SHA
 inside its manifest would change its bytes and commit ID recursively; the tag
-avoids that self-reference. It has not been created by this slice.
+avoids that self-reference. It was subsequently created by the owner after acceptance.
 
 Static verification permits review-document changes and an absent tag while
 checking semantic identities, prepared bases, package import origin, Docker and
@@ -273,10 +277,42 @@ reported the missing `refs/tags/v1.1-evidence-freeze`. Protected semantic diff
 against `802c4d3` is empty. Prepared HEADs remain clean and unchanged, with no
 `.workspaces` children or running PatchBench sandbox containers.
 
+V1.1.6 final evidence uses exactly four canonical Experiments:
+
+- streaming_events: `f5eb757a1caf466d8d49be3a55dbcb58`, 8 PASS / 0 FAIL;
+- request_signing: `71c041b4bc554269b371fdbf98406b50`, 8 PASS / 0 FAIL;
+- atomic_batch: `e8ace47d9fef4fae8214ee47c1a8679e`, 8 PASS / 0 FAIL;
+- cache_revalidation: `51d9c031f8344db0a64bd8cfddc9c6aa`, 6 PASS / 2 FAIL.
+
+Aggregate: 30/32 end-to-end PASS (93.75%), 30 normally completed Agent executions,
+2 COMMAND_FAILED, zero timeouts. All 30 completed executions passed frozen
+assessment (100.00% conditional repair success, not unconditional reliability).
+The two failed cache Runs, `31f0bc3b57304e6abadcd2136db81592` and
+`d741c88639084cdfaba06d27f39cc833`, reported Codex usage limits in persisted
+agent.log, produced empty patches and reproduced the unchanged 39-test baseline
+(19 failures, 1 error). The quota explanation is release-level interpretation;
+platform labels remain agent_command_failed/no_patch/test_failed, overlapping
+on the same two Runs. No semantic repair failure or bad patch is claimed.
+
+Exact whole-patch variants are 8/8/8/7; successful production signatures are
+8/8/4/1, totaling 21 task-scoped signatures across 30 successful Runs. Exact
+hash differences are not semantic algorithm distinctions. Pilot/calibration
+Runs remain excluded forever. All final provenance matches the freeze manifest.
+The tracked artifacts are `evidence/v1.1/final-results.json` and
+`evidence/v1.1/FINAL_REPORT.md`; raw results, frozen semantics and tag are unchanged.
+
+V1.1.6 self-review: **455 passed, 9 skipped**; compileall, JSON parsing and
+`git diff --check` passed. Independent canonical-artifact recomputation confirms
+32 Runs, 30 PASS, 2 FAIL, 30 completed, 2 command_failed, zero timed_out, and
+production diversity 8/8/4/1. All results-tree file hashes remained unchanged;
+protected semantic diff against the freeze commit is empty. Strict preflight
+passed before edits; release-file changes intentionally make that checkout dirty.
+
 ## Git / Development State
 
 - Current branch: `feat/v1.1-evidence-release` (observed during V1.1.0 validation)
-- Latest accepted slice: V1.1.5b1 — Frozen Evaluator Contract
+- Latest accepted slice: V1.1.5b2 — Suite Freeze + Manifest
+- V1.1.5b2 commit: `94cd287 feat: freeze v1.1 evidence suite`
 - V1.1.5b1 commit: `802c4d3 feat: add frozen evaluator contract`
 - V1.1.5a commit: `2440af2 feat: add v1.1 reliability suite B candidates`
 - V1.1.4 commit: `9af2d28 feat: add v1.1 reliability suite A`
@@ -692,12 +728,10 @@ status changes. Do not document every small implementation detail.
 
 ## Exact Next Action
 
-The V1.1.5b2 Suite Freeze + Manifest self-review packet is ready. The owner stages intended files,
-creates a checkpoint commit, pushes the feature branch, and requests independent
-GitHub review. Feature-branch checkpoints are the review substrate; only `main`
-requires accepted code. After V1.1.5b2 external acceptance, the owner creates
-`refs/tags/v1.1-evidence-freeze` at that accepted commit. Strict preflight must
-pass from that exact clean checkout before separately authorized V1.1.6 final
-execution. Do not create the tag or run final experiments in this slice.
-Optional V2 remains deferred. Runtime results, prepared repositories and pilot
-archives must not enter the checkpoint.
+The V1.1.6 release/evidence self-review packet is ready. The owner stages only
+intended release files, creates and pushes a checkpoint, then requests final
+external review. V1.1 is not marked externally accepted until that review.
+Do not move the freeze tag, rerun Agents/experiments, replace failed Runs, or
+include raw results/pilot/calibration artifacts in the checkpoint. Strict freeze
+preflight intentionally rejects the dirty release checkout; protected semantics
+must still match the freeze commit. Optional V2 remains deferred.

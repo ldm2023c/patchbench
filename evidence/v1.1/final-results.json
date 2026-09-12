@@ -1,0 +1,891 @@
+{
+  "schema_version": 1,
+  "suite_id": "patchbench-v1.1-evidence",
+  "freeze_ref": "refs/tags/v1.1-evidence-freeze",
+  "freeze_commit": "94cd2873c42af7f5c697e6316316c9cb59fc6d8b",
+  "experiments": [
+    {
+      "task_id": "streaming_events",
+      "experiment_id": "f5eb757a1caf466d8d49be3a55dbcb58",
+      "run_count": 8,
+      "pass_count": 8,
+      "fail_count": 0,
+      "pass_rate": 1.0,
+      "tests_per_run": 33,
+      "exact_patch_variant_count": 8,
+      "successful_production_variant_count": 8,
+      "run_ids": [
+        "5d625b25edd64a1ab95685a8c5ecbeab",
+        "854ab758977e48759ea1e810a22ddb2e",
+        "5382b9f89f044a0cb2ddedad4ce593e7",
+        "794a4ed76fb1486899eec1edabd07d9e",
+        "6230dba0d99f413f9449d9f169440990",
+        "6155e6383a5048b1aabbc756525c39e0",
+        "bab40af052b344508f41ec965a501818",
+        "83738f0712144d79ad10d52841497fbe"
+      ],
+      "runs": [
+        {
+          "run_id": "5d625b25edd64a1ab95685a8c5ecbeab",
+          "evaluation_passed": true,
+          "agent_status": "completed",
+          "agent_exit_code": 0,
+          "patch_sha256": "699085eb0d6f2798fe7e45a901d93daa39ff2fff6e85e569f0fbe3cd5e793a70",
+          "patch_bytes": 5802,
+          "changed_file_count": 2,
+          "production_signature": [
+            [
+              "eventstream/decoder.py",
+              "99673145f3b8118bb7fdd46fa4a6a583847aa0202885d4a523a49581bc2d7c45"
+            ]
+          ],
+          "tests_run": 33,
+          "failure_count": 0,
+          "error_count": 0,
+          "failure_categories": [],
+          "test_log_sha256": "ee11c5efddc70bd9194dc9e12182663a1f13665b21831077cd08f97b6a1fbf93"
+        },
+        {
+          "run_id": "854ab758977e48759ea1e810a22ddb2e",
+          "evaluation_passed": true,
+          "agent_status": "completed",
+          "agent_exit_code": 0,
+          "patch_sha256": "8d5a144d2c95c96b2612fec2bec962ae489a2e234a1a299696263a7572a33633",
+          "patch_bytes": 6120,
+          "changed_file_count": 2,
+          "production_signature": [
+            [
+              "eventstream/decoder.py",
+              "77d388ad68eb65815e7628c6b01a39e4443f0cd307cfb4764422c4ddcac23fa1"
+            ]
+          ],
+          "tests_run": 33,
+          "failure_count": 0,
+          "error_count": 0,
+          "failure_categories": [],
+          "test_log_sha256": "a55958064991a6abdd9e147798646ef2497d64f93fd414d1879e8fc4e5360a12"
+        },
+        {
+          "run_id": "5382b9f89f044a0cb2ddedad4ce593e7",
+          "evaluation_passed": true,
+          "agent_status": "completed",
+          "agent_exit_code": 0,
+          "patch_sha256": "a883196a8c397b3b9b4ec95af6f87087064067a74886f917909e4e02d9696b63",
+          "patch_bytes": 5817,
+          "changed_file_count": 2,
+          "production_signature": [
+            [
+              "eventstream/decoder.py",
+              "a3758a874c04a5576a8386aefe786749ed5038696f3b4fbe268c22641ee56927"
+            ]
+          ],
+          "tests_run": 33,
+          "failure_count": 0,
+          "error_count": 0,
+          "failure_categories": [],
+          "test_log_sha256": "418a62bdf1cd47e200e1374a8e4219f7c5d4fe1bf09f7380a513bdf66bffb76f"
+        },
+        {
+          "run_id": "794a4ed76fb1486899eec1edabd07d9e",
+          "evaluation_passed": true,
+          "agent_status": "completed",
+          "agent_exit_code": 0,
+          "patch_sha256": "895176b4cdac1932b3a1da2279561054b1276ab810b5f15bfe1bfdc056a312f1",
+          "patch_bytes": 5165,
+          "changed_file_count": 2,
+          "production_signature": [
+            [
+              "eventstream/decoder.py",
+              "24ecac6bc3f4603e8d12e54e06e0d6068793e141208b77392b25108abcd57bb9"
+            ]
+          ],
+          "tests_run": 33,
+          "failure_count": 0,
+          "error_count": 0,
+          "failure_categories": [],
+          "test_log_sha256": "bf369c52f2bf8b6d2289b744ac9cb5cee4706565db31cabb378a3285ffeef7cb"
+        },
+        {
+          "run_id": "6230dba0d99f413f9449d9f169440990",
+          "evaluation_passed": true,
+          "agent_status": "completed",
+          "agent_exit_code": 0,
+          "patch_sha256": "85b84031f7b453210c75a96fdcc18b9d273b43a100d6cdaf26528b64790ca502",
+          "patch_bytes": 5856,
+          "changed_file_count": 2,
+          "production_signature": [
+            [
+              "eventstream/decoder.py",
+              "2cce1c9a4a4928eea88f581f8a361a316fcfbc624bea89b2bd820f755a0bf179"
+            ]
+          ],
+          "tests_run": 33,
+          "failure_count": 0,
+          "error_count": 0,
+          "failure_categories": [],
+          "test_log_sha256": "5c7d44c5614a027eb2212e283d43d43be41d1e0979d1395b83e50dec3cd766ea"
+        },
+        {
+          "run_id": "6155e6383a5048b1aabbc756525c39e0",
+          "evaluation_passed": true,
+          "agent_status": "completed",
+          "agent_exit_code": 0,
+          "patch_sha256": "7093a8e3627e1dbb85f199ccd0e6eefbfa121f58d68b2da4f1d793e7315f3a41",
+          "patch_bytes": 5773,
+          "changed_file_count": 2,
+          "production_signature": [
+            [
+              "eventstream/decoder.py",
+              "c12d7d007d7e3d154af420bd10df72d97b825067c6478680e4e04e4d0da528ff"
+            ]
+          ],
+          "tests_run": 33,
+          "failure_count": 0,
+          "error_count": 0,
+          "failure_categories": [],
+          "test_log_sha256": "0de154ccb494b79f62757a3d0d25fe1e46f3beb7f962cf07f6054a77a4fca395"
+        },
+        {
+          "run_id": "bab40af052b344508f41ec965a501818",
+          "evaluation_passed": true,
+          "agent_status": "completed",
+          "agent_exit_code": 0,
+          "patch_sha256": "b8ba264d4ff62ff728e51c9586319775c3f1fbb55b99f6803fcf68e43dd66529",
+          "patch_bytes": 6231,
+          "changed_file_count": 2,
+          "production_signature": [
+            [
+              "eventstream/decoder.py",
+              "6cbd1945561b4d908ac23fa1966d9188d10fd907afecaa425743bff96127b7b9"
+            ]
+          ],
+          "tests_run": 33,
+          "failure_count": 0,
+          "error_count": 0,
+          "failure_categories": [],
+          "test_log_sha256": "510651b1877539311699dfad18e13840f9e4bba76ccc5f71b5a3ba8db2f6ea41"
+        },
+        {
+          "run_id": "83738f0712144d79ad10d52841497fbe",
+          "evaluation_passed": true,
+          "agent_status": "completed",
+          "agent_exit_code": 0,
+          "patch_sha256": "2ffab93173ed04894dc10f639a734683f367ce9115119bef6ee4da3d2ec26336",
+          "patch_bytes": 5484,
+          "changed_file_count": 2,
+          "production_signature": [
+            [
+              "eventstream/decoder.py",
+              "32ffcc8e36bffcabe2561e6a0e99180c16e7ec18b19e606d72eddfa3e578ffa4"
+            ]
+          ],
+          "tests_run": 33,
+          "failure_count": 0,
+          "error_count": 0,
+          "failure_categories": [],
+          "test_log_sha256": "2c7a5e5e7331ef320320017a782b4f816cdea18b73a32fab8b5c23ae03df1021"
+        }
+      ]
+    },
+    {
+      "task_id": "request_signing",
+      "experiment_id": "71c041b4bc554269b371fdbf98406b50",
+      "run_count": 8,
+      "pass_count": 8,
+      "fail_count": 0,
+      "pass_rate": 1.0,
+      "tests_per_run": 35,
+      "exact_patch_variant_count": 8,
+      "successful_production_variant_count": 8,
+      "run_ids": [
+        "9dbfb38b861846d3acff67cfbc5396ca",
+        "51e347d418e8402db970f0fb21b092f6",
+        "23dee7aa286d48d5966d5d64c39940a6",
+        "0d043e10c0c343f09571be617deb147b",
+        "6c8cfde23bec49e0bd638bfe7139b412",
+        "42346aa7f0524a7cb5f41235753a7975",
+        "7d564baf16884e3d93a04469be0b4c20",
+        "c28c86ca3fab4d6b891e6bebdd180681"
+      ],
+      "runs": [
+        {
+          "run_id": "9dbfb38b861846d3acff67cfbc5396ca",
+          "evaluation_passed": true,
+          "agent_status": "completed",
+          "agent_exit_code": 0,
+          "patch_sha256": "7b24c4f0b7ef8cc9c06c8ef1cdd59fc3557bfdd62665d674fdf8d50440e0244d",
+          "patch_bytes": 4889,
+          "changed_file_count": 2,
+          "production_signature": [
+            [
+              "websign/canonical.py",
+              "4b7b77eb4d5bd446cc639349f715a303afb2d2c4e2dcadff54a02407f83d6ba5"
+            ]
+          ],
+          "tests_run": 35,
+          "failure_count": 0,
+          "error_count": 0,
+          "failure_categories": [],
+          "test_log_sha256": "daf97fec5aa9f65669aa2f923a7ede9ae2c5ff1f6af3e9cc2f9131ed53f4d53d"
+        },
+        {
+          "run_id": "51e347d418e8402db970f0fb21b092f6",
+          "evaluation_passed": true,
+          "agent_status": "completed",
+          "agent_exit_code": 0,
+          "patch_sha256": "4ac9f330f128cb6ef53286df0d039ffd2fc02ea4e681dd5cff81982c3fd9419d",
+          "patch_bytes": 4709,
+          "changed_file_count": 2,
+          "production_signature": [
+            [
+              "websign/canonical.py",
+              "fb1bcf6297aee2e1220306f5292314df18b1a57850067c9076c48c3316791c65"
+            ]
+          ],
+          "tests_run": 35,
+          "failure_count": 0,
+          "error_count": 0,
+          "failure_categories": [],
+          "test_log_sha256": "58f980c3de3df1105a3c21343e09b40b53ba7f02b9fa62ce56c9fa4aff82f102"
+        },
+        {
+          "run_id": "23dee7aa286d48d5966d5d64c39940a6",
+          "evaluation_passed": true,
+          "agent_status": "completed",
+          "agent_exit_code": 0,
+          "patch_sha256": "dcc7a71633824aa209378dfcad87cd94c4f633cf886bf69957793265d47642de",
+          "patch_bytes": 5545,
+          "changed_file_count": 2,
+          "production_signature": [
+            [
+              "websign/canonical.py",
+              "8e4ee01e4c9ce90ffd7517381319225bbe8daf9dcc4625b3bf847cb2ff3b55fb"
+            ]
+          ],
+          "tests_run": 35,
+          "failure_count": 0,
+          "error_count": 0,
+          "failure_categories": [],
+          "test_log_sha256": "b688328b143e11fe378fd4c2987265f05b6cd24128e43dc3cd137b29ac1fd20f"
+        },
+        {
+          "run_id": "0d043e10c0c343f09571be617deb147b",
+          "evaluation_passed": true,
+          "agent_status": "completed",
+          "agent_exit_code": 0,
+          "patch_sha256": "9315a09589914329789e8cf8bb5c9dab650fe4eff31bd6b6f9da6aaf8f225bfc",
+          "patch_bytes": 4825,
+          "changed_file_count": 2,
+          "production_signature": [
+            [
+              "websign/canonical.py",
+              "a19b29ba944f0b86f919009370a9b84ab1ff3a740941755c6411349cddd1c698"
+            ]
+          ],
+          "tests_run": 35,
+          "failure_count": 0,
+          "error_count": 0,
+          "failure_categories": [],
+          "test_log_sha256": "6a134f81e80d89ad6f5877c0730ff3764e9ed6819401db545815ce76f9c69dd0"
+        },
+        {
+          "run_id": "6c8cfde23bec49e0bd638bfe7139b412",
+          "evaluation_passed": true,
+          "agent_status": "completed",
+          "agent_exit_code": 0,
+          "patch_sha256": "026d83865b5017abec3e32d67f9d265bc79149ca4d395558ed59bd59f1dc29fe",
+          "patch_bytes": 4510,
+          "changed_file_count": 2,
+          "production_signature": [
+            [
+              "websign/canonical.py",
+              "435c4851423c87bc87e200084f43eef4fa0c9c46a9f3a7b9c4c79d1ee0e01e3e"
+            ]
+          ],
+          "tests_run": 35,
+          "failure_count": 0,
+          "error_count": 0,
+          "failure_categories": [],
+          "test_log_sha256": "333d4a63244ee01b1d01d6199cb2bfd22e17479cc3791d105738d827bfacf6a5"
+        },
+        {
+          "run_id": "42346aa7f0524a7cb5f41235753a7975",
+          "evaluation_passed": true,
+          "agent_status": "completed",
+          "agent_exit_code": 0,
+          "patch_sha256": "6685a7a78889359edef6fa7ab24ade017618d9bb3d6c247f77ad650b444abdc9",
+          "patch_bytes": 4839,
+          "changed_file_count": 2,
+          "production_signature": [
+            [
+              "websign/canonical.py",
+              "2f0b0540ed78df33a5fd38fbe2673d1de3780c1f556e9612aa6e6d97cf87fe14"
+            ]
+          ],
+          "tests_run": 35,
+          "failure_count": 0,
+          "error_count": 0,
+          "failure_categories": [],
+          "test_log_sha256": "3c19a20d74fe5fa337f764a5af5df2713f9661fa9ec9b411e298a3f35090e690"
+        },
+        {
+          "run_id": "7d564baf16884e3d93a04469be0b4c20",
+          "evaluation_passed": true,
+          "agent_status": "completed",
+          "agent_exit_code": 0,
+          "patch_sha256": "322dc615ef8ee5c51af887f462d78880512fc4cba167c892417d2fb950f37162",
+          "patch_bytes": 4691,
+          "changed_file_count": 2,
+          "production_signature": [
+            [
+              "websign/canonical.py",
+              "d1e8e666488396901ba92377c92e90d6bcbcdb50003397b50af914907070469f"
+            ]
+          ],
+          "tests_run": 35,
+          "failure_count": 0,
+          "error_count": 0,
+          "failure_categories": [],
+          "test_log_sha256": "2ded41f1d0f36a6ef2df6fb0f6151ef322b1d35af26cc65e94aaf8cc107af251"
+        },
+        {
+          "run_id": "c28c86ca3fab4d6b891e6bebdd180681",
+          "evaluation_passed": true,
+          "agent_status": "completed",
+          "agent_exit_code": 0,
+          "patch_sha256": "17673a6652003b6338f8ac5a679f69beabc16cb45c26cb365729efd9953ae477",
+          "patch_bytes": 4802,
+          "changed_file_count": 2,
+          "production_signature": [
+            [
+              "websign/canonical.py",
+              "d552a5441875de96d6be76340b6f59683403d0752c72af7b4caf88dfbf0d6f14"
+            ]
+          ],
+          "tests_run": 35,
+          "failure_count": 0,
+          "error_count": 0,
+          "failure_categories": [],
+          "test_log_sha256": "3e0ff7c6fbad920f840dec97c91fe415aa4bf75124bf3a0319d95e0517c88df7"
+        }
+      ]
+    },
+    {
+      "task_id": "atomic_batch",
+      "experiment_id": "e8ace47d9fef4fae8214ee47c1a8679e",
+      "run_count": 8,
+      "pass_count": 8,
+      "fail_count": 0,
+      "pass_rate": 1.0,
+      "tests_per_run": 36,
+      "exact_patch_variant_count": 8,
+      "successful_production_variant_count": 4,
+      "run_ids": [
+        "8accfb5860c849a6872f4a953b2fd2f0",
+        "eca2f3dbabbe4b56a958ddc129d8ab78",
+        "b5deb804a850489ba2c5402446cb2516",
+        "e433218840c54a039d56bfea8a6002f3",
+        "72625910c1ac4b729d0fb7b856cb998d",
+        "8a82cc0fec384c88ae0f514b9b5056cd",
+        "fa97e0baa50b418c801c3edc40729840",
+        "5811c28a6f664d0db20cc942fc9edb0b"
+      ],
+      "runs": [
+        {
+          "run_id": "8accfb5860c849a6872f4a953b2fd2f0",
+          "evaluation_passed": true,
+          "agent_status": "completed",
+          "agent_exit_code": 0,
+          "patch_sha256": "b008fb857a22cd079789ef235f71bfd109573ca50cbd06d0b0f55e866e4f987f",
+          "patch_bytes": 4931,
+          "changed_file_count": 4,
+          "production_signature": [
+            [
+              "batchstore/journal.py",
+              "d63869262ed9792cfeef4924f343f5d43b37dd7763dda778c11c85ef9060ca0a"
+            ],
+            [
+              "batchstore/service.py",
+              "5ba7add04d50fc95548ec45fae797c3f999fc4fad09a9f42825cd82f32124df4"
+            ],
+            [
+              "batchstore/store.py",
+              "3406317bfe70be527aa7f9a4e956a0cd65d52f1bdbf11b50a48cf918b609ed39"
+            ]
+          ],
+          "tests_run": 36,
+          "failure_count": 0,
+          "error_count": 0,
+          "failure_categories": [],
+          "test_log_sha256": "6e89ad136b103c6a3d82a00234248c3d85e84c361035defa6e49b74eb4008136"
+        },
+        {
+          "run_id": "eca2f3dbabbe4b56a958ddc129d8ab78",
+          "evaluation_passed": true,
+          "agent_status": "completed",
+          "agent_exit_code": 0,
+          "patch_sha256": "60bf834a8a81bdb88bbde864bc4a80cb531c5bd207370553464412cb2f36c303",
+          "patch_bytes": 5406,
+          "changed_file_count": 4,
+          "production_signature": [
+            [
+              "batchstore/journal.py",
+              "d63869262ed9792cfeef4924f343f5d43b37dd7763dda778c11c85ef9060ca0a"
+            ],
+            [
+              "batchstore/service.py",
+              "5ba7add04d50fc95548ec45fae797c3f999fc4fad09a9f42825cd82f32124df4"
+            ],
+            [
+              "batchstore/store.py",
+              "82759871e889dda6edd6fb7c7b3f7e8016475482d882909c9f6135156a6d30ba"
+            ]
+          ],
+          "tests_run": 36,
+          "failure_count": 0,
+          "error_count": 0,
+          "failure_categories": [],
+          "test_log_sha256": "dbea012b0a17b521e0873d05a2a1b2d42749a679f5bf17c669b3d8f970aadaa5"
+        },
+        {
+          "run_id": "b5deb804a850489ba2c5402446cb2516",
+          "evaluation_passed": true,
+          "agent_status": "completed",
+          "agent_exit_code": 0,
+          "patch_sha256": "813b6a319b5b65ab7b270c48ce4d2d03bc652ddc59c95f70c55ff52dcb3cfaec",
+          "patch_bytes": 5138,
+          "changed_file_count": 4,
+          "production_signature": [
+            [
+              "batchstore/journal.py",
+              "d63869262ed9792cfeef4924f343f5d43b37dd7763dda778c11c85ef9060ca0a"
+            ],
+            [
+              "batchstore/service.py",
+              "5ba7add04d50fc95548ec45fae797c3f999fc4fad09a9f42825cd82f32124df4"
+            ],
+            [
+              "batchstore/store.py",
+              "3406317bfe70be527aa7f9a4e956a0cd65d52f1bdbf11b50a48cf918b609ed39"
+            ]
+          ],
+          "tests_run": 36,
+          "failure_count": 0,
+          "error_count": 0,
+          "failure_categories": [],
+          "test_log_sha256": "2be9624a1512e623900879b072cf3f75c6a225b05ece6c684e5870b821a72163"
+        },
+        {
+          "run_id": "e433218840c54a039d56bfea8a6002f3",
+          "evaluation_passed": true,
+          "agent_status": "completed",
+          "agent_exit_code": 0,
+          "patch_sha256": "3ef37e23946d938dd86615323fc1c62825f2c4b601502754cc104baf917ad398",
+          "patch_bytes": 5000,
+          "changed_file_count": 4,
+          "production_signature": [
+            [
+              "batchstore/journal.py",
+              "d63869262ed9792cfeef4924f343f5d43b37dd7763dda778c11c85ef9060ca0a"
+            ],
+            [
+              "batchstore/service.py",
+              "5ba7add04d50fc95548ec45fae797c3f999fc4fad09a9f42825cd82f32124df4"
+            ],
+            [
+              "batchstore/store.py",
+              "3406317bfe70be527aa7f9a4e956a0cd65d52f1bdbf11b50a48cf918b609ed39"
+            ]
+          ],
+          "tests_run": 36,
+          "failure_count": 0,
+          "error_count": 0,
+          "failure_categories": [],
+          "test_log_sha256": "fe155d15f20ad9794ef4fa97e7c552b2c6857b598db7ebbe313224523970b297"
+        },
+        {
+          "run_id": "72625910c1ac4b729d0fb7b856cb998d",
+          "evaluation_passed": true,
+          "agent_status": "completed",
+          "agent_exit_code": 0,
+          "patch_sha256": "ab60cad12d4d6abb14b779e6e36fac48b143b413919e943d7eeaf068c56022c4",
+          "patch_bytes": 5327,
+          "changed_file_count": 4,
+          "production_signature": [
+            [
+              "batchstore/journal.py",
+              "d63869262ed9792cfeef4924f343f5d43b37dd7763dda778c11c85ef9060ca0a"
+            ],
+            [
+              "batchstore/service.py",
+              "1291a05b0cd3fdf81e4ba86c3e2a6a0b05eb13bbc330721d29f125cd1eab27aa"
+            ],
+            [
+              "batchstore/store.py",
+              "3406317bfe70be527aa7f9a4e956a0cd65d52f1bdbf11b50a48cf918b609ed39"
+            ]
+          ],
+          "tests_run": 36,
+          "failure_count": 0,
+          "error_count": 0,
+          "failure_categories": [],
+          "test_log_sha256": "cbaf213c1772f0b2d6a98dcd3dc63fed29cc3aca41964b528a6baa15abe1bb1f"
+        },
+        {
+          "run_id": "8a82cc0fec384c88ae0f514b9b5056cd",
+          "evaluation_passed": true,
+          "agent_status": "completed",
+          "agent_exit_code": 0,
+          "patch_sha256": "9681ce97ee9690f7706b2b9242371a4d8fccaaf328754ff5b08d665963716d5e",
+          "patch_bytes": 4917,
+          "changed_file_count": 4,
+          "production_signature": [
+            [
+              "batchstore/journal.py",
+              "d63869262ed9792cfeef4924f343f5d43b37dd7763dda778c11c85ef9060ca0a"
+            ],
+            [
+              "batchstore/service.py",
+              "5ba7add04d50fc95548ec45fae797c3f999fc4fad09a9f42825cd82f32124df4"
+            ],
+            [
+              "batchstore/store.py",
+              "a92674f1920331e0368f5fa6955fac932ec489bd5eec31f07a9105041531295c"
+            ]
+          ],
+          "tests_run": 36,
+          "failure_count": 0,
+          "error_count": 0,
+          "failure_categories": [],
+          "test_log_sha256": "884ab704023f5e5aae21ba10d21dc9ef0e4069615369282b088373caf66deec4"
+        },
+        {
+          "run_id": "fa97e0baa50b418c801c3edc40729840",
+          "evaluation_passed": true,
+          "agent_status": "completed",
+          "agent_exit_code": 0,
+          "patch_sha256": "228419dc8b266ad3e460c660a645a5f1e201b92d3122c9c0ade18f57efe816c9",
+          "patch_bytes": 4939,
+          "changed_file_count": 4,
+          "production_signature": [
+            [
+              "batchstore/journal.py",
+              "d63869262ed9792cfeef4924f343f5d43b37dd7763dda778c11c85ef9060ca0a"
+            ],
+            [
+              "batchstore/service.py",
+              "5ba7add04d50fc95548ec45fae797c3f999fc4fad09a9f42825cd82f32124df4"
+            ],
+            [
+              "batchstore/store.py",
+              "82759871e889dda6edd6fb7c7b3f7e8016475482d882909c9f6135156a6d30ba"
+            ]
+          ],
+          "tests_run": 36,
+          "failure_count": 0,
+          "error_count": 0,
+          "failure_categories": [],
+          "test_log_sha256": "3eced08f624b692d2f702658a80ab11e9789a7dcef00ee8f2312569cec81e6e2"
+        },
+        {
+          "run_id": "5811c28a6f664d0db20cc942fc9edb0b",
+          "evaluation_passed": true,
+          "agent_status": "completed",
+          "agent_exit_code": 0,
+          "patch_sha256": "3e757774e623882a209a2a3d03fbcae854cd80556c4e7167c2fb6613d339da41",
+          "patch_bytes": 5391,
+          "changed_file_count": 4,
+          "production_signature": [
+            [
+              "batchstore/journal.py",
+              "d63869262ed9792cfeef4924f343f5d43b37dd7763dda778c11c85ef9060ca0a"
+            ],
+            [
+              "batchstore/service.py",
+              "5ba7add04d50fc95548ec45fae797c3f999fc4fad09a9f42825cd82f32124df4"
+            ],
+            [
+              "batchstore/store.py",
+              "3406317bfe70be527aa7f9a4e956a0cd65d52f1bdbf11b50a48cf918b609ed39"
+            ]
+          ],
+          "tests_run": 36,
+          "failure_count": 0,
+          "error_count": 0,
+          "failure_categories": [],
+          "test_log_sha256": "0a30da91d17fb122efdd958e6f4c5190fe4e64fd8def3e382269f76dea9b3ae2"
+        }
+      ]
+    },
+    {
+      "task_id": "cache_revalidation",
+      "experiment_id": "51d9c031f8344db0a64bd8cfddc9c6aa",
+      "run_count": 8,
+      "pass_count": 6,
+      "fail_count": 2,
+      "pass_rate": 0.75,
+      "tests_per_run": 39,
+      "exact_patch_variant_count": 7,
+      "successful_production_variant_count": 1,
+      "run_ids": [
+        "9553e21550404aa492202245eb637693",
+        "1c97fe05554e40238f5e60e609dbf527",
+        "70c4b40149a447ec96be38a3b6af1978",
+        "76ccc288d67944b69f45cfb767b65dff",
+        "b62ac322efe547f7ba48cd3b6c01bb36",
+        "a71e0edd66a644289f7e37828ea28941",
+        "31f0bc3b57304e6abadcd2136db81592",
+        "d741c88639084cdfaba06d27f39cc833"
+      ],
+      "runs": [
+        {
+          "run_id": "9553e21550404aa492202245eb637693",
+          "evaluation_passed": true,
+          "agent_status": "completed",
+          "agent_exit_code": 0,
+          "patch_sha256": "bfb78e298ad871db0d0d0d5f2cb57f04979d084ea40678468f9f1e76356e9370",
+          "patch_bytes": 4704,
+          "changed_file_count": 3,
+          "production_signature": [
+            [
+              "cacheclient/cache.py",
+              "c0c67cb0301affb52c08b05489ab535a7cc982937475f343809cf6d5d14985fb"
+            ],
+            [
+              "cacheclient/client.py",
+              "75b3e29d8ef4afeeac592ad4b00b6d04fee00d65daaed78e5bccabb72a1c6507"
+            ]
+          ],
+          "tests_run": 39,
+          "failure_count": 0,
+          "error_count": 0,
+          "failure_categories": [],
+          "test_log_sha256": "b5ef0f6f82a4001bb221e07607c8ca74556be5984d712209f988880ef9778c94"
+        },
+        {
+          "run_id": "1c97fe05554e40238f5e60e609dbf527",
+          "evaluation_passed": true,
+          "agent_status": "completed",
+          "agent_exit_code": 0,
+          "patch_sha256": "8712ed67ff7047b2dd704dc0c6f7c1104305b71937c0a94157d018cf9c606e25",
+          "patch_bytes": 4884,
+          "changed_file_count": 3,
+          "production_signature": [
+            [
+              "cacheclient/cache.py",
+              "c0c67cb0301affb52c08b05489ab535a7cc982937475f343809cf6d5d14985fb"
+            ],
+            [
+              "cacheclient/client.py",
+              "75b3e29d8ef4afeeac592ad4b00b6d04fee00d65daaed78e5bccabb72a1c6507"
+            ]
+          ],
+          "tests_run": 39,
+          "failure_count": 0,
+          "error_count": 0,
+          "failure_categories": [],
+          "test_log_sha256": "2e56b70d9f8ab04e5cb41183ec0d86c6fb068bf65a6ab7ef93f22aa9d04c4c07"
+        },
+        {
+          "run_id": "70c4b40149a447ec96be38a3b6af1978",
+          "evaluation_passed": true,
+          "agent_status": "completed",
+          "agent_exit_code": 0,
+          "patch_sha256": "c94e836fec96a4632375a71c2f7025ee30c487e94ef5cbcbe53d2120c0bcd8b4",
+          "patch_bytes": 4352,
+          "changed_file_count": 3,
+          "production_signature": [
+            [
+              "cacheclient/cache.py",
+              "c0c67cb0301affb52c08b05489ab535a7cc982937475f343809cf6d5d14985fb"
+            ],
+            [
+              "cacheclient/client.py",
+              "75b3e29d8ef4afeeac592ad4b00b6d04fee00d65daaed78e5bccabb72a1c6507"
+            ]
+          ],
+          "tests_run": 39,
+          "failure_count": 0,
+          "error_count": 0,
+          "failure_categories": [],
+          "test_log_sha256": "2300b590666203715694bb367bc2feee123c81afcb430b9d45f91c75dcaaf589"
+        },
+        {
+          "run_id": "76ccc288d67944b69f45cfb767b65dff",
+          "evaluation_passed": true,
+          "agent_status": "completed",
+          "agent_exit_code": 0,
+          "patch_sha256": "077f2b7928f5a03e63b74907ffa8dfbe02646153bc4a7717fc1b8b16dfcf705f",
+          "patch_bytes": 4029,
+          "changed_file_count": 3,
+          "production_signature": [
+            [
+              "cacheclient/cache.py",
+              "c0c67cb0301affb52c08b05489ab535a7cc982937475f343809cf6d5d14985fb"
+            ],
+            [
+              "cacheclient/client.py",
+              "75b3e29d8ef4afeeac592ad4b00b6d04fee00d65daaed78e5bccabb72a1c6507"
+            ]
+          ],
+          "tests_run": 39,
+          "failure_count": 0,
+          "error_count": 0,
+          "failure_categories": [],
+          "test_log_sha256": "4207c1f38e7e1891d2c1d4a268469ffda62d271dba693b963925e72faa472152"
+        },
+        {
+          "run_id": "b62ac322efe547f7ba48cd3b6c01bb36",
+          "evaluation_passed": true,
+          "agent_status": "completed",
+          "agent_exit_code": 0,
+          "patch_sha256": "8139f78c5fcfd4603cc8c065e82d221c16ac6b2b514868fc500cf914ba94df0d",
+          "patch_bytes": 4521,
+          "changed_file_count": 3,
+          "production_signature": [
+            [
+              "cacheclient/cache.py",
+              "c0c67cb0301affb52c08b05489ab535a7cc982937475f343809cf6d5d14985fb"
+            ],
+            [
+              "cacheclient/client.py",
+              "75b3e29d8ef4afeeac592ad4b00b6d04fee00d65daaed78e5bccabb72a1c6507"
+            ]
+          ],
+          "tests_run": 39,
+          "failure_count": 0,
+          "error_count": 0,
+          "failure_categories": [],
+          "test_log_sha256": "75539113ed992071076342b2a1b3cd08bc353df528019799ffeeb879486bb0e5"
+        },
+        {
+          "run_id": "a71e0edd66a644289f7e37828ea28941",
+          "evaluation_passed": true,
+          "agent_status": "completed",
+          "agent_exit_code": 0,
+          "patch_sha256": "d5b1c519215bdd824098f212ec832e7acc3ec43415e456cc14a67681fbe3c493",
+          "patch_bytes": 4383,
+          "changed_file_count": 3,
+          "production_signature": [
+            [
+              "cacheclient/cache.py",
+              "c0c67cb0301affb52c08b05489ab535a7cc982937475f343809cf6d5d14985fb"
+            ],
+            [
+              "cacheclient/client.py",
+              "75b3e29d8ef4afeeac592ad4b00b6d04fee00d65daaed78e5bccabb72a1c6507"
+            ]
+          ],
+          "tests_run": 39,
+          "failure_count": 0,
+          "error_count": 0,
+          "failure_categories": [],
+          "test_log_sha256": "d9a813bb8c4a801acf47aac385fd056ef3f818dd3d355017f012ecc1324b29d3"
+        },
+        {
+          "run_id": "31f0bc3b57304e6abadcd2136db81592",
+          "evaluation_passed": false,
+          "agent_status": "command_failed",
+          "agent_exit_code": 1,
+          "patch_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+          "patch_bytes": 0,
+          "changed_file_count": 0,
+          "production_signature": [],
+          "tests_run": 39,
+          "failure_count": 19,
+          "error_count": 1,
+          "failure_categories": [
+            "agent_command_failed",
+            "no_patch",
+            "test_failed"
+          ],
+          "test_log_sha256": "102d3040da173a26f0db633b730126325b71a4646b9996b74bc4ca48924a2eaa"
+        },
+        {
+          "run_id": "d741c88639084cdfaba06d27f39cc833",
+          "evaluation_passed": false,
+          "agent_status": "command_failed",
+          "agent_exit_code": 1,
+          "patch_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+          "patch_bytes": 0,
+          "changed_file_count": 0,
+          "production_signature": [],
+          "tests_run": 39,
+          "failure_count": 19,
+          "error_count": 1,
+          "failure_categories": [
+            "agent_command_failed",
+            "no_patch",
+            "test_failed"
+          ],
+          "test_log_sha256": "85ee255da51974dd27d1822a1fd8c03225481c4a81315b3959a3b18dd0916af5"
+        }
+      ]
+    }
+  ],
+  "aggregate": {
+    "run_count": 32,
+    "pass_count": 30,
+    "fail_count": 2,
+    "end_to_end_pass_rate": 0.9375,
+    "completed_agent_count": 30,
+    "command_failed_agent_count": 2,
+    "timed_out_agent_count": 0,
+    "completed_agent_evaluation_pass_count": 30,
+    "conditional_completed_agent_repair_pass_rate": 1.0,
+    "failure_category_counts": {
+      "agent_command_failed": 2,
+      "no_patch": 2,
+      "test_failed": 2
+    },
+    "failure_category_note": "Labels overlap on the same two Runs; they are not six independent failures."
+  },
+  "production_diversity": {
+    "signature_definition": "tuple(sorted((file.path, file.diff_sha256) for file in run.patch.files if file.role == \"non_test\"))",
+    "successful_run_count": 30,
+    "task_scoped_successful_signature_count": 21,
+    "per_task": {
+      "streaming_events": 8,
+      "request_signing": 8,
+      "atomic_batch": 4,
+      "cache_revalidation": 1
+    },
+    "interpretation": "Sum of task-local exact non_test diff signatures; not cross-task or semantic algorithm equivalence."
+  },
+  "external_failures": [
+    {
+      "run_id": "31f0bc3b57304e6abadcd2136db81592",
+      "task_id": "cache_revalidation",
+      "observed_agent_status": "command_failed",
+      "observed_exit_code": 1,
+      "patch_bytes": 0,
+      "release_interpretation": "external_codex_usage_quota",
+      "evidence_summary": "Codex inspected repository files and ran the raw baseline, then reported a usage limit before producing a patch.",
+      "evidence_quote": "You've hit your usage limit.",
+      "agent_log_path": "results/31f0bc3b57304e6abadcd2136db81592/agent.log",
+      "agent_log_sha256": "3f3dc9ceeebc730036dc28857ff5734703c5d57ef76dcce951686091c19062b7",
+      "frozen_baseline": {
+        "tests_run": 39,
+        "failure_count": 19,
+        "error_count": 1
+      }
+    },
+    {
+      "run_id": "d741c88639084cdfaba06d27f39cc833",
+      "task_id": "cache_revalidation",
+      "observed_agent_status": "command_failed",
+      "observed_exit_code": 1,
+      "patch_bytes": 0,
+      "release_interpretation": "external_codex_usage_quota",
+      "evidence_summary": "Codex started and reported a usage limit almost immediately, without producing a patch.",
+      "evidence_quote": "You've hit your usage limit.",
+      "agent_log_path": "results/d741c88639084cdfaba06d27f39cc833/agent.log",
+      "agent_log_sha256": "ad456b7050813be4873301e603830c025f7bf654c074275a9218cb4de8a3cc21",
+      "frozen_baseline": {
+        "tests_run": 39,
+        "failure_count": 19,
+        "error_count": 1
+      }
+    }
+  ]
+}
