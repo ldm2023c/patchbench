@@ -97,8 +97,8 @@ class EvidenceItem(DomainModel):
     """Exact exposed text, with inclusive artifact-relative line coordinates.
 
     Only LF separates lines. A final LF terminates the preceding line rather
-    than adding a line; empty content represents zero lines and cannot satisfy
-    a nonempty range. CR and Unicode separators remain content. The supplied
+    than adding a line; empty content represents zero lines and requires both
+    coordinates to be None. CR and Unicode separators remain content. The supplied
     hash identifies the artifact, not necessarily this exposed region.
     """
 
@@ -108,12 +108,18 @@ class EvidenceItem(DomainModel):
     artifact_sha256: Sha256Hex
     path: NonEmptyString | None = None
     source_state: EvidenceSourceState | None = None
-    start_line: int = Field(ge=1, strict=True)
-    end_line: int = Field(ge=1, strict=True)
+    start_line: int | None = Field(ge=1, strict=True)
+    end_line: int | None = Field(ge=1, strict=True)
     content: Annotated[str, StringConstraints(strict=True, strip_whitespace=False)]
 
     @model_validator(mode="after")
     def validate_lines(self) -> Self:
+        if self.content == "":
+            if self.start_line is not None or self.end_line is not None:
+                raise ValueError("empty content requires both coordinates to be None")
+            return self
+        if self.start_line is None or self.end_line is None:
+            raise ValueError("non-empty content requires both integer coordinates")
         if self.end_line < self.start_line:
             raise ValueError("end_line must be at least start_line")
         count = self.content.count("\n") + int(bool(self.content) and not self.content.endswith("\n"))
@@ -123,14 +129,21 @@ class EvidenceItem(DomainModel):
 
 
 class EvidenceRef(DomainModel):
-    """Local coordinates only; bundle membership and containment await D3."""
+    """Local coordinates or None/None for a whole zero-line item.
+
+    Whether that item is actually empty, membership and containment await D3.
+    """
 
     evidence_id: NonEmptyString
-    start_line: int = Field(ge=1, strict=True)
-    end_line: int = Field(ge=1, strict=True)
+    start_line: int | None = Field(ge=1, strict=True)
+    end_line: int | None = Field(ge=1, strict=True)
 
     @model_validator(mode="after")
     def validate_range(self) -> Self:
+        if self.start_line is None or self.end_line is None:
+            if self.start_line is not None or self.end_line is not None:
+                raise ValueError("reference coordinates must both be present or both absent")
+            return self
         if self.end_line < self.start_line:
             raise ValueError("end_line must be at least start_line")
         return self
@@ -181,6 +194,8 @@ class DiagnosisEvidenceBundle(DomainModel):
     def validate_bundle(self) -> Self:
         if self.official_evaluation_passed:
             raise ValueError("diagnosis bundle requires official evaluation FAIL")
+        if self.agent_status is not AgentRunStatus.COMPLETED:
+            raise ValueError("semantic diagnosis bundle requires COMPLETED Agent execution")
         ids = [item.evidence_id for item in self.evidence_items]
         if len(ids) != len(set(ids)):
             raise ValueError("evidence IDs must be unique")

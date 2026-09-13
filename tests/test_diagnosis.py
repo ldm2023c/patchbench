@@ -123,6 +123,45 @@ def test_optional_path_and_source_state():
     assert item.path is item.source_state is None
 
 
+def test_empty_canonical_patch_item_and_reference_roundtrip():
+    item = EvidenceItem(**item_data(evidence_id="empty-patch", kind="canonical_patch",
+        content="", start_line=None, end_line=None))
+    assert item.content == ""
+    assert item.start_line is item.end_line is None
+    assert EvidenceItem.model_validate_json(item.model_dump_json()) == item
+    reference = EvidenceRef(evidence_id="empty-patch", start_line=None, end_line=None)
+    assert EvidenceRef.model_validate_json(reference.model_dump_json()) == reference
+    bundle = DiagnosisEvidenceBundle(**bundle_data(evidence_items=[item]))
+    assert bundle.evidence_items[0].content == ""
+
+
+@pytest.mark.parametrize("content,start,end", [
+    ("", 1, 1), ("x", None, None),
+    ("", None, 1), ("", 1, None),
+    ("x", None, 1), ("x", 1, None),
+])
+def test_evidence_item_rejects_inconsistent_empty_coordinates(content, start, end):
+    with pytest.raises(ValidationError):
+        EvidenceItem(**item_data(content=content, start_line=start, end_line=end))
+
+
+@pytest.mark.parametrize("start,end", [(None, 1), (1, None)])
+def test_evidence_ref_rejects_mixed_nullable_coordinates(start, end):
+    with pytest.raises(ValidationError):
+        EvidenceRef(evidence_id="empty-patch", start_line=start, end_line=end)
+
+
+@pytest.mark.parametrize("mode", ["blind", "contrastive"])
+@pytest.mark.parametrize("status", list(AgentRunStatus))
+def test_semantic_bundle_requires_completed_agent(mode, status):
+    data = bundle_data(mode, agent_status=status)
+    if status is AgentRunStatus.COMPLETED:
+        assert DiagnosisEvidenceBundle(**data).agent_status is status
+    else:
+        with pytest.raises(ValidationError, match="COMPLETED"):
+            DiagnosisEvidenceBundle(**data)
+
+
 @pytest.mark.parametrize("start,end", [(0, 1), (1, 0), (3, 2), (True, 1), (1, "2")])
 def test_evidence_ref_local_ranges(start, end):
     with pytest.raises(ValidationError):
