@@ -27,19 +27,25 @@ def semantic_checkout(tmp_path_factory):
 def context(semantic_checkout, monkeypatch):
     root = semantic_checkout
     original = verifier.git
-    actual_root = verifier.ROOT
     def git(path, *args):
         if path == root:
+            # Model a valid frozen root independently of the development checkout.
+            # Prepared repositories below still use their real disposable Git state.
             if args == ("rev-parse", "--show-toplevel"):
                 return str(root).encode() + b"\n"
-            # Test the actual tracked semantic paths and accepted commit.
-            return original(actual_root, *args)
+            if args == ("rev-parse", "--verify", f"{verifier.EVALUATOR_COMMIT}^{{commit}}"):
+                return verifier.EVALUATOR_COMMIT.encode() + b"\n"
+            if args == ("diff", "--name-only", verifier.EVALUATOR_COMMIT, "--", *verifier.PROTECTED):
+                return b""
+            if args == ("ls-files", "--others", "--exclude-standard", "--", *verifier.PROTECTED):
+                return b""
+            raise AssertionError(f"Unexpected synthetic-root Git arguments: {args!r}")
         return original(path, *args)
     monkeypatch.setattr(verifier, "git", git)
     return root, verifier.load_manifest()
 
 
-def test_real_manifest_matches_actual_semantic_content(context):
+def test_real_manifest_matches_synthetic_checkout_semantic_content(context):
     root, manifest = context
     verifier.verify_semantics(root, manifest)
     raw = (verifier.ROOT / verifier.MANIFEST_PATH).read_text()
