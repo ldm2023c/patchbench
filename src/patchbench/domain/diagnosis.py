@@ -7,10 +7,40 @@ checks and citation auditing belong to later application/compiler/auditor work.
 from enum import Enum
 from typing import Annotated, Self, assert_never
 
-from pydantic import Field, StringConstraints, model_validator
+from pydantic import ConfigDict, Field, StringConstraints, field_validator, model_validator
 
 from patchbench.agents.base import AgentRunStatus
 from patchbench.domain.models import DomainModel, NonEmptyString, RunRecord, Sha256Hex
+
+
+class DiagnosisSourcePolicy(DomainModel):
+    """Explicit repository-relative selection; no globbing or normalization."""
+
+    model_config = ConfigDict(extra="forbid", str_strip_whitespace=False)
+
+    schema_version: Annotated[int, Field(strict=True, ge=1, le=1)] = 1
+    production_roots: list[Annotated[str, StringConstraints(strict=True)]] = Field(min_length=1)
+    excluded_paths: list[Annotated[str, StringConstraints(strict=True)]] = Field(default_factory=list)
+
+    @field_validator("production_roots", "excluded_paths")
+    @classmethod
+    def validate_paths(cls, paths: list[str]) -> list[str]:
+        if len(paths) != len(set(paths)):
+            raise ValueError("policy paths must be unique")
+        for path in paths:
+            if (not path or path != path.strip() or "\\" in path or ":" in path
+                    or any(ord(char) < 32 or ord(char) == 127 for char in path)
+                    or (path != "." and any(part in ("", ".", "..") for part in path.split("/")))):
+                raise ValueError("policy paths must be canonical repo-relative POSIX paths")
+        return paths
+
+    @model_validator(mode="after")
+    def validate_roots(self) -> Self:
+        for root in self.production_roots:
+            if any(other != root and (other == "." or root.startswith(other + "/"))
+                   for other in self.production_roots):
+                raise ValueError("production roots must not contain redundant descendants")
+        return self
 
 
 class DiagnosisMode(str, Enum):

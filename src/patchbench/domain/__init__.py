@@ -45,6 +45,7 @@ from patchbench.domain.evaluation_evidence import render_evaluation_log, summari
 
 from patchbench.domain.analysis import ExperimentAnalysis, RunEvidence
 from patchbench.domain.diagnosis import (
+    DiagnosisSourcePolicy,
     BundleProvenance,
     DiagnosisCertainty,
     DiagnosisEvidenceBundle,
@@ -66,6 +67,7 @@ from patchbench.domain.diagnosis import (
 )
 
 __all__ = [
+    "DiagnosisSourcePolicy",
     "BundleProvenance",
     "DiagnosisCertainty",
     "DiagnosisEvidenceBundle",

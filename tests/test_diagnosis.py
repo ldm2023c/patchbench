@@ -7,6 +7,7 @@ from pydantic import ValidationError
 
 from patchbench.agents.base import AgentRunStatus
 from patchbench.domain import (
+    DiagnosisSourcePolicy,
     BundleProvenance, DiagnosisCertainty, DiagnosisEvidenceBundle,
     DiagnosisHypothesis, DiagnosisMode, DiagnosisRoute, DiagnosisRoutingDecision,
     DiagnosisRoutingReason, EvidenceItem, EvidenceKind, EvidenceOwner, EvidenceRef,
@@ -17,6 +18,32 @@ from tests.test_failure_analysis import make_run
 
 
 SHA = "a" * 64
+
+
+@pytest.mark.parametrize("paths", [["."], ["src"], ["src/pkg", "app.py"]])
+def test_source_policy_valid_paths(paths):
+    policy = DiagnosisSourcePolicy(production_roots=paths)
+    assert policy.production_roots == paths
+    assert DiagnosisSourcePolicy.model_validate_json(policy.model_dump_json()) == policy
+
+
+@pytest.mark.parametrize("path", ["/absolute/path", "../src", "src/../pkg", "./src", "src\\",
+                                  "src/", "src//pkg", "", " src", "src\n", "C:/src", 1])
+@pytest.mark.parametrize("field", ["production_roots", "excluded_paths"])
+def test_source_policy_invalid_paths(path, field):
+    with pytest.raises(ValidationError):
+        DiagnosisSourcePolicy(**({"production_roots": ["src"]} | {field: [path]}))
+
+
+@pytest.mark.parametrize("changes", [
+    {"production_roots": []}, {"production_roots": ["src", "src"]},
+    {"production_roots": ["src", "src/pkg"]}, {"production_roots": [".", "src"]},
+    {"excluded_paths": ["vendor", "vendor"]}, {"schema_version": True},
+    {"schema_version": "1"}, {"schema_version": 2}, {"max_bundle_json_bytes": 100},
+])
+def test_source_policy_local_invariants(changes):
+    with pytest.raises(ValidationError):
+        DiagnosisSourcePolicy(**({"production_roots": ["src"]} | changes))
 
 
 def item_data(**changes):
