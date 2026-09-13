@@ -82,17 +82,23 @@ def _excluded(path: str, policy: DiagnosisSourcePolicy, frozen_tests: list[str])
                    for excluded in [*policy.excluded_paths, *frozen_tests]))
 
 
-def _read_source(path: Path, relative: str) -> bytes:
-    # D1 path strings trim boundary whitespace. Refuse unrepresentable locators
-    # rather than silently changing the identity of an included artifact.
+def _validate_source_locator(relative: str) -> None:
+    """Reject locators outside the exact repo-relative POSIX contract; never normalize."""
     try:
         relative.encode("utf-8")
     except UnicodeEncodeError as error:
         raise DiagnosisCompilationError(DiagnosisCompilationReason.UNSUPPORTED_SOURCE,
                                         "Included source path is not UTF-8") from error
-    if relative != relative.strip():
+    if (not relative or relative.startswith("/") or relative != relative.strip()
+            or "\\" in relative or ":" in relative
+            or any(ord(char) < 32 or ord(char) == 127 for char in relative)
+            or any(part in {"", ".", ".."} for part in relative.split("/"))):
         raise DiagnosisCompilationError(DiagnosisCompilationReason.UNSUPPORTED_SOURCE,
-                                        "Included source path cannot be represented exactly by D1")
+                                        "Included source path is not canonical repo-relative POSIX")
+
+
+def _read_source(path: Path, relative: str) -> bytes:
+    _validate_source_locator(relative)
     if not stat.S_ISREG(path.lstat().st_mode):
         raise DiagnosisCompilationError(DiagnosisCompilationReason.UNSUPPORTED_SOURCE,
                                         f"Included source is not a regular file: {relative}")

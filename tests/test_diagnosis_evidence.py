@@ -11,7 +11,7 @@ import yaml
 from patchbench.application.diagnosis_evidence import (
     DiagnosisCompilationError, DiagnosisCompilationReason,
     _canonical_json, _collect_snapshot, _policy_identity, _snapshot_hash,
-    _verify_inputs, _reconstruct,
+    _verify_inputs, _reconstruct, _validate_source_locator,
     compile_diagnosis_evidence,
 )
 from patchbench.domain import (DiagnosisSourcePolicy, RunProvenance, EvaluationResult,
@@ -548,8 +548,40 @@ def test_missing_historical_commit_is_typed(historical):
     assert not list(case["repository_manager"].workspace_root.iterdir())
 
 
-def test_source_locator_is_never_silently_trimmed(historical):
-    case = historical(files={"src/a.py ": b"text\n"})
+@pytest.mark.parametrize("name", ["a\\b.py", "a:b.py", "a\nb.py", "a.py "],
+                         ids=["backslash", "colon", "control-newline", "trailing-space"])
+def test_source_locator_is_never_silently_normalized(historical, tmp_path, name):
+    probe = tmp_path / "filename-probe"
+    probe.mkdir()
+    try:
+        (probe / name).write_bytes(b"text\n")
+    except OSError as error:
+        pytest.skip(f"Filesystem cannot create this filename: {error}")
+    if [entry.name for entry in probe.iterdir()] != [name]:
+        pytest.skip("Filesystem does not preserve this filename exactly")
+    case = historical(files={f"src/{name}": b"text\n"})
     with pytest.raises(DiagnosisCompilationError) as caught:
         compile_diagnosis_evidence(**case)
     assert caught.value.reason is DiagnosisCompilationReason.UNSUPPORTED_SOURCE
+
+
+@pytest.mark.parametrize("locator", ["", "/src/a.py", " src/a.py", "src/a.py ",
+    "src/a\\b.py", "src/a:b.py", "src/a\nb.py", "src/a\x00b.py", "src/a\x7fb.py",
+    "src//a.py", "src/./a.py", "src/../a.py", "src/a.py/", "src/\udcff.py"])
+def test_source_locator_boundary_rejects_exact_malformed_strings(locator):
+    with pytest.raises(DiagnosisCompilationError) as caught:
+        _validate_source_locator(locator)
+    assert caught.value.reason is DiagnosisCompilationReason.UNSUPPORTED_SOURCE
+
+
+def test_unicode_source_locator_and_bytes_are_preserved(historical):
+    raw = b'VALUE = "exact"\r\n'
+    case = historical(files={"src/雪.py": raw})
+    bundle = compile_diagnosis_evidence(**case)
+    sources = source_items(bundle)
+    assert set(sources) == {("base", "src/雪.py"), ("candidate", "src/雪.py")}
+    for item in sources.values():
+        assert item.path == "src/雪.py"
+        assert not PurePosixPath(item.path).is_absolute()
+        assert item.content.encode("utf-8") == raw
+        assert item.artifact_sha256 == hashlib.sha256(raw).hexdigest()
