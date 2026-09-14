@@ -5,6 +5,7 @@ import hashlib
 
 from patchbench.domain.diagnosis import DiagnosisEvidenceBundle, DiagnosisMode
 from patchbench.domain.diagnosis_integrity import canonical_json_bytes
+from patchbench.domain.diagnosis_execution import DiagnosisPromptTemplateVersion
 
 BLIND_PROMPT_TEMPLATE_VERSION = "blind-diagnosis-v1"
 BLIND_INSTRUCTIONS = """Diagnose a failed coding attempt from the supplied evidence.
@@ -44,15 +45,13 @@ def blind_diagnosis_output_schema_v1() -> dict:
 
 @dataclass(frozen=True)
 class DiagnosisPrompt:
-    template_version: str
+    template_version: DiagnosisPromptTemplateVersion
     instructions: str
     input_text: str
     prompt_sha256: str
 
 
-def render_blind_diagnosis_prompt(bundle: DiagnosisEvidenceBundle) -> DiagnosisPrompt:
-    if bundle.mode is not DiagnosisMode.BLIND:
-        raise ValueError("Blind prompt requires a Blind Bundle")
+def _render_evidence(bundle: DiagnosisEvidenceBundle) -> list[dict]:
     evidence = []
     for item in bundle.evidence_items:
         texts = item.content.split("\n") if item.content else []
@@ -64,11 +63,40 @@ def render_blind_diagnosis_prompt(bundle: DiagnosisEvidenceBundle) -> DiagnosisP
         # Preserve the final-LF distinction as well as CR and all raw line text.
         entry["ends_with_lf"] = item.content.endswith("\n")
         evidence.append(entry)
+    return evidence
+
+
+def render_blind_diagnosis_prompt(bundle: DiagnosisEvidenceBundle) -> DiagnosisPrompt:
+    if bundle.mode is not DiagnosisMode.BLIND:
+        raise ValueError("Blind prompt requires a Blind Bundle")
+    evidence = _render_evidence(bundle)
     input_text = canonical_json_bytes({"official_evaluation_passed": bundle.official_evaluation_passed,
                                        "evidence_items": evidence}).decode("utf-8")
     material = {"instructions": BLIND_INSTRUCTIONS, "input_text": input_text}
     return DiagnosisPrompt(BLIND_PROMPT_TEMPLATE_VERSION, BLIND_INSTRUCTIONS, input_text,
                            hashlib.sha256(canonical_json_bytes(material)).hexdigest())
+
+
+CONTRASTIVE_PROMPT_TEMPLATE_VERSION = "contrastive-diagnosis-v1"
+CONTRASTIVE_INSTRUCTIONS = BLIND_INSTRUCTIONS + """
+The SUBJECT is an official evaluator FAIL.
+The PEER is a verified same-cell official evaluator PASS.
+The peer is comparison evidence, not a gold repair. The peer is not a reference fix.
+Differences between the subject and passing peer are comparison evidence, not proof of causality.
+Do not assume every peer difference is necessary, correct, or related."""
+
+
+def render_contrastive_diagnosis_prompt(bundle: DiagnosisEvidenceBundle) -> DiagnosisPrompt:
+    """Secondary comparison evidence, without treating passing differences as causes."""
+    if bundle.mode is not DiagnosisMode.CONTRASTIVE:
+        raise ValueError("Contrastive prompt requires a Contrastive Bundle")
+    input_text = canonical_json_bytes({"comparison": {
+        "subject_run_id": bundle.subject_run_id, "subject_official_outcome": "fail",
+        "peer_run_id": bundle.peer_run_id, "peer_official_outcome": "pass", "same_cell_verified": True,
+    }, "evidence_items": _render_evidence(bundle)}).decode("utf-8")
+    material = {"instructions": CONTRASTIVE_INSTRUCTIONS, "input_text": input_text}
+    return DiagnosisPrompt(CONTRASTIVE_PROMPT_TEMPLATE_VERSION, CONTRASTIVE_INSTRUCTIONS,
+                           input_text, hashlib.sha256(canonical_json_bytes(material)).hexdigest())
 
 
 def provider_input_bytes(prompt: DiagnosisPrompt, schema: dict) -> int:

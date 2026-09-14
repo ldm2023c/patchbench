@@ -14,6 +14,7 @@ TokenCount = Annotated[int, Field(strict=True, ge=0)]
 PositiveSeconds = Annotated[float, Field(strict=True, gt=0, allow_inf_nan=False)]
 Duration = Annotated[float, Field(strict=True, ge=0, allow_inf_nan=False)]
 StrictBool = Annotated[bool, Field(strict=True)]
+DiagnosisPromptTemplateVersion = Literal["blind-diagnosis-v1", "contrastive-diagnosis-v1"]
 
 
 class DiagnosisExternalLLMPolicy(DomainModel):
@@ -66,7 +67,7 @@ class DiagnosisProviderProvenance(DiagnosisProviderSettings):
     client_version: NonEmptyString
     usage: DiagnosisProviderUsage
     duration_seconds: Duration
-    prompt_template_version: Literal["blind-diagnosis-v1"]
+    prompt_template_version: DiagnosisPromptTemplateVersion
     prompt_sha256: Sha256Hex
     response_schema_sha256: Sha256Hex
     provider_input_bytes: PositiveInt

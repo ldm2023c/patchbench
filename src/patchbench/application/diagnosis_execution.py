@@ -1,15 +1,17 @@
-"""One Blind inference attempt over an already compiled Bundle; no repair or retries."""
+"""One inference attempt over an already compiled Bundle; no repair or retries."""
 
 from dataclasses import dataclass
 from enum import Enum
 import hashlib
 import json
 from pathlib import Path
+from collections.abc import Callable
 
 from pydantic import ValidationError
 
 from patchbench.application.diagnosis_prompt import (
     render_blind_diagnosis_prompt, blind_diagnosis_output_schema_v1, provider_input_bytes,
+    render_contrastive_diagnosis_prompt, DiagnosisPrompt,
 )
 from patchbench.domain.diagnosis import DiagnosisEvidenceBundle, DiagnosisMode, FailureDiagnosis
 from patchbench.domain.diagnosis_audit import DiagnosisAuditResult, audit_failure_diagnosis
@@ -27,6 +29,7 @@ from patchbench.storage.filesystem import FilesystemArtifactStore
 
 class DiagnosisExecutionReason(str, Enum):
     NOT_BLIND_BUNDLE = "not_blind_bundle"
+    NOT_CONTRASTIVE_BUNDLE = "not_contrastive_bundle"
     BUNDLE_INTEGRITY_FAILED = "bundle_integrity_failed"
     EXTERNAL_LLM_NOT_ALLOWED = "external_llm_not_allowed"
     PROMPT_TOO_LARGE = "prompt_too_large"
@@ -63,13 +66,34 @@ def execute_blind_diagnosis(
     bundle: DiagnosisEvidenceBundle, *, provider: DiagnosisProvider,
     external_policy: DiagnosisExternalLLMPolicy, artifact_store: FilesystemArtifactStore,
 ) -> DiagnosisExecution:
-    if bundle.mode is not DiagnosisMode.BLIND:
-        raise DiagnosisExecutionError(DiagnosisExecutionReason.NOT_BLIND_BUNDLE)
+    return _execute_diagnosis(bundle, expected_mode=DiagnosisMode.BLIND,
+        prompt_renderer=render_blind_diagnosis_prompt, provider=provider,
+        external_policy=external_policy, artifact_store=artifact_store)
+
+
+def execute_contrastive_diagnosis(
+    bundle: DiagnosisEvidenceBundle, *, provider: DiagnosisProvider,
+    external_policy: DiagnosisExternalLLMPolicy, artifact_store: FilesystemArtifactStore,
+) -> DiagnosisExecution:
+    return _execute_diagnosis(bundle, expected_mode=DiagnosisMode.CONTRASTIVE,
+        prompt_renderer=render_contrastive_diagnosis_prompt, provider=provider,
+        external_policy=external_policy, artifact_store=artifact_store)
+
+
+def _execute_diagnosis(
+    bundle: DiagnosisEvidenceBundle, *, expected_mode: DiagnosisMode,
+    prompt_renderer: Callable[[DiagnosisEvidenceBundle], DiagnosisPrompt], provider: DiagnosisProvider,
+    external_policy: DiagnosisExternalLLMPolicy, artifact_store: FilesystemArtifactStore,
+) -> DiagnosisExecution:
+    if bundle.mode is not expected_mode:
+        reason = (DiagnosisExecutionReason.NOT_BLIND_BUNDLE if expected_mode is DiagnosisMode.BLIND
+                  else DiagnosisExecutionReason.NOT_CONTRASTIVE_BUNDLE)
+        raise DiagnosisExecutionError(reason)
     if compute_bundle_sha256(bundle) != bundle.bundle_sha256:
         raise DiagnosisExecutionError(DiagnosisExecutionReason.BUNDLE_INTEGRITY_FAILED)
     if not external_policy.external_llm_allowed:
         raise DiagnosisExecutionError(DiagnosisExecutionReason.EXTERNAL_LLM_NOT_ALLOWED)
-    prompt = render_blind_diagnosis_prompt(bundle)
+    prompt = prompt_renderer(bundle)
     schema = blind_diagnosis_output_schema_v1()
     schema_bytes = canonical_json_bytes(schema)
     input_bytes = provider_input_bytes(prompt, schema)

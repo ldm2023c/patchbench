@@ -77,9 +77,11 @@ from patchbench.domain.diagnosis_audit import (
 from patchbench.domain.diagnosis_execution import (
     DiagnosisExternalLLMPolicy, DiagnosisProviderUsage, DiagnosisProviderSettings,
     DiagnosisProviderProvenance, DiagnosisExecutionRecord, compute_execution_sha256,
+    DiagnosisPromptTemplateVersion,
 )
 
 __all__ = [
+    "DiagnosisPromptTemplateVersion",
     "DiagnosisExternalLLMPolicy",
     "DiagnosisProviderUsage",
     "DiagnosisProviderSettings",
