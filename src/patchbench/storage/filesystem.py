@@ -1,12 +1,16 @@
-"""Filesystem persistence for completed Runs, Experiments, and Replays."""
+"""Filesystem persistence for Runs, Experiments, Replays, and Diagnosis attempts."""
 
 import json
+import re
+import shutil
 from pathlib import Path
 
 from pydantic import ValidationError
 
 from patchbench.agents.base import AgentRunResult
 from patchbench.domain.evaluation_evidence import render_evaluation_log
+from patchbench.domain.diagnosis import DiagnosisEvidenceBundle, FailureDiagnosis
+from patchbench.domain.diagnosis_audit import DiagnosisAuditResult, audit_failure_diagnosis
 from patchbench.domain.models import (
     ArtifactPaths,
     EvaluationResult,
@@ -21,7 +25,7 @@ class ArtifactStoreError(RuntimeError):
 
 
 class FilesystemArtifactStore:
-    """Load Run evidence and persist completed Run, Experiment, or Replay data."""
+    """Load Run evidence and persist completed artifacts and immutable Diagnoses."""
 
     def __init__(self, results_root: Path) -> None:
         self.results_root = results_root.resolve()
@@ -179,6 +183,61 @@ class FilesystemArtifactStore:
                 f"Unable to persist Replay artifacts '{directory}': {error}"
             ) from error
         return metadata
+
+    def _diagnosis_directory(self, diagnosis_id: str) -> Path:
+        if (not re.fullmatch(r"[A-Za-z0-9][A-Za-z0-9._-]*", diagnosis_id)
+                or diagnosis_id in {".", ".."}):
+            raise ArtifactStoreError(f"Unsafe Diagnosis ID: {diagnosis_id!r}")
+        directory = self.results_root / "diagnoses" / diagnosis_id
+        try:
+            if directory.resolve() != directory:
+                raise ArtifactStoreError("Diagnosis directory must not redirect outside its exact namespace")
+        except (OSError, RuntimeError) as error:
+            raise ArtifactStoreError(f"Unable to locate Diagnosis directory: {error}") from error
+        return directory
+
+    def save_diagnosis_artifacts(
+        self, bundle: DiagnosisEvidenceBundle, diagnosis: FailureDiagnosis,
+        audit: DiagnosisAuditResult,
+    ) -> Path:
+        """Create one immutable attempt, including a faithfully recomputed FAIL audit."""
+        directory = self._diagnosis_directory(diagnosis.diagnosis_id)
+        if audit != audit_failure_diagnosis(bundle, diagnosis):
+            raise ArtifactStoreError("Supplied Diagnosis audit differs from recomputation")
+        try:
+            directory.mkdir(parents=True, exist_ok=False)
+        except OSError as error:
+            raise ArtifactStoreError(f"Unable to create Diagnosis directory: {error}") from error
+        try:
+            for name, artifact in (("bundle.json", bundle), ("diagnosis.json", diagnosis), ("audit.json", audit)):
+                (directory / name).write_text(
+                    json.dumps(artifact.model_dump(mode="json"), ensure_ascii=False, sort_keys=True, indent=2) + "\n",
+                    encoding="utf-8", newline="\n",
+                )
+        except Exception as error:
+            try:
+                shutil.rmtree(directory)
+            except OSError as cleanup_error:
+                raise ArtifactStoreError(f"Diagnosis write failed; cleanup failed: {cleanup_error}") from error
+            raise ArtifactStoreError(f"Unable to persist Diagnosis artifacts: {error}") from error
+        return directory
+
+    def load_diagnosis_artifacts(
+        self, diagnosis_id: str,
+    ) -> tuple[DiagnosisEvidenceBundle, FailureDiagnosis, DiagnosisAuditResult]:
+        """Validate all three artifacts and re-audit; integrity is separate from PASS."""
+        directory = self._diagnosis_directory(diagnosis_id)
+        try:
+            bundle = DiagnosisEvidenceBundle.model_validate_json((directory / "bundle.json").read_bytes())
+            diagnosis = FailureDiagnosis.model_validate_json((directory / "diagnosis.json").read_bytes())
+            audit = DiagnosisAuditResult.model_validate_json((directory / "audit.json").read_bytes())
+        except (OSError, UnicodeError, ValidationError) as error:
+            raise ArtifactStoreError(f"Unable to load valid Diagnosis artifacts: {error}") from error
+        if diagnosis.diagnosis_id != diagnosis_id:
+            raise ArtifactStoreError("Diagnosis artifact ID differs from requested ID")
+        if audit != audit_failure_diagnosis(bundle, diagnosis):
+            raise ArtifactStoreError("Persisted Diagnosis audit differs from recomputation")
+        return bundle, diagnosis, audit
 
     def _run_directory(self, run_id: str) -> Path:
         candidate = (self.results_root / run_id).resolve()

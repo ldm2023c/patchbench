@@ -66,7 +66,23 @@ from patchbench.domain.diagnosis import (
     route_run_diagnosis,
 )
 
+from patchbench.domain.diagnosis_integrity import (
+    canonical_json_bytes, compute_bundle_sha256, compute_diagnosis_sha256,
+)
+from patchbench.domain.diagnosis_audit import (
+    DiagnosisAuditIssueCode, DiagnosisReferenceRole, DiagnosisAuditIssue,
+    DiagnosisAuditResult, audit_failure_diagnosis,
+)
+
 __all__ = [
+    "canonical_json_bytes",
+    "compute_bundle_sha256",
+    "compute_diagnosis_sha256",
+    "DiagnosisAuditIssueCode",
+    "DiagnosisReferenceRole",
+    "DiagnosisAuditIssue",
+    "DiagnosisAuditResult",
+    "audit_failure_diagnosis",
     "DiagnosisSourcePolicy",
     "BundleProvenance",
     "DiagnosisCertainty",

@@ -3,7 +3,6 @@
 from enum import Enum
 from dataclasses import dataclass
 import hashlib
-import json
 from pathlib import Path
 import stat
 import re
@@ -17,6 +16,9 @@ from patchbench.domain.diagnosis import (
     EvidenceSourceState, SubjectProvenance, route_run_diagnosis,
 )
 from patchbench.domain.models import RunRecord, RunStatus, Sha256Hex, TaskSpec
+from patchbench.domain.diagnosis_integrity import (
+    canonical_json_bytes as _canonical_json, compute_bundle_sha256,
+)
 from patchbench.domain.provenance import compute_task_fingerprint
 from patchbench.domain.patch_evidence import summarize_patch
 from patchbench.domain.evaluation_evidence import summarize_evaluation_log
@@ -50,10 +52,6 @@ class DiagnosisCompilationError(ValueError):
 _TECHNICAL_DENYLIST = (
     ".git", ".patchbench-eval", "__pycache__", ".pytest_cache", ".mypy_cache", ".ruff_cache",
 )
-
-
-def _canonical_json(value: object) -> bytes:
-    return json.dumps(value, sort_keys=True, separators=(",", ":"), ensure_ascii=False).encode("utf-8")
 
 
 def _sha(data: bytes) -> str:
@@ -343,7 +341,7 @@ def compile_diagnosis_evidence(
         bundle_sha256="0" * 64, task_id=task.id, base_commit=run.provenance.base_commit_used,
         official_evaluation_passed=run.evaluation_passed, agent_status=run.agent.status,
         evidence_items=items, provenance=provenance)
-    bundle.bundle_sha256 = _sha(_canonical_json(bundle.model_dump(mode="json", exclude={"bundle_sha256"})))
+    bundle.bundle_sha256 = compute_bundle_sha256(bundle)
     size = len(_canonical_json(bundle.model_dump(mode="json")))
     if size > max_bundle_json_bytes:
         raise DiagnosisCompilationError(DiagnosisCompilationReason.BUNDLE_TOO_LARGE,

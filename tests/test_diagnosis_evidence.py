@@ -585,3 +585,22 @@ def test_unicode_source_locator_and_bytes_are_preserved(historical):
         assert not PurePosixPath(item.path).is_absolute()
         assert item.content.encode("utf-8") == raw
         assert item.artifact_sha256 == hashlib.sha256(raw).hexdigest()
+
+
+def test_shared_integrity_helpers_preserve_d2_output(historical, monkeypatch):
+    import patchbench.application.diagnosis_evidence as compiler
+
+    case = historical(files={"src/雪.py": b'PATH = "/home/example/file.py"\r\n'})
+    shared = compiler.compile_diagnosis_evidence(**case)
+
+    # Reproduce D2's pre-extraction hashing independently on identical inputs.
+    def original_canonical(value):
+        return json.dumps(value, sort_keys=True, separators=(",", ":"), ensure_ascii=False).encode("utf-8")
+
+    monkeypatch.setattr(compiler, "_canonical_json", original_canonical)
+    monkeypatch.setattr(compiler, "compute_bundle_sha256", lambda bundle: hashlib.sha256(
+        original_canonical(bundle.model_dump(mode="json", exclude={"bundle_sha256"}))
+    ).hexdigest())
+    original = compiler.compile_diagnosis_evidence(**case)
+    assert original == shared
+    assert original_canonical(original.model_dump(mode="json")) == original_canonical(shared.model_dump(mode="json"))
