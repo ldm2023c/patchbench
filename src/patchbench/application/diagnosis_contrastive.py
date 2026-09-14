@@ -134,6 +134,7 @@ def compile_contrastive_diagnosis_evidence(
     if {item.evidence_id for item in items} & {item.evidence_id for item in blind_bundle.evidence_items}:
         raise ContrastiveCompilationError(ContrastiveCompilationReason.INVALID_BLIND_BUNDLE, "Blind IDs collide with P namespace")
     identity = dict(schema_version=1, mode="contrastive", subject_run_id=blind_bundle.subject_run_id,
+        peer_experiment_id=peer_selection.peer_experiment_id, peer_run_index=peer_selection.peer_run_index,
         peer_run_id=peer.run_id, blind_bundle_sha256=blind_bundle.bundle_sha256,
         benchmark_definition_sha256=blind_bundle.benchmark_definition_sha256,
         task_fingerprint_sha256=blind_bundle.task_fingerprint_sha256, source_snapshot_policy=blind_bundle.source_snapshot_policy)
@@ -142,6 +143,7 @@ def compile_contrastive_diagnosis_evidence(
         bundle_id="contrastive-" + _sha(canonical_json_bytes(identity)), bundle_sha256="0" * 64,
         evidence_items=[*blind_bundle.evidence_items, *items],
         provenance=BundleProvenance(subject=subject_hashes, peer=PeerProvenance(peer_run_id=peer.run_id,
+            peer_experiment_id=peer_selection.peer_experiment_id, peer_run_index=peer_selection.peer_run_index,
             peer_patch_sha256=_sha(patch.encode("utf-8")), peer_evaluation_log_sha256=_sha(log.encode("utf-8")),
             peer_candidate_snapshot_sha256=_snapshot_hash(candidate))))
     bundle = DiagnosisEvidenceBundle(**data).model_copy(deep=True)

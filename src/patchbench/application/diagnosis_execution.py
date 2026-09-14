@@ -25,11 +25,15 @@ from patchbench.providers.base import (
     DiagnosisProviderRefusalError, DiagnosisProviderIncompleteError,
 )
 from patchbench.storage.filesystem import FilesystemArtifactStore
+from patchbench.application.diagnosis_peer import (
+    ContrastivePeerSelection, DiagnosisPeerError, verify_contrastive_peer_selection,
+)
 
 
 class DiagnosisExecutionReason(str, Enum):
     NOT_BLIND_BUNDLE = "not_blind_bundle"
     NOT_CONTRASTIVE_BUNDLE = "not_contrastive_bundle"
+    CONTRASTIVE_PEER_VERIFICATION_FAILED = "contrastive_peer_verification_failed"
     BUNDLE_INTEGRITY_FAILED = "bundle_integrity_failed"
     EXTERNAL_LLM_NOT_ALLOWED = "external_llm_not_allowed"
     PROMPT_TOO_LARGE = "prompt_too_large"
@@ -91,6 +95,17 @@ def _execute_diagnosis(
         raise DiagnosisExecutionError(reason)
     if compute_bundle_sha256(bundle) != bundle.bundle_sha256:
         raise DiagnosisExecutionError(DiagnosisExecutionReason.BUNDLE_INTEGRITY_FAILED)
+    if expected_mode is DiagnosisMode.CONTRASTIVE:
+        peer = bundle.provenance.peer
+        if peer is None or bundle.peer_run_id != peer.peer_run_id:
+            raise DiagnosisExecutionError(DiagnosisExecutionReason.CONTRASTIVE_PEER_VERIFICATION_FAILED)
+        try:
+            selection = ContrastivePeerSelection(subject_run_id=bundle.subject_run_id,
+                peer_experiment_id=peer.peer_experiment_id, peer_run_id=peer.peer_run_id,
+                peer_run_index=peer.peer_run_index)
+            verify_contrastive_peer_selection(selection, artifact_store=artifact_store)
+        except (DiagnosisPeerError, ValidationError):
+            raise DiagnosisExecutionError(DiagnosisExecutionReason.CONTRASTIVE_PEER_VERIFICATION_FAILED) from None
     if not external_policy.external_llm_allowed:
         raise DiagnosisExecutionError(DiagnosisExecutionReason.EXTERNAL_LLM_NOT_ALLOWED)
     prompt = prompt_renderer(bundle)

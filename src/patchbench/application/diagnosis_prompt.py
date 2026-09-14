@@ -87,7 +87,11 @@ Do not assume every peer difference is necessary, correct, or related."""
 
 
 def render_contrastive_diagnosis_prompt(bundle: DiagnosisEvidenceBundle) -> DiagnosisPrompt:
-    """Secondary comparison evidence, without treating passing differences as causes."""
+    """Render assuming D5-verified peer provenance, without proving filesystem state.
+
+    The execution path re-verifies canonical Experiment selection before rendering
+    or provider invocation. Peer differences remain comparison evidence, not causes.
+    """
     if bundle.mode is not DiagnosisMode.CONTRASTIVE:
         raise ValueError("Contrastive prompt requires a Contrastive Bundle")
     input_text = canonical_json_bytes({"comparison": {

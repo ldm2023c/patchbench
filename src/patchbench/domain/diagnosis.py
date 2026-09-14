@@ -191,6 +191,8 @@ class SubjectProvenance(DomainModel):
 
 class PeerProvenance(DomainModel):
     peer_run_id: NonEmptyString
+    peer_experiment_id: NonEmptyString
+    peer_run_index: int = Field(strict=True, ge=0)
     peer_patch_sha256: Sha256Hex
     peer_candidate_snapshot_sha256: Sha256Hex
     peer_evaluation_log_sha256: Sha256Hex

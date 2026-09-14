@@ -53,7 +53,7 @@ def item_data(**changes):
 
 
 def peer_data():
-    return dict(peer_run_id="peer", peer_patch_sha256=SHA,
+    return dict(peer_run_id="peer", peer_experiment_id="peers", peer_run_index=0, peer_patch_sha256=SHA,
                 peer_candidate_snapshot_sha256=SHA, peer_evaluation_log_sha256=SHA)
 
 
@@ -329,3 +329,18 @@ def test_diagnosis_rejects_invalid_ranks(ranks):
 def test_diagnosis_structural_firewall(field):
     with pytest.raises(ValidationError, match="Extra inputs"):
         FailureDiagnosis.model_validate(diagnosis_data(**{field: "forbidden"}))
+
+
+@pytest.mark.parametrize("changes", [{"peer_experiment_id": " "}, {"peer_run_index": -1},
+    {"peer_run_index": True}, {"peer_run_index": "0"}, {"peer_run_index": 0.5}])
+def test_peer_selection_provenance_is_strict(changes):
+    with pytest.raises(ValidationError):
+        PeerProvenance(**(peer_data() | changes))
+
+
+@pytest.mark.parametrize("field", ["peer_experiment_id", "peer_run_index"])
+def test_peer_selection_provenance_is_required(field):
+    data = peer_data()
+    data.pop(field)
+    with pytest.raises(ValidationError):
+        PeerProvenance(**data)

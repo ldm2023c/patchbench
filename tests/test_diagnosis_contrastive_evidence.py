@@ -211,3 +211,32 @@ def test_peer_raw_absolute_path_text_is_preserved_and_agent_logs_unread(peer_wor
     for item in structured["evidence_items"]:
         item.pop("content")
     assert str(peer_world["task_path"].parent).encode() not in canonical_json_bytes(structured)
+
+
+def test_bundle_identity_binds_experiment_and_position(peer_world):
+    from patchbench.application.diagnosis_peer import select_contrastive_peer
+    from tests.test_diagnosis_peer import save_experiment
+    blind = compile_diagnosis_evidence(**peer_world)
+    store = peer_world["artifact_store"]
+    first_selection = select(peer_world)
+    first = compile_peer(peer_world, blind, first_selection)
+    alternate = store.load_experiment_record("peers").model_copy(update={"experiment_id": "other-peers"})
+    store.save_experiment(alternate)
+    second_selection = select_contrastive_peer("subject", "other-peers", artifact_store=store)
+    second = compile_peer(peer_world, blind, second_selection)
+    save_experiment(store, ["z-passA", "fail1", "a-passB"])
+    third_selection = select(peer_world)
+    third = compile_peer(peer_world, blind, third_selection)
+    assert len({first.bundle_id, second.bundle_id, third.bundle_id}) == 3
+    assert first.evidence_items == second.evidence_items == third.evidence_items
+    for bundle, selection in [(first, first_selection), (second, second_selection), (third, third_selection)]:
+        assert bundle.provenance.peer.peer_experiment_id == selection.peer_experiment_id
+        assert bundle.provenance.peer.peer_run_index == selection.peer_run_index
+        assert bundle.provenance.peer.peer_run_id == selection.peer_run_id
+        identity = dict(schema_version=1, mode="contrastive", subject_run_id=blind.subject_run_id,
+            peer_run_id=selection.peer_run_id, peer_experiment_id=selection.peer_experiment_id,
+            peer_run_index=selection.peer_run_index, blind_bundle_sha256=blind.bundle_sha256,
+            benchmark_definition_sha256=blind.benchmark_definition_sha256,
+            task_fingerprint_sha256=blind.task_fingerprint_sha256, source_snapshot_policy=blind.source_snapshot_policy)
+        raw = json.dumps(identity, sort_keys=True, separators=(",", ":"), ensure_ascii=False).encode("utf-8")
+        assert bundle.bundle_id == "contrastive-" + hashlib.sha256(raw).hexdigest()

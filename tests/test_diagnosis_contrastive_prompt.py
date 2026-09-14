@@ -6,6 +6,8 @@ from patchbench.application.diagnosis_prompt import render_blind_diagnosis_promp
 from patchbench.domain.diagnosis import DiagnosisEvidenceBundle
 from tests.test_diagnosis import bundle_data, item_data
 from tests.test_diagnosis_audit import audit_inputs
+from tests.test_diagnosis_peer import peer_world, historical
+from tests.test_diagnosis_contrastive_evidence import compile_peer
 
 
 def comparison_bundle():
@@ -46,3 +48,12 @@ def test_contrastive_metadata_warnings_and_exact_ordered_data():
 
 def test_blind_prompt_sha_is_unchanged_from_d4():
     assert render_blind_diagnosis_prompt(audit_inputs()[0]).prompt_sha256 == "3166d493afe2900ea98016aec2ad50f5943ab6d9cac2fa07149faaa668044b68"
+
+
+def test_compiler_produced_bundle_prompt(peer_world):
+    bundle = compile_peer(peer_world)
+    prompt = render_contrastive_diagnosis_prompt(bundle)
+    envelope = json.loads(prompt.input_text)
+    assert envelope["comparison"]["peer_run_id"] == bundle.provenance.peer.peer_run_id
+    assert envelope["comparison"]["same_cell_verified"] is True
+    assert [item["evidence_id"] for item in envelope["evidence_items"]] == [item.evidence_id for item in bundle.evidence_items]
