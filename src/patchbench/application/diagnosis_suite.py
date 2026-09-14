@@ -16,12 +16,17 @@ from patchbench.application.diagnosis_validation import (
     compute_subject_evidence_sha256,
     validate_semantic_gold_evidence,
 )
+from patchbench.application.diagnosis_evidence import _snapshot_hash
+from patchbench.application.diagnosis_peer import (
+    ContrastivePeerSelection, DiagnosisPeerError, verify_contrastive_peer_selection,
+)
 from patchbench.domain.diagnosis import (
     DiagnosisEvidenceBundle,
     DiagnosisMode,
     DiagnosisRoute,
     DiagnosisRoutingReason,
     EvidenceOwner,
+    EvidenceKind,
     FailureFamily,
     route_run_diagnosis,
 )
@@ -34,6 +39,7 @@ from patchbench.domain.diagnosis_suite import (
 )
 from patchbench.domain.diagnosis_validation import DiagnosisGoldCase
 from patchbench.domain.models import RunRecord, Sha256Hex
+from patchbench.storage.filesystem import ArtifactStoreError, FilesystemArtifactStore
 
 
 class DiagnosisSuiteReason(str, Enum):
@@ -71,6 +77,9 @@ def verify_semantic_validation_case(
     gold: DiagnosisGoldCase,
     blind_bundle: DiagnosisEvidenceBundle,
     contrastive_bundle: DiagnosisEvidenceBundle | None = None,
+    *,
+    peer_selection: ContrastivePeerSelection | None = None,
+    peer_artifact_store: FilesystemArtifactStore | None = None,
 ) -> None:
     """Verify all final semantic identity, outcome and grounding boundaries."""
     try:
@@ -96,6 +105,8 @@ def verify_semantic_validation_case(
             raise ValueError("subject evidence identities differ")
         validate_semantic_gold_evidence(blind_bundle, gold)
         if contrastive_bundle is not None:
+            if peer_selection is None or peer_artifact_store is None:
+                raise ValueError("Contrastive verification requires frozen D5 selection and support")
             if contrastive_bundle.mode is not DiagnosisMode.CONTRASTIVE:
                 raise ValueError("declared Contrastive Bundle has wrong mode")
             if (compute_bundle_sha256(contrastive_bundle) != contrastive_bundle.bundle_sha256
@@ -103,7 +114,65 @@ def verify_semantic_validation_case(
                 raise ValueError("Contrastive Bundle hash differs")
             if compute_subject_evidence_sha256(contrastive_bundle) != subject_sha:
                 raise ValueError("Contrastive subject evidence differs from Blind")
-    except (ValueError, DiagnosisValidationError) as error:
+            verified_subject, verified_peer = verify_contrastive_peer_selection(
+                peer_selection, artifact_store=peer_artifact_store)
+            peer_provenance = contrastive_bundle.provenance.peer
+            if peer_provenance is None:
+                raise ValueError("Contrastive Bundle lacks peer provenance")
+            if (verified_subject.run_id != blind_bundle.subject_run_id
+                    or peer_selection.subject_run_id != blind_bundle.subject_run_id
+                    or contrastive_bundle.subject_run_id != peer_selection.subject_run_id
+                    or verified_peer.run_id != peer_selection.peer_run_id
+                    or contrastive_bundle.peer_run_id != peer_selection.peer_run_id
+                    or peer_provenance.peer_run_id != peer_selection.peer_run_id
+                    or peer_provenance.peer_experiment_id != peer_selection.peer_experiment_id
+                    or peer_provenance.peer_run_index != peer_selection.peer_run_index):
+                raise ValueError("Contrastive provenance differs from verified D5 selection")
+            subject_provenance = blind_bundle.provenance.subject
+            if (verified_subject.provenance is None
+                    or verified_subject.patch_summary is None
+                    or verified_subject.evaluation_evidence is None
+                    or verified_subject.task_id != blind_bundle.task_id
+                    or verified_subject.provenance.base_commit_used != blind_bundle.base_commit
+                    or verified_subject.provenance.task_fingerprint_sha256
+                    != blind_bundle.task_fingerprint_sha256
+                    or verified_subject.patch_summary.patch_sha256
+                    != subject_provenance.canonical_patch_sha256
+                    or verified_subject.evaluation_evidence.test_log_sha256
+                    != subject_provenance.evaluation_log_sha256):
+                raise ValueError("verified D5 subject differs from Blind provenance")
+            patch = peer_artifact_store.load_run_patch(verified_peer.run_id)
+            log = peer_artifact_store.load_run_test_log(verified_peer.run_id)
+            patch_sha, log_sha = _sha256(patch.encode("utf-8")), _sha256(log.encode("utf-8"))
+            if (verified_peer.patch_summary is None or verified_peer.evaluation_evidence is None
+                    or verified_peer.patch_summary.patch_sha256 != patch_sha
+                    or verified_peer.evaluation_evidence.test_log_sha256 != log_sha
+                    or peer_provenance.peer_patch_sha256 != patch_sha
+                    or peer_provenance.peer_evaluation_log_sha256 != log_sha):
+                raise ValueError("peer raw evidence differs from Run and Contrastive provenance")
+            peer_patch = [item for item in contrastive_bundle.evidence_items
+                          if item.kind is EvidenceKind.PEER_PATCH]
+            peer_logs = [item for item in contrastive_bundle.evidence_items
+                         if item.kind is EvidenceKind.PEER_EVALUATION]
+            peer_sources = [item for item in contrastive_bundle.evidence_items
+                            if item.kind is EvidenceKind.PEER_SOURCE]
+            if (len(peer_patch) != 1 or len(peer_logs) != 1
+                    or peer_patch[0].content != patch or peer_logs[0].content != log
+                    or peer_patch[0].owner is not EvidenceOwner.PEER
+                    or peer_logs[0].owner is not EvidenceOwner.PEER
+                    or peer_patch[0].artifact_sha256 != patch_sha
+                    or peer_logs[0].artifact_sha256 != log_sha
+                    or len({item.path for item in peer_sources}) != len(peer_sources)
+                    or any(item.owner is not EvidenceOwner.PEER
+                           or item.path is None
+                           or item.artifact_sha256 != _sha256(item.content.encode("utf-8"))
+                           for item in peer_sources)
+                    or _snapshot_hash({item.path: item.content.encode("utf-8")
+                                       for item in peer_sources})
+                    != peer_provenance.peer_candidate_snapshot_sha256):
+                raise ValueError("Contrastive peer evidence differs from frozen support")
+    except (ValueError, DiagnosisValidationError, DiagnosisPeerError,
+            ArtifactStoreError) as error:
         raise DiagnosisSuiteError(DiagnosisSuiteReason.INVALID_CASE, str(error)) from error
 
 
@@ -258,7 +327,23 @@ def verify_diagnosis_validation_suite(
             contrastive = _parse(DiagnosisEvidenceBundle,
                                  _required_file(files, case.contrastive_bundle_path),
                                  "Contrastive Bundle")
-            verify_semantic_validation_case(case, gold, blind, contrastive)
+            selection_raw = _required_file(files, case.peer_selection_path)
+            if _sha256(selection_raw) != case.peer_selection_sha256:
+                raise DiagnosisSuiteError(DiagnosisSuiteReason.INVALID_CASE,
+                                          "peer selection raw hash differs")
+            selection = _parse(ContrastivePeerSelection, selection_raw, "peer selection")
+            support_root = root / case.peer_artifact_store_path
+            try:
+                support_mode = support_root.lstat().st_mode
+            except OSError as error:
+                raise DiagnosisSuiteError(DiagnosisSuiteReason.MISSING_FILE,
+                                          case.peer_artifact_store_path) from error
+            if not stat.S_ISDIR(support_mode) or stat.S_ISLNK(support_mode):
+                raise DiagnosisSuiteError(DiagnosisSuiteReason.UNSAFE_FILE,
+                                          case.peer_artifact_store_path)
+            verify_semantic_validation_case(case, gold, blind, contrastive,
+                peer_selection=selection,
+                peer_artifact_store=FilesystemArtifactStore(support_root))
         else:
             run = _parse(RunRecord, _required_file(files, case.run_record_path), "Run record")
             decision = route_run_diagnosis(run)

@@ -59,13 +59,16 @@ class DiagnosisValidationSuiteCase(DomainModel):
     blind_bundle_sha256: Sha256Hex | None = None
     contrastive_bundle_path: ExactString | None = None
     contrastive_bundle_sha256: Sha256Hex | None = None
+    peer_selection_path: ExactString | None = None
+    peer_selection_sha256: Sha256Hex | None = None
+    peer_artifact_store_path: ExactString | None = None
 
     expected_routing_reason: DiagnosisRoutingReason | None = None
     run_record_path: ExactString | None = None
     run_record_sha256: Sha256Hex | None = None
 
     @field_validator("gold_path", "blind_bundle_path", "contrastive_bundle_path",
-                     "run_record_path")
+                     "peer_selection_path", "peer_artifact_store_path", "run_record_path")
     @classmethod
     def validate_paths(cls, path: str | None) -> str | None:
         return None if path is None else validate_suite_relative_path(path)
@@ -75,7 +78,8 @@ class DiagnosisValidationSuiteCase(DomainModel):
         semantic_fields = (
             self.subject_evidence_sha256, self.blind_bundle_path,
             self.blind_bundle_sha256, self.contrastive_bundle_path,
-            self.contrastive_bundle_sha256,
+            self.contrastive_bundle_sha256, self.peer_selection_path,
+            self.peer_selection_sha256, self.peer_artifact_store_path,
         )
         operational_fields = (
             self.expected_routing_reason, self.run_record_path, self.run_record_sha256,

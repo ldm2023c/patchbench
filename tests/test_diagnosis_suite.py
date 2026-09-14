@@ -30,7 +30,9 @@ def semantic_suite_case(case_id: str, gold: DiagnosisGoldCase | None = None):
         subject_evidence_sha256=gold.subject_evidence_sha256,
         blind_bundle_path=f"cases/{case_id}/blind.json", blind_bundle_sha256=SHA,
         contrastive_bundle_path=f"cases/{case_id}/contrastive.json",
-        contrastive_bundle_sha256=SHA), gold
+        contrastive_bundle_sha256=SHA,
+        peer_selection_path=f"cases/{case_id}/selection.json", peer_selection_sha256=SHA,
+        peer_artifact_store_path=f"support/{case_id}/results"), gold
 
 
 def operational_suite_case(case_id: str, reason: str):
@@ -174,7 +176,9 @@ def test_semantic_verification_binds_gold_subject_bundle_mode_and_grounding():
         gold_path="gold.json", gold_sha256=compute_diagnosis_gold_sha256(gold),
         subject_evidence_sha256=compute_subject_evidence_sha256(blind),
         blind_bundle_path="blind.json", blind_bundle_sha256=blind.bundle_sha256,
-        contrastive_bundle_path="contrastive.json", contrastive_bundle_sha256=SHA)
+        contrastive_bundle_path="contrastive.json", contrastive_bundle_sha256=SHA,
+        peer_selection_path="selection.json", peer_selection_sha256=SHA,
+        peer_artifact_store_path="support/results")
     verify_semantic_validation_case(case, gold, blind)
     variants = [
         case.model_copy(update={"gold_sha256": SHA}),
@@ -201,7 +205,9 @@ def test_semantic_verification_rejects_stale_gold_and_peer_evidence_in_blind():
         gold_path="gold.json", gold_sha256=compute_diagnosis_gold_sha256(gold),
         subject_evidence_sha256=compute_subject_evidence_sha256(blind),
         blind_bundle_path="blind.json", blind_bundle_sha256=blind.bundle_sha256,
-        contrastive_bundle_path="contrastive.json", contrastive_bundle_sha256=SHA)
+        contrastive_bundle_path="contrastive.json", contrastive_bundle_sha256=SHA,
+        peer_selection_path="selection.json", peer_selection_sha256=SHA,
+        peer_artifact_store_path="support/results")
     raw = gold.model_dump(mode="json")
     raw["semantic_gold"]["required_evidence"][0]["acceptable_locators"][0]["path"] = "stale.py"
     stale = DiagnosisGoldCase.model_validate(raw)

@@ -3,17 +3,23 @@
 import hashlib
 import json
 import os
+import shutil
 
 import pytest
 
 from patchbench.application.diagnosis_suite import DiagnosisSuiteError, verify_diagnosis_validation_suite
+from patchbench.application.diagnosis_evidence import compile_diagnosis_evidence
 from patchbench.application.diagnosis_validation import compute_diagnosis_gold_sha256, compute_subject_evidence_sha256
 from patchbench.domain import (
-    DiagnosisValidationFreezeManifest, DiagnosisValidationSuite,
+    DiagnosisEvidenceBundle, DiagnosisValidationFreezeManifest, DiagnosisValidationSuite,
     DiagnosisValidationSuiteCase, DiagnosisValidationSuiteCaseFile,
-    FrozenValidationFile, canonical_json_bytes, compute_diagnosis_validation_suite_sha256,
+    FrozenValidationFile, canonical_json_bytes, compute_bundle_sha256,
+    compute_diagnosis_validation_suite_sha256,
 )
 from tests.test_diagnosis_validation import make_bundle, semantic_case
+from tests.test_diagnosis_contrastive_evidence import compile_peer
+from tests.test_diagnosis_evidence import historical
+from tests.test_diagnosis_peer import peer_world, select
 
 
 def sha(data):
@@ -39,21 +45,43 @@ def rewrite_manifest(root, *, suite_sha=None, mutate_file=None):
     write_json(root / "freeze-manifest.json", manifest)
 
 
+def relink_case_and_manifest(root):
+    case_path = root / "cases/case.json"
+    case = json.loads(case_path.read_bytes())
+    case["peer_selection_sha256"] = sha((root / case["peer_selection_path"]).read_bytes())
+    case["contrastive_bundle_sha256"] = DiagnosisEvidenceBundle.model_validate_json(
+        (root / case["contrastive_bundle_path"]).read_bytes()).bundle_sha256
+    case_path.write_bytes(canonical_json_bytes(case))
+    suite_path = root / "suite.json"
+    suite = json.loads(suite_path.read_bytes())
+    suite["case_files"][0]["sha256"] = sha(case_path.read_bytes())
+    suite_path.write_bytes(canonical_json_bytes(suite))
+    rewrite_manifest(root)
+
+
 @pytest.fixture
-def frozen_tree(tmp_path):
+def frozen_tree(tmp_path, peer_world):
     root = tmp_path / "suite"
-    blind, contrastive = make_bundle(), make_bundle("contrastive")
+    blind = compile_diagnosis_evidence(**peer_world)
+    selection = select(peer_world)
+    contrastive = compile_peer(peer_world, blind, selection)
     gold = semantic_case(blind, case_id="case")
     case = DiagnosisValidationSuiteCase(case_id="case", expected_route="semantic_diagnosis",
         gold_path="cases/gold.json", gold_sha256=compute_diagnosis_gold_sha256(gold),
         subject_evidence_sha256=compute_subject_evidence_sha256(blind),
         blind_bundle_path="cases/blind.json", blind_bundle_sha256=blind.bundle_sha256,
         contrastive_bundle_path="cases/contrastive.json",
-        contrastive_bundle_sha256=contrastive.bundle_sha256)
+        contrastive_bundle_sha256=contrastive.bundle_sha256,
+        peer_selection_path="cases/selection.json", peer_selection_sha256="0" * 64,
+        peer_artifact_store_path="support/results")
     write_json(root / "cases/gold.json", gold)
     write_json(root / "cases/blind.json", blind)
     write_json(root / "cases/contrastive.json", contrastive)
+    write_json(root / "cases/selection.json", selection)
+    case = case.model_copy(update={"peer_selection_sha256":
+                                  sha((root / "cases/selection.json").read_bytes())})
     write_json(root / "cases/case.json", case)
+    shutil.copytree(peer_world["artifact_store"].results_root, root / "support/results")
     case_raw = (root / "cases/case.json").read_bytes()
     suite = DiagnosisValidationSuite(suite_id="synthetic", case_files=[
         DiagnosisValidationSuiteCaseFile(case_id="case", path="cases/case.json",
@@ -166,3 +194,55 @@ def test_case_file_declared_id_mismatch_rejected(frozen_tree):
     with pytest.raises(DiagnosisSuiteError) as caught:
         verify_diagnosis_validation_suite(frozen_tree, enforce_v1_composition=False)
     assert caught.value.reason.value == "case_id_mismatch"
+
+
+@pytest.mark.parametrize("field,value", [("peer_run_id", "a-passB"),
+                                          ("peer_run_index", 2)])
+def test_wrong_frozen_peer_selection_rejected(frozen_tree, field, value):
+    selection = frozen_tree / "cases/selection.json"
+    raw = json.loads(selection.read_bytes()); raw[field] = value
+    selection.write_bytes(canonical_json_bytes(raw))
+    relink_case_and_manifest(frozen_tree)
+    with pytest.raises(DiagnosisSuiteError, match="invalid_case"):
+        verify_diagnosis_validation_suite(frozen_tree, enforce_v1_composition=False)
+
+
+def test_changed_experiment_order_rejected(frozen_tree):
+    path = frozen_tree / "support/results/experiments/peers/metadata.json"
+    raw = json.loads(path.read_bytes())
+    raw["run_ids"] = ["fail1", "a-passB", "z-passA"]
+    path.write_bytes(canonical_json_bytes(raw))
+    rewrite_manifest(frozen_tree)
+    with pytest.raises(DiagnosisSuiteError, match="invalid_case"):
+        verify_diagnosis_validation_suite(frozen_tree, enforce_v1_composition=False)
+
+
+def test_selected_peer_ineligibility_rejected(frozen_tree):
+    path = frozen_tree / "support/results/z-passA/metadata.json"
+    raw = json.loads(path.read_bytes())
+    raw["agent"]["status"] = "command_failed"
+    raw["agent"]["exit_code"] = 7
+    path.write_bytes(canonical_json_bytes(raw))
+    rewrite_manifest(frozen_tree)
+    with pytest.raises(DiagnosisSuiteError, match="invalid_case"):
+        verify_diagnosis_validation_suite(frozen_tree, enforce_v1_composition=False)
+
+
+def test_selected_peer_same_cell_mismatch_rejected(frozen_tree):
+    path = frozen_tree / "support/results/z-passA/metadata.json"
+    raw = json.loads(path.read_bytes()); raw["agent"]["name"] = "other-agent"
+    path.write_bytes(canonical_json_bytes(raw))
+    rewrite_manifest(frozen_tree)
+    with pytest.raises(DiagnosisSuiteError, match="invalid_case"):
+        verify_diagnosis_validation_suite(frozen_tree, enforce_v1_composition=False)
+
+
+def test_self_hashed_contrastive_bundle_cannot_forge_peer_provenance(frozen_tree):
+    path = frozen_tree / "cases/contrastive.json"
+    bundle = DiagnosisEvidenceBundle.model_validate_json(path.read_bytes())
+    bundle.provenance.peer.peer_experiment_id = "forged-experiment"
+    bundle.bundle_sha256 = compute_bundle_sha256(bundle)
+    write_json(path, bundle)
+    relink_case_and_manifest(frozen_tree)
+    with pytest.raises(DiagnosisSuiteError, match="invalid_case"):
+        verify_diagnosis_validation_suite(frozen_tree, enforce_v1_composition=False)

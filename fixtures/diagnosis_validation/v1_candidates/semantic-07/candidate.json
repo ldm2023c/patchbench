@@ -2,8 +2,6 @@
   "blind_bundle_sha256": "0d77196933dac3487840a0ee40bc9bf7c82f08e563dbb49f93e6d23f487383aa",
   "candidate_id": "semantic-07",
   "expected_route": "semantic_diagnosis",
-  "peer_experiment_id": "semantic-07-peers",
-  "peer_run_id": "semantic-07-peer",
   "schema_version": 1,
   "subject_evidence_sha256": "127c58a8ce1fd65a8ad5c8f60ba1f0cb1a2f02bfdcafbca5cf5992522b8fef38",
   "subject_run_id": "semantic-07-subject"

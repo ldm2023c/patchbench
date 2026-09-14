@@ -299,8 +299,7 @@ def _build_semantic(case_root: Path, case_id: str, spec) -> None:
     _write_json(case_root / "candidate.json", {"schema_version": 1, "candidate_id": case_id,
         "expected_route": DiagnosisRoute.SEMANTIC_DIAGNOSIS.value,
         "subject_run_id": subject.run_id, "blind_bundle_sha256": bundle.bundle_sha256,
-        "subject_evidence_sha256": _subject_sha(bundle), "peer_experiment_id": experiment_id,
-        "peer_run_id": peer.run_id})
+        "subject_evidence_sha256": _subject_sha(bundle)})
     shutil.rmtree(case_root / "repository")
     if (case_root / "workspaces").exists(): shutil.rmtree(case_root / "workspaces")
 
@@ -332,7 +331,12 @@ def prepare_diagnosis_validation_candidates(output_root: Path) -> None:
     (output_root / "README.md").write_text(
         "# Diagnosis Validation v1 candidates\n\n"
         "Draft human-authoring inputs. This directory is not a frozen validation suite.\n"
-        "Semantic candidates contain Blind evidence only and intentionally contain no Human Gold.\n",
+        "Semantic candidates contain Blind evidence only and intentionally contain no Human Gold.\n\n"
+        "Human Gold authors may inspect only candidate-inventory.json and the selected\n"
+        "semantic-XX directory, including its task, base source, and Blind Bundle. Do not\n"
+        "inspect _support/, this generator, or candidate-construction tests until that\n"
+        "case's Human Gold has been authored and its identity locked. _support/ is\n"
+        "machine-verification infrastructure and is not part of an authoring packet.\n",
         encoding="utf-8")
     inventory = [{"candidate_id": value, "expected_route":
                   (DiagnosisRoute.SEMANTIC_DIAGNOSIS.value if value in SEMANTIC_IDS
@@ -342,9 +346,14 @@ def prepare_diagnosis_validation_candidates(output_root: Path) -> None:
     stage_root = Path("/tmp/patchbench-diagnosis-v1-candidate-stage")
     shutil.rmtree(stage_root, ignore_errors=True)
     stage_root.mkdir()
+    support_root = output_root / "_support"
+    support_root.mkdir()
     for case_id, spec in zip(SEMANTIC_IDS, _semantic_specs(), strict=True):
         staged_case = stage_root / case_id; staged_case.mkdir()
         _build_semantic(staged_case, case_id, spec)
+        machine_support = support_root / case_id
+        machine_support.mkdir()
+        shutil.move(staged_case / "results", machine_support / "results")
         shutil.copytree(staged_case, output_root / case_id)
     for case_id, status in zip(OPERATIONAL_IDS,
         (AgentRunStatus.COMMAND_FAILED, AgentRunStatus.TIMED_OUT), strict=True):
@@ -381,8 +390,18 @@ def verify_diagnosis_validation_candidates(root: Path) -> dict[str, str]:
          else DiagnosisRoute.OPERATIONAL_ONLY.value)} for value in ALL_IDS]
     if inventory != {"schema_version": 1, "status": "draft", "candidates": expected_inventory}:
         raise CandidateVerificationError("candidate inventory differs from the exact draft pool")
-    if {path.name for path in root.iterdir() if path.is_dir()} != set(ALL_IDS):
+    if {path.name for path in root.iterdir() if path.is_dir()} != {*ALL_IDS, "_support"}:
         raise CandidateVerificationError("candidate directory set differs")
+    if {path.name for path in (root / "_support").iterdir() if path.is_dir()} != set(SEMANTIC_IDS):
+        raise CandidateVerificationError("machine support directory set differs")
+    if any("contrastive" in path.name.lower() for path in root.rglob("*")):
+        raise CandidateVerificationError("candidate pool contains a Contrastive asset")
+    semantic_answer_tokens = ("preferred_family", "acceptable_families", "should_abstain",
+        "required_evidence", "forbidden_claims", "intended construction family")
+    if any(any(token in path.read_text(encoding="utf-8", errors="ignore")
+               for token in semantic_answer_tokens)
+           for path in root.rglob("*") if path.is_file()):
+        raise CandidateVerificationError("candidate pool contains semantic Human Gold material")
     identities = {}
     forbidden_keys = {"preferred_family", "acceptable_families", "should_abstain",
         "required_evidence", "forbidden_claims", "intended_construction_family"}
@@ -390,16 +409,14 @@ def verify_diagnosis_validation_candidates(root: Path) -> dict[str, str]:
         stage_root = Path(temporary)
         for case_id in SEMANTIC_IDS:
             source = root / case_id
-            names = {path.name.lower() for path in source.iterdir()}
-            if any("contrastive" in name or name in {"gold.json", "semantic-gold.json"} for name in names):
-                raise CandidateVerificationError(f"{case_id} exposes post-authoring evidence")
+            verify_candidate_authoring_isolation(root, case_id)
             metadata = json.loads((source / "candidate.json").read_bytes())
             if forbidden_keys.intersection(metadata):
                 raise CandidateVerificationError(f"{case_id} metadata contains semantic answer fields")
             case_root = stage_root / case_id
             shutil.copytree(source, case_root)
             _restore_repository(case_root)
-            store = FilesystemArtifactStore(case_root / "results")
+            store = FilesystemArtifactStore(root / "_support" / case_id / "results")
             manager = GitRepositoryManager(case_root / "workspaces")
             with _without_inherited_git_environment(), _working_directory(case_root):
                 task_path = Path("task.yaml")
@@ -422,10 +439,12 @@ def verify_diagnosis_validation_candidates(root: Path) -> dict[str, str]:
                 decision = route_run_diagnosis(run)
                 if decision.route is not DiagnosisRoute.SEMANTIC_DIAGNOSIS:
                     raise CandidateVerificationError(f"{case_id} subject does not route semantic")
+                experiment_id = f"{case_id}-peers"
+                peer_id = f"{case_id}-peer"
                 selection = select_contrastive_peer(metadata["subject_run_id"],
-                    metadata["peer_experiment_id"], artifact_store=store)
+                    experiment_id, artifact_store=store)
                 verify_contrastive_peer_selection(selection, artifact_store=store)
-                if selection.peer_run_id != metadata["peer_run_id"]:
+                if selection.peer_run_id != peer_id:
                     raise CandidateVerificationError(f"{case_id} selected peer differs")
             identities[case_id] = persisted.bundle_sha256
         expected_reasons = {"operational-01": DiagnosisRoutingReason.AGENT_COMMAND_FAILED,
@@ -442,6 +461,43 @@ def verify_diagnosis_validation_candidates(root: Path) -> dict[str, str]:
                 raise CandidateVerificationError(f"{case_id} operational route differs")
             identities[case_id] = hashlib.sha256(canonical_json_bytes(run.model_dump(mode="json"))).hexdigest()
     return identities
+
+
+def verify_candidate_authoring_isolation(root: Path, case_id: str) -> None:
+    """Fail if a human-facing semantic directory exposes post-Gold information."""
+    root = Path(root).resolve()
+    case_root = root / case_id
+    allowed = {"base", "blind-bundle.json", "candidate.json", "task.yaml"}
+    if {path.name for path in case_root.iterdir()} != allowed:
+        raise CandidateVerificationError(f"{case_id} authoring directory has non-Blind assets")
+    metadata = json.loads((case_root / "candidate.json").read_bytes())
+    expected_keys = {"schema_version", "candidate_id", "expected_route", "subject_run_id",
+                     "blind_bundle_sha256", "subject_evidence_sha256"}
+    if set(metadata) != expected_keys:
+        raise CandidateVerificationError(f"{case_id} authoring metadata exposes unsupported linkage")
+    bundle = DiagnosisEvidenceBundle.model_validate_json(
+        (case_root / "blind-bundle.json").read_bytes())
+    if bundle.mode.value != "blind" or bundle.peer_run_id is not None or bundle.provenance.peer is not None:
+        raise CandidateVerificationError(f"{case_id} authoring Bundle is not strictly Blind")
+    forbidden_keys = {"preferred_family", "acceptable_families", "should_abstain",
+        "required_evidence", "forbidden_claims", "intended_construction_family",
+        "peer_run_id", "peer_experiment_id", "peer_run_index", "peer_selection_path",
+        "peer_artifact_store_path"}
+    def keys(value):
+        if isinstance(value, dict):
+            return set(value).union(*(keys(item) for item in value.values()))
+        if isinstance(value, list):
+            return set().union(*(keys(item) for item in value)) if value else set()
+        return set()
+    documents = [metadata, yaml.safe_load((case_root / "task.yaml").read_bytes())]
+    if any(forbidden_keys.intersection(keys(document)) for document in documents):
+        raise CandidateVerificationError(f"{case_id} authoring data references peer or semantic Gold")
+    support_tokens = ("_support", f"{case_id}-peer", f"{case_id}-peers")
+    for path in case_root.rglob("*"):
+        if path.is_file():
+            text = path.read_text(encoding="utf-8")
+            if any(token in text for token in support_tokens):
+                raise CandidateVerificationError(f"{case_id} authoring bytes reference machine support")
 
 
 def main() -> None:
