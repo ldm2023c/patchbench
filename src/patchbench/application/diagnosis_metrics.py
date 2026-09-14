@@ -27,6 +27,7 @@ class DiagnosisMetricsReason(str, Enum):
     INVALID_APPLICABILITY = "invalid_applicability"
     PAIR_CASE_SET_MISMATCH = "pair_case_set_mismatch"
     PAIR_SUBJECT_MISMATCH = "pair_subject_mismatch"
+    PAIR_GOLD_MISMATCH = "pair_gold_mismatch"
     PAIR_APPLICABILITY_MISMATCH = "pair_applicability_mismatch"
     PAIR_EVIDENCE_TOTAL_MISMATCH = "pair_evidence_total_mismatch"
     PAIR_OVERCLAIM_APPLICABILITY_MISMATCH = "pair_overclaim_applicability_mismatch"
@@ -199,6 +200,9 @@ def compare_blind_contrastive(
         if blind.subject_evidence_sha256 != contrastive.subject_evidence_sha256:
             raise DiagnosisMetricsError(DiagnosisMetricsReason.PAIR_SUBJECT_MISMATCH,
                                         f"case {case_id!r} subject identities differ")
+        if blind.gold_sha256 != contrastive.gold_sha256:
+            raise DiagnosisMetricsError(DiagnosisMetricsReason.PAIR_GOLD_MISMATCH,
+                                        f"case {case_id!r} Human Gold identities differ")
         blind_applicable = _semantic_applicable(blind)
         contrastive_applicable = _semantic_applicable(contrastive)
         if blind_applicable != contrastive_applicable:
@@ -231,6 +235,7 @@ def compare_blind_contrastive(
             evidence_delta = evidence_change = None
         pairs.append(PairedDiagnosisDelta(
             case_id=case_id,
+            gold_sha256=blind.gold_sha256,
             subject_evidence_sha256=blind.subject_evidence_sha256,
             blind_diagnosis_id=blind.diagnosis_id,
             contrastive_diagnosis_id=contrastive.diagnosis_id,
@@ -266,4 +271,3 @@ def compare_blind_contrastive(
         ),
         audit_pass_transitions=_summarize(pair.audit_pass_change for pair in pairs),
     )
-

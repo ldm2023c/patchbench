@@ -33,6 +33,7 @@ def semantic_score(case_id, *, mode="blind", should_abstain=False,
     violated = ["claim"] if overclaim_violation else []
     return SemanticDiagnosisScore(
         case_id=case_id,
+        gold_sha256=SHA,
         subject_evidence_sha256=SHA,
         diagnosis_id=f"diag-{mode}-{case_id}",
         mode=mode,
@@ -55,6 +56,7 @@ def semantic_score(case_id, *, mode="blind", should_abstain=False,
 
 def route_score(case_id, correct=True):
     return DiagnosisRouteScore(case_id=case_id, run_id=f"run-{case_id}",
+        gold_sha256=SHA,
         expected_route="semantic_diagnosis" if correct else "unavailable",
         actual_route="semantic_diagnosis", actual_reason="semantic_failure", correct=correct)
 

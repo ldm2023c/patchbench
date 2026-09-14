@@ -7,7 +7,12 @@ from patchbench.application.diagnosis_metrics import (
     aggregate_semantic_scores,
     compare_blind_contrastive,
 )
+from patchbench.application.diagnosis_validation import score_semantic_diagnosis
+from patchbench.domain import GoldEvidenceRequirement
 from tests.test_diagnosis_metrics import SHA, semantic_score
+from tests.test_diagnosis_validation import (
+    locator, make_bundle, make_diagnosis, semantic_case,
+)
 
 
 def with_mode(score, mode):
@@ -49,6 +54,7 @@ def test_pairing_by_case_not_position_sorted_and_immutable():
               [score.model_dump() for score in contrastive])
     result = compare_blind_contrastive(blind, contrastive)
     assert [pair.case_id for pair in result.pairs] == ["a", "b", "c", "d"]
+    assert all(pair.gold_sha256 == SHA for pair in result.pairs)
     assert result.pair_count == 4
     assert result.blind_aggregate == aggregate_semantic_scores(blind)
     assert result.contrastive_aggregate == aggregate_semantic_scores(contrastive)
@@ -144,3 +150,27 @@ def test_pairing_rejects_internal_applicability_contradiction():
         update={"preferred_top1_match": None})
     assert_pair_error(blind, [malformed], "invalid_applicability")
 
+
+def test_pairing_rejects_two_real_scores_from_different_complete_gold():
+    blind_bundle = make_bundle()
+    contrastive_bundle = make_bundle("contrastive")
+    blind_requirement = GoldEvidenceRequirement(
+        requirement_id="required", description="Original human requirement.",
+        acceptable_locators=[locator(blind_bundle.evidence_items[0])])
+    contrastive_requirement = GoldEvidenceRequirement(
+        requirement_id="required", description="Different human requirement.",
+        acceptable_locators=[locator(contrastive_bundle.evidence_items[0])])
+    blind_gold = semantic_case(blind_bundle, required=[blind_requirement])
+    contrastive_gold = semantic_case(contrastive_bundle,
+                                     required=[contrastive_requirement])
+    blind_score = score_semantic_diagnosis(
+        blind_bundle, make_diagnosis(blind_bundle), blind_gold)
+    contrastive_score = score_semantic_diagnosis(
+        contrastive_bundle, make_diagnosis(contrastive_bundle), contrastive_gold)
+
+    assert blind_score.case_id == contrastive_score.case_id
+    assert blind_score.subject_evidence_sha256 == contrastive_score.subject_evidence_sha256
+    assert blind_score.required_evidence_total == contrastive_score.required_evidence_total
+    assert blind_score.overclaim_applicable == contrastive_score.overclaim_applicable
+    assert blind_score.gold_sha256 != contrastive_score.gold_sha256
+    assert_pair_error([blind_score], [contrastive_score], "pair_gold_mismatch")

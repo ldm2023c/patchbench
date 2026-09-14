@@ -14,7 +14,7 @@ from patchbench.application.diagnosis_contrastive import (
 )
 from patchbench.application.diagnosis_validation import (
     DiagnosisValidationError, DiagnosisValidationReason,
-    compute_subject_evidence_sha256, score_diagnosis_route,
+    compute_diagnosis_gold_sha256, compute_subject_evidence_sha256, score_diagnosis_route,
     score_semantic_diagnosis,
 )
 from patchbench.application.diagnosis_metrics import (
@@ -28,6 +28,7 @@ __all__ = ["ReplayError", "ReplayExecution", "replay_run", "run_task",
            "select_contrastive_peer", "ContrastiveCompilationError", "ContrastiveCompilationReason",
            "compile_contrastive_diagnosis_evidence", "DiagnosisValidationError",
            "DiagnosisValidationReason", "compute_subject_evidence_sha256",
+           "compute_diagnosis_gold_sha256",
            "score_diagnosis_route", "score_semantic_diagnosis",
            "DiagnosisMetricsError", "DiagnosisMetricsReason",
            "aggregate_route_scores", "aggregate_semantic_scores",

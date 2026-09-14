@@ -139,6 +139,7 @@ class DiagnosisRouteScore(DomainModel):
 
     schema_version: Annotated[int, Field(strict=True, ge=1, le=1)] = 1
     case_id: NonEmptyString
+    gold_sha256: Sha256Hex
     run_id: NonEmptyString
     expected_route: DiagnosisRoute
     actual_route: DiagnosisRoute
@@ -165,6 +166,7 @@ class SemanticDiagnosisScore(DomainModel):
 
     schema_version: Annotated[int, Field(strict=True, ge=1, le=1)] = 1
     case_id: NonEmptyString
+    gold_sha256: Sha256Hex
     subject_evidence_sha256: Sha256Hex
     diagnosis_id: NonEmptyString
     mode: DiagnosisMode

@@ -1,5 +1,6 @@
 """D6.1 human-gold contracts, subject identity, and grounding boundaries."""
 
+import copy
 import hashlib
 
 import pytest
@@ -7,6 +8,7 @@ from pydantic import ValidationError
 
 from patchbench.application.diagnosis_validation import (
     DiagnosisValidationError,
+    compute_diagnosis_gold_sha256,
     compute_subject_evidence_sha256,
     score_diagnosis_route,
     score_semantic_diagnosis,
@@ -73,6 +75,68 @@ def semantic_case(bundle, *, preferred="incorrect_local_logic", acceptable=None,
             acceptable_families=acceptable or [preferred],
             required_evidence=required or [requirement(bundle.evidence_items[0])],
             forbidden_claims=forbidden or []))
+
+
+def test_complete_gold_identity_is_canonical_deterministic_and_nonmutating():
+    bundle = make_bundle()
+    gold = semantic_case(bundle, acceptable=[
+        "incorrect_local_logic", "regression_introduced"], forbidden=[
+            ForbiddenClaim(claim_id="claim", description="Forbidden claim.")])
+    before = gold.model_dump()
+    expected = hashlib.sha256(canonical_json_bytes(
+        gold.model_dump(mode="json"))).hexdigest()
+    assert compute_diagnosis_gold_sha256(gold) == expected
+    assert compute_diagnosis_gold_sha256(gold) == expected
+    identical = DiagnosisGoldCase.model_validate(gold.model_dump(mode="json"))
+    assert compute_diagnosis_gold_sha256(identical) == expected
+    assert gold.model_dump() == before
+
+
+def test_every_gold_contract_change_changes_complete_identity():
+    bundle = make_bundle()
+    base = semantic_case(bundle, acceptable=[
+        "incorrect_local_logic", "regression_introduced"], forbidden=[
+            ForbiddenClaim(claim_id="claim", description="Forbidden claim.")])
+    raw = base.model_dump(mode="json")
+    variants = []
+
+    def changed(mutator):
+        value = copy.deepcopy(raw)
+        mutator(value)
+        variants.append(DiagnosisGoldCase.model_validate(value))
+
+    changed(lambda value: value.update(case_id="other-case"))
+    variants.append(DiagnosisGoldCase(case_id=base.case_id,
+                                      expected_route="unavailable"))
+    changed(lambda value: value.update(subject_evidence_sha256=SHA_B))
+    changed(lambda value: value.update(semantic_gold=dict(
+        should_abstain=True, preferred_family=None, acceptable_families=[],
+        required_evidence=[], forbidden_claims=value["semantic_gold"]["forbidden_claims"])))
+    changed(lambda value: value["semantic_gold"].update(
+        preferred_family="regression_introduced"))
+    changed(lambda value: value["semantic_gold"].update(
+        acceptable_families=["incorrect_local_logic"]))
+    changed(lambda value: value["semantic_gold"]["required_evidence"][0].update(
+        requirement_id="other-requirement"))
+    changed(lambda value: value["semantic_gold"]["required_evidence"][0].update(
+        description="Different description."))
+    changed(lambda value: value["semantic_gold"]["required_evidence"][0][
+        "acceptable_locators"][0].update(artifact_sha256=SHA_B))
+    changed(lambda value: value["semantic_gold"]["required_evidence"][0][
+        "acceptable_locators"][0].update(path="other.py"))
+    changed(lambda value: value["semantic_gold"]["required_evidence"][0][
+        "acceptable_locators"][0].update(source_state="base"))
+    changed(lambda value: value["semantic_gold"]["required_evidence"][0][
+        "acceptable_locators"][0].update(start_line=42, end_line=42))
+    changed(lambda value: value["semantic_gold"]["forbidden_claims"][0].update(
+        claim_id="other-claim"))
+    changed(lambda value: value["semantic_gold"]["forbidden_claims"][0].update(
+        description="Different forbidden claim."))
+
+    identity = compute_diagnosis_gold_sha256(base)
+    assert len(variants) == 14
+    assert all(compute_diagnosis_gold_sha256(variant) != identity
+               for variant in variants)
 
 
 def test_subject_identity_exact_material_and_determinism_without_mutation():
@@ -288,6 +352,7 @@ def test_route_scoring_reuses_d1_router(passed, status, expected, monkeypatch):
     monkeypatch.setattr(module, "route_run_diagnosis", lambda value: calls.append(value) or original(value))
     score = score_diagnosis_route(run, gold)
     assert score.actual_route.value == expected and score.correct and calls == [run]
+    assert score.gold_sha256 == compute_diagnosis_gold_sha256(gold)
     wrong = DiagnosisGoldCase(case_id="wrong", expected_route="unavailable")
     assert score_diagnosis_route(run, wrong).correct == (expected == "unavailable")
 
@@ -303,5 +368,6 @@ def test_scoring_does_not_mutate_inputs():
     diagnosis = make_diagnosis(bundle)
     gold = semantic_case(bundle)
     before = (bundle.model_dump(), diagnosis.model_dump(), gold.model_dump())
-    score_semantic_diagnosis(bundle, diagnosis, gold)
+    score = score_semantic_diagnosis(bundle, diagnosis, gold)
+    assert score.gold_sha256 == compute_diagnosis_gold_sha256(gold)
     assert before == (bundle.model_dump(), diagnosis.model_dump(), gold.model_dump())

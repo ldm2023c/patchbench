@@ -59,10 +59,16 @@ def compute_subject_evidence_sha256(bundle: DiagnosisEvidenceBundle) -> Sha256He
     return hashlib.sha256(canonical_json_bytes(identity)).hexdigest()
 
 
+def compute_diagnosis_gold_sha256(gold: DiagnosisGoldCase) -> Sha256Hex:
+    """Hash the complete typed Human Gold case without omissions or mutation."""
+    return hashlib.sha256(canonical_json_bytes(gold.model_dump(mode="json"))).hexdigest()
+
+
 def score_diagnosis_route(run: RunRecord, gold: DiagnosisGoldCase) -> DiagnosisRouteScore:
     decision = route_run_diagnosis(run)
     return DiagnosisRouteScore(
         case_id=gold.case_id,
+        gold_sha256=compute_diagnosis_gold_sha256(gold),
         run_id=run.run_id,
         expected_route=gold.expected_route,
         actual_route=decision.route,
@@ -233,6 +239,7 @@ def score_semantic_diagnosis(
     violated_ids = [] if overclaim_review is None else overclaim_review.violated_claim_ids
     return SemanticDiagnosisScore(
         case_id=gold.case_id,
+        gold_sha256=compute_diagnosis_gold_sha256(gold),
         subject_evidence_sha256=subject_sha,
         diagnosis_id=diagnosis.diagnosis_id,
         mode=bundle.mode,
