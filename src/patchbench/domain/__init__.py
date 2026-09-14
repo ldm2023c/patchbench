@@ -74,7 +74,18 @@ from patchbench.domain.diagnosis_audit import (
     DiagnosisAuditResult, audit_failure_diagnosis,
 )
 
+from patchbench.domain.diagnosis_execution import (
+    DiagnosisExternalLLMPolicy, DiagnosisProviderUsage, DiagnosisProviderSettings,
+    DiagnosisProviderProvenance, DiagnosisExecutionRecord, compute_execution_sha256,
+)
+
 __all__ = [
+    "DiagnosisExternalLLMPolicy",
+    "DiagnosisProviderUsage",
+    "DiagnosisProviderSettings",
+    "DiagnosisProviderProvenance",
+    "DiagnosisExecutionRecord",
+    "compute_execution_sha256",
     "canonical_json_bytes",
     "compute_bundle_sha256",
     "compute_diagnosis_sha256",

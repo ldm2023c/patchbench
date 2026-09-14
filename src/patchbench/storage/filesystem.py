@@ -11,6 +11,11 @@ from patchbench.agents.base import AgentRunResult
 from patchbench.domain.evaluation_evidence import render_evaluation_log
 from patchbench.domain.diagnosis import DiagnosisEvidenceBundle, FailureDiagnosis
 from patchbench.domain.diagnosis_audit import DiagnosisAuditResult, audit_failure_diagnosis
+from patchbench.domain.diagnosis_integrity import compute_bundle_sha256, compute_diagnosis_sha256
+from patchbench.domain.diagnosis_execution import (
+    DiagnosisExecutionRecord, compute_execution_sha256, diagnosis_payload,
+    inference_payload_sha256, generate_diagnosis_id,
+)
 from patchbench.domain.models import (
     ArtifactPaths,
     EvaluationResult,
@@ -204,12 +209,17 @@ class FilesystemArtifactStore:
         directory = self._diagnosis_directory(diagnosis.diagnosis_id)
         if audit != audit_failure_diagnosis(bundle, diagnosis):
             raise ArtifactStoreError("Supplied Diagnosis audit differs from recomputation")
+        return self._write_diagnosis_files(directory, (("bundle.json", bundle),
+            ("diagnosis.json", diagnosis), ("audit.json", audit)))
+
+    def _write_diagnosis_files(self, directory: Path, artifacts: tuple) -> Path:
+        """Create-only all-or-nothing write shared by three- and four-file attempts."""
         try:
             directory.mkdir(parents=True, exist_ok=False)
         except OSError as error:
             raise ArtifactStoreError(f"Unable to create Diagnosis directory: {error}") from error
         try:
-            for name, artifact in (("bundle.json", bundle), ("diagnosis.json", diagnosis), ("audit.json", audit)):
+            for name, artifact in artifacts:
                 (directory / name).write_text(
                     json.dumps(artifact.model_dump(mode="json"), ensure_ascii=False, sort_keys=True, indent=2) + "\n",
                     encoding="utf-8", newline="\n",
@@ -238,6 +248,42 @@ class FilesystemArtifactStore:
         if audit != audit_failure_diagnosis(bundle, diagnosis):
             raise ArtifactStoreError("Persisted Diagnosis audit differs from recomputation")
         return bundle, diagnosis, audit
+
+    @staticmethod
+    def _verify_diagnosis_execution(bundle, diagnosis, audit, execution) -> None:
+        if (compute_bundle_sha256(bundle) != bundle.bundle_sha256
+                or audit != audit_failure_diagnosis(bundle, diagnosis)
+                or execution.execution_sha256 != compute_execution_sha256(execution)
+                or execution.diagnosis_id != diagnosis.diagnosis_id
+                or execution.bundle_sha256 != bundle.bundle_sha256
+                or diagnosis.bundle_sha256 != bundle.bundle_sha256
+                or execution.diagnosis_sha256 != compute_diagnosis_sha256(diagnosis)
+                or execution.audit_passed != audit.passed
+                or execution.inference_payload_sha256 != inference_payload_sha256(diagnosis_payload(diagnosis))
+                or execution.diagnosis_id != generate_diagnosis_id(bundle.bundle_sha256,
+                    execution.inference_payload_sha256, execution.provider)):
+            raise ArtifactStoreError("Diagnosis execution integrity or linkage mismatch")
+
+    def save_diagnosis_execution_artifacts(
+        self, bundle: DiagnosisEvidenceBundle, diagnosis: FailureDiagnosis,
+        audit: DiagnosisAuditResult, execution: DiagnosisExecutionRecord,
+    ) -> Path:
+        directory = self._diagnosis_directory(diagnosis.diagnosis_id)
+        self._verify_diagnosis_execution(bundle, diagnosis, audit, execution)
+        return self._write_diagnosis_files(directory, (("bundle.json", bundle),
+            ("diagnosis.json", diagnosis), ("audit.json", audit), ("execution.json", execution)))
+
+    def load_diagnosis_execution_artifacts(self, diagnosis_id: str) -> tuple[
+        DiagnosisEvidenceBundle, FailureDiagnosis, DiagnosisAuditResult, DiagnosisExecutionRecord,
+    ]:
+        bundle, diagnosis, audit = self.load_diagnosis_artifacts(diagnosis_id)
+        try:
+            execution = DiagnosisExecutionRecord.model_validate_json(
+                (self._diagnosis_directory(diagnosis_id) / "execution.json").read_bytes())
+        except (OSError, UnicodeError, ValidationError) as error:
+            raise ArtifactStoreError("Unable to load valid Diagnosis execution") from error
+        self._verify_diagnosis_execution(bundle, diagnosis, audit, execution)
+        return bundle, diagnosis, audit, execution
 
     def _run_directory(self, run_id: str) -> Path:
         candidate = (self.results_root / run_id).resolve()
