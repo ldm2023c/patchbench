@@ -6,7 +6,9 @@ outrank implementation summaries and this document when they disagree.
 ## Current state and next action
 
 - **Integration branch:** `v1.2`; accepted D1–D5 tip `3e4af7d`.
-- **Documentation slice:** `docs/v1.2-diagnosis-sync` synchronizes the current contract.
+- **Documentation baseline:** V1.2 Diagnosis documentation is synchronized through
+  the D1–D5 implementation boundary; this documentation-only slice contains no
+  D6 implementation.
 - **Implemented and code-reviewed:** V1.2 Diagnosis D1–D5, merged and pushed to `v1.2`.
 - **Historical release:** V1.1 frozen evidence is COMPLETE; V1 M0–M6 is also complete.
 - **External blocker:** D4-P live OpenAI Blind prototype and D6-R real provider
@@ -17,9 +19,10 @@ outrank implementation summaries and this document when they disagree.
 - **Empirical boundary:** no Diagnosis-accuracy claim. The V1.1 frozen reliability
   release is the current empirical model evidence.
 
-This documentation slice authorizes no D6 implementation or new experiments.
-After documentation review, the owner can supply the D6.1 scope lock. Offline
-contract/scoring work and billing-dependent real validation are separate gates.
+No D6 implementation or new experiment is included in this documentation sync.
+After this sync is merged, D6.1 Human Gold Contract + deterministic per-case
+scoring is the next implementation slice, subject to its locked scope. Offline
+contract/scoring work and billing-dependent real validation remain separate gates.
 Do not describe all of V1.2 as complete.
 
 ## Accepted Diagnosis history
@@ -46,9 +49,9 @@ Routing alone does not prove compilation readiness.
 
 D2 verifies historical raw patch/log/task identity and compiles complete bounded
 base/candidate production source plus frozen baseline tests. D3 audits only
-hashes, linkage, ownership and citation ranges. D4 accepts a compiled Blind
-Bundle, applies permission/integrity/byte gates, makes one provider SDK call,
-parses semantic output and persists the completed typed attempt. D5 appends one
+hashes, linkage, ownership and citation ranges. D4 accepts a compiled Blind Bundle, applies permission/integrity/byte gates,
+makes one provider inference call, parses semantic output and persists the
+completed typed attempt. D5 appends one
 same-cell PASS peer selected by persisted Experiment order.
 
 D5 peer provenance includes Experiment ID and zero-based Run index. Execution
