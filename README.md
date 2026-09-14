@@ -12,6 +12,7 @@ study that variation:
 
 ```text
 Run → Repeat → Classify → Compare → Replay
+                   └─ semantic FAIL → verified evidence → optional Diagnosis
 ```
 
 ## V1.1 Evidence Release
@@ -36,14 +37,40 @@ purpose-built realistic tasks and one model/environment; it does not establish
 general coding-agent reliability. PatchBench V1.1 is complete. The final evidence
 release was externally accepted at `7a99c2c`.
 
+## V1.2 — Evidence-Grounded Diagnosis
+
+Diagnosis infrastructure **D1–D5 is implemented, externally code-reviewed, and
+merged into `v1.2`**. Official deterministic evaluation remains truth: Diagnosis
+is optional inference and never changes official PASS/FAIL.
+
+A semantic failure (official FAIL with normally completed Agent execution) can
+be compiled into complete bounded evidence, then receive **Blind Diagnosis**,
+the headline mode. **Contrastive Diagnosis** is a secondary ablation using one
+verified same-cell PASS peer from a persisted Experiment. A deterministic
+Auditor checks linkage and exact citation ranges; immutable execution artifacts
+preserve the inference and its audit, including Audit FAIL.
+
+Diagnosis is currently a **programmatic subsystem**, not a CLI command. D6
+human-gold validation and metrics are next, beginning with D6.1's contract and
+deterministic per-case scoring. The live OpenAI Blind prototype (D4-P) and real
+provider validation (D6-R) remain blocked by unfunded API billing/credits.
+There is no successful live OpenAI Diagnosis result or measured Diagnosis
+accuracy claim. The V1.1 frozen release above remains the empirical reliability
+evidence; mocked provider tests are infrastructure verification.
+
+See the [Diagnosis reference](docs/DIAGNOSIS.md) and
+[current handoff](docs/PROJECT_STATUS.md).
+
 ## Why PatchBench?
 
-PatchBench separates five practical reliability questions:
+PatchBench separates practical reliability questions:
 
 - **Run:** Did this individual execution pass its evaluator?
 - **Experiment:** How reliable was the same frozen setup across repeated Runs?
 - **FailureAnalysis:** Which directly observable failure conditions occurred?
 - **PassFailComparison:** What evidence differs between one PASS and one FAIL?
+- **Diagnosis:** Which evidence-grounded hypotheses explain a semantic failure,
+  or should the model abstain?
 - **Replay:** Does a saved historical patch reproduce its observed outcome on a
   fresh base worktree?
 
@@ -83,7 +110,7 @@ host / Docker evaluation
 RunRecord
 ```
 
-Repeated reliability and M5 analysis build on completed Runs:
+Repeated reliability and deterministic analysis build on completed Runs:
 
 ```text
 Run × N                        Run + patch
@@ -254,16 +281,28 @@ results/
 ├── experiments/
 │   └── <experiment-id>/
 │       └── metadata.json
-└── replays/
-    └── <replay-id>/
-        ├── metadata.json
-        └── test.log
+├── replays/
+│   └── <replay-id>/
+│       ├── metadata.json
+│       └── test.log
+└── diagnoses/
+    └── <diagnosis-id>/
+        ├── bundle.json
+        ├── diagnosis.json
+        ├── audit.json
+        └── execution.json
 ```
 
 A Run owns its execution artifacts and canonical historical patch. An
 Experiment owns aggregate metadata and references standalone child Runs by
 `run_ids`. A Replay references one `source_run_id`, owns its new metadata and
 evaluation log, and does not duplicate the source patch.
+
+A completed provider Diagnosis attempt owns all four Diagnosis files. The
+separate D3 `save_diagnosis_artifacts()` API still writes exactly three files
+without `execution.json`. Diagnosis directories are create-only; save/load
+recompute integrity and auditing. Audit FAIL is persistable and does not change
+any official Run verdict.
 
 ## Reliability Semantics
 
@@ -287,21 +326,18 @@ isolation, not a production-grade hostile multi-tenant security boundary.
 
 ## Project Status
 
-Milestones 0–6 are complete and merged to `main`. M6 — Demo / README /
-Documentation / Resume polish is complete: M6.1 — Public Demo & README and M6.2
-— Documentation / Interview / Resume Polish are complete, and M6
-whole-milestone review passed before merge. M6 was merged to `main` through
-`e9cdc76 Merge pull request #8 from ldm2023c/feat/m6-demo-docs-polish`.
-PatchBench v1, the current job-search version, is complete. Optional V2 work
-remains deferred and has not started. See
-[Project Status](docs/PROJECT_STATUS.md) for canonical milestone evidence and
-the exact next action.
+V1 and V1.1 are historical completed releases. The current integration branch
+is `v1.2`: Diagnosis infrastructure D1–D5 is complete; the validation layer
+remains in progress. D6.1 Human Gold Contract + deterministic per-case scoring
+is next. Real provider smoke/validation remains blocked by API billing.
+Optional V2 context-engine/service work remains deferred. See
+[Project Status](docs/PROJECT_STATUS.md) for accepted commits and boundaries.
 
 Historical patch Replay has been validated end to end with both a FakeAgent
 source Run and a real Codex source Run using Docker evaluation. The real
 Codex-generated canonical Git patch included binary patch content and was
 successfully persisted and replayed. Detailed Run IDs, Replay IDs, and cleanup
-evidence remain in the canonical project-status record; ephemeral hash values
+evidence remain in the [historical handoff](docs/history/V1_1_STATUS.md); ephemeral hash values
 and temporary paths are intentionally omitted here.
 
 ## Development and Tests

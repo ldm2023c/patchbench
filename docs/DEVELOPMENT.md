@@ -70,44 +70,22 @@ A slice should ideally be small enough for its behavior and diff to be understoo
 
 For each reviewable slice:
 
-```text
-1. Start from an up-to-date main branch.
+1. Lock design, scope, non-goals, and acceptance checks.
+2. Start a short-lived feature branch from the current version branch (`v1.2`).
+3. Codex implements the authorized slice, verifies it, and self-reviews.
+4. Codex returns an implementation report with exact status and limitations.
+5. The human inspects changes, then stages, commits, and pushes for review.
+6. External GitHub review examines the cumulative diff against the version branch.
+7. Address findings with focused fixes and regression tests where appropriate;
+   the human submits focused fix commits for incremental review.
+8. Perform a final cumulative review, not only a review of the latest fix.
+9. After acceptance, the human performs an ff-only merge into the version branch,
+   pushes it, and optionally cleans up the feature branch.
 
-2. Create or switch to the milestone feature branch.
-
-3. Give the coding agent a narrowly scoped implementation prompt.
-
-4. Coding agent implements the slice and runs tests.
-
-5. Coding agent performs a critical self-review.
-
-6. Human independently runs important verification commands.
-
-7. Inspect:
-
-   git status --short
-
-8. Stage the intended implementation files.
-
-9. Generate a review diff.
-
-10. Perform architecture and implementation review.
-
-11. When a possible correctness bug is identified, prefer adding a
-    regression test instead of resolving the disagreement by opinion.
-
-12. Coding agent performs focused fixes only.
-
-13. Review the incremental fix diff.
-
-14. Perform a final full-diff sanity check.
-
-15. Human commits the accepted slice.
-
-16. After the milestone is complete, push the feature branch and open a PR.
-
-17. Merge only after milestone acceptance.
-```
+A commit submitted for review is not acceptance of the slice. The coding agent
+does not infer permission to stage, commit, push, or merge from implementation
+authorization. Source code + tests + runtime/Git evidence outrank implementation
+summaries. Preserve unrelated work and report any mismatch in expected branch.
 
 ## 4. Review Packet
 
@@ -149,12 +127,12 @@ Use:
 git diff --cached
 ```
 
-### Feature branch compared with main
+### Feature branch compared with the version branch
 
 After commits exist on the feature branch, use:
 
 ```bash
-git diff main...HEAD
+git diff v1.2...HEAD
 ```
 
 ### Important: untracked files
@@ -261,36 +239,17 @@ git status --short
 Tests, compile checks, and runtime verification depend on the current slice. A
 documentation-only slice does not require unrelated implementation tests.
 
-A commit is created only after:
-
-- required tests pass;
-- important runtime behavior is independently verified;
-- code review is complete;
-- no unintended file is staged.
+Before the human creates a review commit, required slice checks must pass,
+material runtime behavior must be verified where applicable, and staged files
+must match scope. External review may then request fix commits. Final cumulative
+review and acceptance are required before integration into the version branch.
 
 ## 10. Git and PR Policy
 
-Feature development should not occur directly on `main`.
-
-Typical flow:
-
-```text
-main
-  ↓
-feature branch
-  ↓
-implementation commits
-  ↓
-Pull Request
-  ↓
-review
-  ↓
-merge
-  ↓
-main
-```
-
-The coding agent does not decide when work is committed, pushed, or merged.
+Feature development uses short-lived branches off the current version branch,
+currently `v1.2`. The human owns staging, commits, pushes, acceptance, ff-only
+integration, and branch cleanup. Explicit session authorization governs any
+exception; implementation permission alone does not authorize Git publication.
 
 ## 11. Scope Discipline
 
@@ -311,3 +270,17 @@ AI may generate most implementation code, but project ownership remains human.
 Architecture, experimental validity, review, acceptance, and engineering
 trade-offs must remain understandable and defensible without relying on the
 coding agent's explanation.
+
+## 13. Documentation synchronization checkpoints
+
+After a major version boundary or architecture-changing milestone, explicitly
+schedule a documentation synchronization checkpoint. Reconcile public, contract,
+architecture, handoff, subsystem, and interview documentation with current exports,
+code, tests, runtime artifacts, and Git. Separate implemented/reviewed infrastructure,
+planned validation, external blockers, and measured results. Preserve useful
+historical status in an explicitly historical archive.
+
+For documentation-only changes, inspect changed Markdown links, search for stale
+claims, run `git diff --check` and `git status --short`, and verify permitted file
+scope. Full unrelated pytest runs and live experiments are not required solely
+for prose edits. Report tests as not run rather than recycling old counts.

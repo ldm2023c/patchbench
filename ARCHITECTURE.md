@@ -34,6 +34,73 @@ Infrastructure-specific logic belongs in adapters.
 
 ---
 
+### V1.2 Diagnosis layers and trust boundaries
+
+D1–D5 infrastructure is implemented and externally reviewed. D6 is designed/next,
+not implemented. Diagnosis is an application API alongside the existing CLI flow.
+
+```text
+L0 deterministic official evaluation (fixed PASS/FAIL)
+ ↓ persisted Run + patch + evaluation output
+L1 verified evidence ← historical Git + pinned task/benchmark + source policy
+ ↓ route_run_diagnosis: completed Agent + official FAIL → semantic eligibility
+L2 DiagnosisEvidenceBundle (Blind, or verified same-cell PASS augmentation)
+ ↓ explicit external permission + integrity + provider byte gates
+   deterministic prompt → DiagnosisProvider → semantic payload only
+L3 FailureDiagnosis (PatchBench-owned identity/linkage)
+ ↓ audit_failure_diagnosis
+L4 deterministic structural/citation Auditor → immutable artifacts
+L5 human-gold validation — next / not implemented
+```
+
+Routing itself reads recorded outcomes, not source bytes. Evidence verification
+and compilation are separate readiness gates. Official PASS is unavailable for
+semantic diagnosis; command failure/timeout with FAIL is operational only.
+
+`DiagnosisSourcePolicy` bounds complete production snapshots. `SubjectProvenance`
+binds raw task/patch/log, historical base/candidate snapshots, frozen tests, and
+benchmark identity. D2 reconstructs from Run provenance, preserves untouched
+source and exact raw content, and fails closed rather than truncating or retrieving.
+Compiler-generated paths are canonical repo-relative identities; historical host
+path strings inside raw evidence are preserved as data.
+
+D5 selects the first eligible same-cell PASS from persisted Experiment run order.
+`PeerProvenance` binds Experiment ID, Run ID, zero-based position, and peer artifact
+hashes. Selection has no fallback. Contrastive compilation preserves every Blind
+`E` item exactly and appends complete `P` evidence. Execution re-verifies persisted
+selection before rendering/provider invocation: a locally valid Bundle/hash alone
+is insufficient. A PASS peer is comparison evidence, not a reference fix or causal
+oracle. Blind is the headline mode; Contrastive is a secondary ablation.
+
+`DiagnosisProvider` is separate from coding `Agent` and receives textual/schema
+input only, with no filesystem, repository, workspace, or shell handles. The
+built-in OpenAI Responses adapter explicitly requests no tools, `store=False`,
+no truncation, and zero SDK retries. The protocol does not sandbox arbitrary
+third-party implementations or prevent their external actions.
+
+PatchBench owns facts and source selection; the provider emits hypotheses only.
+Versioned prompts render all evidence in order, preserving artifact-relative LF
+line semantics and zero-line evidence. Candidate content is untrusted data, not
+an instruction source. Strict semantic output excludes system-owned IDs/linkage;
+invalid output is rejected without repair. External permission defaults closed.
+There is no secret scanning/redaction or claim of arbitrary-private-repository
+safety, adversarial prompt-injection security, or immutable model weights.
+
+`FailureDiagnosis` holds ranked hypotheses or abstention. `DiagnosisAuditResult`
+checks structure/citations, not semantic truth. Audit FAIL can be a completed
+persisted inference attempt. `DiagnosisExecutionRecord` binds provider provenance,
+prompt/schema/payload identity, Diagnosis linkage, and an integrity hash.
+
+D3 storage remains three files; D4/D5 execution storage adds `execution.json`
+through distinct four-file APIs. Both are create-only, validate on save/load,
+and clean up newly created partial directories. Provider failure creates no
+completed Diagnosis artifact. See [Diagnosis technical reference](docs/DIAGNOSIS.md)
+for exact contracts and [current handoff](docs/PROJECT_STATUS.md) for accepted
+commits, D6.1 next work, and D4-P/D6-R API billing blockers. No empirical
+Diagnosis accuracy or successful real OpenAI Diagnosis request is claimed.
+
+---
+
 ## 3. Domain Layer
 
 The domain layer contains data structures and invariants describing PatchBench itself.
@@ -79,7 +146,8 @@ RunRecord + already-loaded patch text
 
 The classifier does not read artifacts or invoke Git, Agents, evaluators,
 Sandboxes, network services, or LLMs. Agent outcomes and Evaluation outcomes
-remain independent labels, and semantic root-cause inference is deferred.
+remain independent labels. Optional V1.2 Diagnosis adds semantic hypotheses
+after routing; it does not change this observable classification.
 
 M5.2 adds an explicit descriptive comparison boundary:
 
@@ -260,6 +328,13 @@ agent claiming success.
 
 ---
 
+### Frozen official evaluation (V1.1)
+
+Frozen evaluation uses a separate evaluation worktree and restores baseline tests
+before evaluation. Agent-edited tests remain canonical patch evidence but do not
+replace frozen test truth. This controls the benchmark's evaluator boundary; it
+is not a security guarantee against arbitrary hostile Python execution.
+
 ## 9. Artifact Store
 
 The current storage backend is filesystem-based.
@@ -303,6 +378,21 @@ A database is intentionally unnecessary for the first local MVP.
 
 ---
 
+### Diagnosis artifacts (V1.2)
+
+```text
+results/diagnoses/<diagnosis-id>/
+    bundle.json
+    diagnosis.json
+    audit.json
+    execution.json   # distinct D4/D5 execution API only
+```
+
+D3's existing save/load API writes exactly the first three files. The execution
+API writes all four as one create-only attempt, with partial-write cleanup and
+recomputed hashes/audit/linkage on load. Run/Experiment/Replay artifacts remain
+separate. Audit FAIL is persistable; failed provider inference is not a Diagnosis.
+
 ## 10. Task Configuration
 
 Task definitions live under:
@@ -340,69 +430,68 @@ Invalid configuration should fail early with a readable error message.
 ## 11. Package Structure
 
 ```text
-patchbench/
-├── pyproject.toml
-├── README.md
-├── PROJECT_SPEC.md
-├── ARCHITECTURE.md
-├── .gitignore
-│
-├── docs/
-│   ├── DEVELOPMENT.md
-│   ├── PROJECT_STATUS.md
-│   └── interview_notes.md
-│
-├── src/
-│   └── patchbench/
-│       ├── __init__.py
-│       ├── cli.py
-│       │
-│       ├── domain/
-│       │   ├── __init__.py
-│       │   ├── models.py
-│       │   ├── aggregation.py
-│       │   ├── failure.py
-│       │   └── comparison.py
-│       │
-│       ├── config/
-│       │   ├── __init__.py
-│       │   └── task_loader.py
-│       │
-│       ├── application/
-│       │   ├── __init__.py
-│       │   ├── local_run.py
-│       │   ├── experiment.py
-│       │   └── replay.py
-│       │
-│       ├── repository/
-│       │   ├── __init__.py
-│       │   └── git_repository.py
-│       │
-│       ├── sandbox/
-│       │   ├── __init__.py
-│       │   ├── base.py
-│       │   └── docker.py
-│       │
-│       ├── agents/
-│       │   ├── __init__.py
-│       │   ├── base.py
-│       │   └── codex.py
-│       │
-│       ├── evaluators/
-│       │   ├── __init__.py
-│       │   ├── command.py
-│       │   └── sandbox.py
-│       │
-│       └── storage/
-│           ├── __init__.py
-│           └── filesystem.py
-│
-├── tests/
-├── tasks/
-├── fixtures/
-├── scripts/
-└── results/
+src/patchbench/
+├── __init__.py
+├── agents/
+│   ├── __init__.py
+│   ├── base.py
+│   ├── codex.py
+│   ├── fake.py
+├── application/
+│   ├── __init__.py
+│   ├── analysis.py
+│   ├── diagnosis_contrastive.py
+│   ├── diagnosis_evidence.py
+│   ├── diagnosis_execution.py
+│   ├── diagnosis_peer.py
+│   ├── diagnosis_prompt.py
+│   ├── evaluation.py
+│   ├── experiment.py
+│   ├── local_run.py
+│   ├── replay.py
+├── cli.py
+├── config/
+│   ├── __init__.py
+│   ├── task_loader.py
+├── domain/
+│   ├── __init__.py
+│   ├── aggregation.py
+│   ├── analysis.py
+│   ├── comparison.py
+│   ├── diagnosis.py
+│   ├── diagnosis_audit.py
+│   ├── diagnosis_execution.py
+│   ├── diagnosis_integrity.py
+│   ├── evaluation_evidence.py
+│   ├── evidence_errors.py
+│   ├── failure.py
+│   ├── models.py
+│   ├── patch_evidence.py
+│   ├── provenance.py
+├── evaluators/
+│   ├── __init__.py
+│   ├── command.py
+│   ├── frozen_runner.py
+│   ├── sandbox.py
+├── providers/
+│   ├── __init__.py
+│   ├── base.py
+│   ├── openai.py
+├── repository/
+│   ├── __init__.py
+│   ├── git_repository.py
+├── sandbox/
+│   ├── __init__.py
+│   ├── base.py
+│   ├── docker.py
+├── storage/
+│   ├── __init__.py
+│   ├── filesystem.py
 ```
+
+Documentation includes the current handoff, this architecture, and
+[DIAGNOSIS.md](docs/DIAGNOSIS.md). Tests, tasks, fixtures, scripts, frozen evidence,
+and runtime results remain separate top-level directories.
 
 ---
 
@@ -626,7 +715,7 @@ PatchBench MVP focuses on reproducibility and practical isolation, not productio
 
 ---
 
-## 17. Milestone Strategy
+## 17. Historical V1 milestone strategy (completed)
 
 ### Milestone 0 — Project Skeleton
 

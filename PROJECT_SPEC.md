@@ -2,6 +2,9 @@
 
 ## 1. Project Overview
 
+V1.1 is COMPLETE. V1.2 Diagnosis infrastructure D1–D5 is implemented and
+reviewed; validation remains pending. See [Project Status](docs/PROJECT_STATUS.md).
+
 **Project Name:** PatchBench
 
 **Positioning:** Coding Agent Reliability & Failure Analysis Platform
@@ -41,7 +44,7 @@ The core experimental unit is:
 
 ## 3. Project Goals
 
-PatchBench v1 supports the following workflow:
+The current workflow retains the completed foundation and adds optional Diagnosis:
 
 1. Define a reproducible repository-level coding task.
 2. Restore the repository to a known base commit.
@@ -55,6 +58,10 @@ PatchBench v1 supports the following workflow:
 9. Classify directly observable failure conditions.
 10. Descriptively compare an explicit PASS/FAIL pair or Replay a historical
     patch without rerunning an Agent.
+11. For eligible semantic failures, compile complete bounded evidence and optionally
+    infer Blind or same-cell PASS Contrastive hypotheses without revising truth.
+12. Audit citations and preserve completed Diagnosis execution artifacts. Human-gold
+    scoring is the next validation layer, not a current measured result.
 
 ---
 
@@ -127,9 +134,9 @@ references, rather than duplicates, the source Run patch.
 
 ---
 
-## 5. Current V1 / Job-search Scope
+## 5. Implemented foundation and V1.2 scope
 
-The implemented local v1 scope is:
+The completed V1/V1.1 foundation remains implemented:
 
 - Task specification;
 - task configuration validation;
@@ -146,6 +153,31 @@ The implemented local v1 scope is:
 - deterministic directly-observable FailureAnalysis;
 - descriptive explicit PASS-vs-FAIL comparison;
 - historical patch Replay with zero Agent executions.
+
+V1.2 Evidence-Grounded Diagnosis infrastructure D1–D5 is complete, externally
+reviewed, and merged into `v1.2`. Official evaluator truth is deterministic and
+immutable within Diagnosis. Diagnosis is optional evidence-grounded inference:
+it may be uncertain, wrong, or abstain, and never changes official PASS/FAIL.
+
+The programmatic subsystem adds semantic FAIL routing, complete bounded evidence,
+Blind Diagnosis, same-cell PASS Contrastive Diagnosis, a deterministic citation
+Auditor, and immutable execution artifacts. Blind Diagnosis is the headline mode;
+Contrastive Diagnosis is a secondary same-cell PASS ablation. A PASS peer is
+comparison evidence, not a reference fix. External inference is opt-in and closed
+by default; untrusted evidence framing does not establish prompt-injection
+security or private-repository safety. See [Diagnosis](docs/DIAGNOSIS.md).
+
+D6 Human-Gold Validation & Metrics is designed/next, not implemented. Next is
+D6.1 Human Gold Contract + deterministic per-case scoring. D4-P real OpenAI Blind
+smoke testing and D6-R real provider validation are blocked by API billing/credits;
+D6-R also needs its implementation prerequisites. No successful real OpenAI
+Diagnosis request or measured Diagnosis accuracy exists. The
+[V1.1 frozen release](evidence/v1.1/FINAL_REPORT.md) remains the only empirical
+coding-agent reliability release: 32 Runs, 30 PASS, two external Codex quota
+failures, and 30/30 normally completed executions passing.
+
+Current CLI commands are `validate-task`, `run`, `experiment`, `replay`, and
+`analyze`. Diagnosis is an application API with no CLI command.
 
 The current CLI form is:
 
@@ -228,7 +260,7 @@ fields.
 
 ---
 
-## 8. Current V1 Metrics
+## 8. Foundation reliability metrics
 
 Required v1 metrics:
 
@@ -279,25 +311,19 @@ Agents and does not claim full historical environment reconstruction.
 
 ## 10. Explicit Non-goals and Deferred Work
 
-The following are explicitly outside PatchBench v1:
+Current non-goals are:
 
-- Kubernetes;
-- distributed execution clusters;
-- Firecracker or custom microVM implementation;
-- custom container runtime;
-- complicated frontend;
-- supporting many coding agents;
-- large-scale SWE-bench integration;
-- semantic root-cause inference or an automatic LLM diagnosis oracle;
-- automatic PASS/FAIL pair selection or Experiment-wide comparison;
-- parallel or distributed Experiment execution;
-- a complete historical environment snapshot system;
-- repository-aware context engine;
-- RAG system;
-- advanced model routing;
-- production multi-tenant security.
+- LLM as primary evaluator or changing official PASS/FAIL;
+- guaranteed root-cause oracle or causal certainty from a PASS peer;
+- automatic reference-fix inference or hidden retrieval/oracle context;
+- automatic citation repair or automatic patch repair;
+- cross-agent Contrastive peers or multiple-peer selection;
+- Diagnosis CLI, production multi-tenant security, distributed execution;
+- repository-aware context engine, RAG, and advanced model routing.
 
-V1 remains local, small, inspectable, and reproducible.
+Deterministic observable FailureAnalysis and Experiment-wide descriptive Analyze
+remain available. V1.2 adds optional semantic hypotheses and canonical same-cell
+peer selection; neither makes comparison a causal proof.
 
 ---
 
@@ -357,7 +383,7 @@ PatchBench follows several strict engineering principles:
 
 ---
 
-## 13. Definition of V1 Success
+## 13. Historical definition of V1 success (completed)
 
 The local job-search v1 completion line is satisfied when the real CLI can run
 an Experiment such as:
