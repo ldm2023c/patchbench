@@ -1,0 +1,1 @@
+Accept explicit null timeout as the documented default.

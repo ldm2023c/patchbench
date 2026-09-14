@@ -1,0 +1,62 @@
+{
+  "agent": {
+    "backend": "host",
+    "duration_seconds": 0.0,
+    "exit_code": 0,
+    "name": "controlled-fixture",
+    "requested_model": null,
+    "status": "completed",
+    "timeout_seconds": 30.0
+  },
+  "artifacts": {
+    "agent_log": "results/semantic-13-peer/agent.log",
+    "agent_stderr_log": "results/semantic-13-peer/agent.stderr.log",
+    "directory": "results/semantic-13-peer",
+    "metadata": "results/semantic-13-peer/metadata.json",
+    "patch": "results/semantic-13-peer/patch.diff",
+    "prompt": "results/semantic-13-peer/prompt.txt",
+    "test_log": "results/semantic-13-peer/test.log"
+  },
+  "duration_seconds": 0.0,
+  "evaluation_evidence": {
+    "duration_seconds": 0.0,
+    "error_count": 0,
+    "exit_code": 0,
+    "failing_cases": [],
+    "failure_count": 0,
+    "framework": "unittest",
+    "output_tail": [
+      "Command: python -I -S -B .patchbench-eval/runner.py",
+      "Exit code: 0",
+      "Duration seconds: 0.000000",
+      "STDOUT:",
+      "STDERR:",
+      "test_select (_patchbench_frozen_0.Contract.test_select) ... ok",
+      "----------------------------------------------------------------------",
+      "Ran 1 test in 0.000s",
+      "OK"
+    ],
+    "passed": true,
+    "test_log_sha256": "be08ab6e3bb5769d741fa713524077f8e34e0a18b78f3e9784aedfa13e411d4c",
+    "tests_run": 1
+  },
+  "evaluation_passed": true,
+  "patch_summary": {
+    "changed_file_count": 0,
+    "files": [],
+    "patch_bytes": 0,
+    "patch_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "text_added_lines": 0,
+    "text_deleted_lines": 0
+  },
+  "provenance": {
+    "base_commit_used": "9ed0dda4116f1b5c346d3cd7ed4aa730dc6e7ee5",
+    "evaluation_backend": "host",
+    "evaluation_command": "python -I -S -B .patchbench-eval/runner.py",
+    "evaluation_timeout_seconds": 30,
+    "task_fingerprint_sha256": "41ba137544fe3f00ac5665b27a068e04f981af0430b080ec36a4e289613c1ed4"
+  },
+  "run_id": "semantic-13-peer",
+  "status": "passed",
+  "task_id": "semantic-13"
+}

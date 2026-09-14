@@ -1,0 +1,117 @@
+{
+  "agent_status": "completed",
+  "base_commit": "f3819cdab1dee9a8169647ea92f608a1b9d71a41",
+  "benchmark_definition_sha256": "a190ba0a5f51388572e0dd5b1854f1f024778dd20e6ed9bc2addc91a3635878a",
+  "bundle_id": "blind-175516c8e4b08290a9a9c974252e056f9af5d94567bd85666613d66fef41a840",
+  "bundle_sha256": "03ca19d38762427b9d6f232fec35379670694003f17be171ab07b84e734ce6a5",
+  "evidence_items": [
+    {
+      "artifact_sha256": "d2a38a511f36507208a91e22e95811995f21fd06bd48b538ee85d368aabd154e",
+      "content": "import unittest\nunittest.runner.time.perf_counter = lambda: 0.0\nfrom src.config import timeout\nimport unittest\nclass Contract(unittest.TestCase):\n def test_timeout(self): self.assertEqual(timeout({'timeout':None}),30); self.assertEqual(timeout({'timeout':'8'}),8)\n",
+      "end_line": 6,
+      "evidence_id": "E001",
+      "kind": "frozen_test",
+      "owner": "benchmark",
+      "path": "test_contract.py",
+      "source_state": "frozen",
+      "start_line": 1
+    },
+    {
+      "artifact_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "content": "",
+      "end_line": null,
+      "evidence_id": "E002",
+      "kind": "production_source",
+      "owner": "benchmark",
+      "path": "src/__init__.py",
+      "source_state": "base",
+      "start_line": null
+    },
+    {
+      "artifact_sha256": "eb4c3868d16fbe8b4b46cce20af29e1acdb9746097da0bb31b60fd7e324682a5",
+      "content": "def timeout(data):\n return data.get('timeout',30)\n",
+      "end_line": 2,
+      "evidence_id": "E003",
+      "kind": "production_source",
+      "owner": "benchmark",
+      "path": "src/config.py",
+      "source_state": "base",
+      "start_line": 1
+    },
+    {
+      "artifact_sha256": "37b884184e336b42978dd654f46e225a7b6870fb9e341997a5c3b769a88283be",
+      "content": "evaluation:\n  command: python -I -S -B .patchbench-eval/runner.py\n  frozen_unittest:\n    test_files:\n    - test_contract.py\n    version: 1\n  timeout_seconds: 30\nid: semantic-05\nmetadata:\n  language: python\nrepository:\n  base_commit: f3819cdab1dee9a8169647ea92f608a1b9d71a41\n  path: repository\n  type: local\nschema_version: 1\ntask:\n  prompt: Accept explicit null timeout as the documented default.\n",
+      "end_line": 17,
+      "evidence_id": "E004",
+      "kind": "task_contract",
+      "owner": "benchmark",
+      "path": null,
+      "source_state": null,
+      "start_line": 1
+    },
+    {
+      "artifact_sha256": "4ef8484024a8edaab8757341ab6edf86ad47e0c0789be37d033886abca05b8ed",
+      "content": "diff --git a/src/config.py b/src/config.py\nindex 4f82769..aafafff 100644\n--- a/src/config.py\n+++ b/src/config.py\n@@ -1,2 +1,2 @@\n def timeout(data):\n- return data.get('timeout',30)\n+ return int(data.get('timeout',30))\n",
+      "end_line": 8,
+      "evidence_id": "E005",
+      "kind": "canonical_patch",
+      "owner": "subject",
+      "path": "patch.diff",
+      "source_state": null,
+      "start_line": 1
+    },
+    {
+      "artifact_sha256": "7226d9307b3cbd730a85bf4411011fd877fbf92cd4b252864964e401c2234368",
+      "content": "Command: python -I -S -B .patchbench-eval/runner.py\nExit code: 1\nDuration seconds: 0.000000\n\nSTDOUT:\n\nSTDERR:\ntest_timeout (_patchbench_frozen_0.Contract.test_timeout) ... ERROR\n\n======================================================================\nERROR: test_timeout (_patchbench_frozen_0.Contract.test_timeout)\n----------------------------------------------------------------------\nTraceback (most recent call last):\n  File \"/tmp/patchbench-diagnosis-v1-candidate-stage/semantic-05/workspaces/evaluation-subject-work/test_contract.py\", line 6, in test_timeout\n    def test_timeout(self): self.assertEqual(timeout({'timeout':None}),30); self.assertEqual(timeout({'timeout':'8'}),8)\n                                             ^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/tmp/patchbench-diagnosis-v1-candidate-stage/semantic-05/workspaces/evaluation-subject-work/src/config.py\", line 2, in timeout\n    return int(data.get('timeout',30))\n           ^^^^^^^^^^^^^^^^^^^^^^^^^^^\nTypeError: int() argument must be a string, a bytes-like object or a real number, not 'NoneType'\n\n----------------------------------------------------------------------\nRan 1 test in 0.000s\n\nFAILED (errors=1)",
+      "end_line": 25,
+      "evidence_id": "E006",
+      "kind": "evaluation_output",
+      "owner": "subject",
+      "path": "test.log",
+      "source_state": null,
+      "start_line": 1
+    },
+    {
+      "artifact_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "content": "",
+      "end_line": null,
+      "evidence_id": "E007",
+      "kind": "production_source",
+      "owner": "subject",
+      "path": "src/__init__.py",
+      "source_state": "candidate",
+      "start_line": null
+    },
+    {
+      "artifact_sha256": "5ddc4c2d17ef509477dfb3ae50a5fd4fa89f95d5808b11441c4f2ade4808301c",
+      "content": "def timeout(data):\n return int(data.get('timeout',30))\n",
+      "end_line": 2,
+      "evidence_id": "E008",
+      "kind": "production_source",
+      "owner": "subject",
+      "path": "src/config.py",
+      "source_state": "candidate",
+      "start_line": 1
+    }
+  ],
+  "mode": "blind",
+  "official_evaluation_passed": false,
+  "peer_run_id": null,
+  "provenance": {
+    "peer": null,
+    "subject": {
+      "base_source_snapshot_sha256": "6457fe60e8beae652afaa962d7dc8b68f8b7e06253fe017ce6ad40d7ffb141fe",
+      "benchmark_definition_sha256": "a190ba0a5f51388572e0dd5b1854f1f024778dd20e6ed9bc2addc91a3635878a",
+      "candidate_source_snapshot_sha256": "438c1a4365f304b1f6800766915fcc29dfaf8e245d8fc8f2523429b34cc54ac5",
+      "canonical_patch_sha256": "4ef8484024a8edaab8757341ab6edf86ad47e0c0789be37d033886abca05b8ed",
+      "evaluation_log_sha256": "7226d9307b3cbd730a85bf4411011fd877fbf92cd4b252864964e401c2234368",
+      "frozen_tests_snapshot_sha256": "58a79f9c187cd5f10a88f6e698f68b90eaba5ebf5ce77a4d93b5e8c7fa4858fe",
+      "task_contract_sha256": "37b884184e336b42978dd654f46e225a7b6870fb9e341997a5c3b769a88283be"
+    }
+  },
+  "schema_version": 1,
+  "source_snapshot_policy": "full_bounded_production_v1:5872fe6c90dcbe418f35d9548e49b7e473794cb388faa8e9374f7a283f7ac77b",
+  "subject_run_id": "semantic-05-subject",
+  "task_fingerprint_sha256": "8b2ba6335436341e03ac11832148fd55fd158715ce62d939793c17c31640ce82",
+  "task_id": "semantic-05"
+}

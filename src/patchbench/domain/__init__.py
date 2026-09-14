@@ -89,8 +89,19 @@ from patchbench.domain.diagnosis_metrics import (
     PairedDiagnosisDelta, PairTransition, PairTransitionSummary,
     RequiredEvidenceTransitionSummary, SemanticDiagnosisAggregate,
 )
+from patchbench.domain.diagnosis_suite import (
+    DiagnosisValidationFreezeManifest, DiagnosisValidationSuite,
+    DiagnosisValidationSuiteCase, DiagnosisValidationSuiteCaseFile,
+    FrozenValidationFile, compute_diagnosis_validation_suite_sha256,
+)
 
 __all__ = [
+    "DiagnosisValidationFreezeManifest",
+    "DiagnosisValidationSuite",
+    "DiagnosisValidationSuiteCase",
+    "DiagnosisValidationSuiteCaseFile",
+    "FrozenValidationFile",
+    "compute_diagnosis_validation_suite_sha256",
     "BlindContrastiveComparison",
     "DiagnosisRouteAggregate",
     "MetricMean",

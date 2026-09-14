@@ -1,0 +1,117 @@
+{
+  "agent_status": "completed",
+  "base_commit": "d03c659d5455d80f80ea25a63bc62aaba4a7b4fe",
+  "benchmark_definition_sha256": "ba319c50bcde373c6a2550f636d39ec4d35dcb7dc15cd40d8777359f25f2f31d",
+  "bundle_id": "blind-b9ac7613430b005cbe981649c421d2ed1a86d780bb2588dcb8f5bf89214934e8",
+  "bundle_sha256": "76cf9c4830301ab36a8c382e0c1d17f0ee75431c70f1b754d18c1fc020bf213a",
+  "evidence_items": [
+    {
+      "artifact_sha256": "e4df1d2b5c93c58bfddf229599d0ee962c2c9e48fbf9d606f9c222e525704a8c",
+      "content": "import unittest\nunittest.runner.time.perf_counter = lambda: 0.0\nfrom src.queue import Queue\nimport unittest\nclass Contract(unittest.TestCase):\n def test_add(self):\n  q=Queue(); q.add('x'); self.assertEqual((q.items,q.count,q.version),(['x'],1,1))\n",
+      "end_line": 7,
+      "evidence_id": "E001",
+      "kind": "frozen_test",
+      "owner": "benchmark",
+      "path": "test_contract.py",
+      "source_state": "frozen",
+      "start_line": 1
+    },
+    {
+      "artifact_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "content": "",
+      "end_line": null,
+      "evidence_id": "E002",
+      "kind": "production_source",
+      "owner": "benchmark",
+      "path": "src/__init__.py",
+      "source_state": "base",
+      "start_line": null
+    },
+    {
+      "artifact_sha256": "504b6432cee40cf150c0fb86867e0a9f680446ffcaade5a00983c1b1f0f12abb",
+      "content": "class Queue:\n def __init__(self): self.items=[]; self.count=0; self.version=0\n def add(self,item): pass\n",
+      "end_line": 3,
+      "evidence_id": "E003",
+      "kind": "production_source",
+      "owner": "benchmark",
+      "path": "src/queue.py",
+      "source_state": "base",
+      "start_line": 1
+    },
+    {
+      "artifact_sha256": "55056797cdad616f730d767b3297b18ab6fe7334ad2d7e269a6cf028e49564e0",
+      "content": "evaluation:\n  command: python -I -S -B .patchbench-eval/runner.py\n  frozen_unittest:\n    test_files:\n    - test_contract.py\n    version: 1\n  timeout_seconds: 30\nid: semantic-08\nmetadata:\n  language: python\nrepository:\n  base_commit: d03c659d5455d80f80ea25a63bc62aaba4a7b4fe\n  path: repository\n  type: local\nschema_version: 1\ntask:\n  prompt: Update the queue and its observable metadata atomically.\n",
+      "end_line": 17,
+      "evidence_id": "E004",
+      "kind": "task_contract",
+      "owner": "benchmark",
+      "path": null,
+      "source_state": null,
+      "start_line": 1
+    },
+    {
+      "artifact_sha256": "39a3af2682ae7cee567ad157917448229dbc364dcc47ce8e9612d1e71c3b36cc",
+      "content": "diff --git a/src/queue.py b/src/queue.py\nindex ca63e02..8a9b3cb 100644\n--- a/src/queue.py\n+++ b/src/queue.py\n@@ -1,3 +1,3 @@\n class Queue:\n  def __init__(self): self.items=[]; self.count=0; self.version=0\n- def add(self,item): pass\n+ def add(self,item): self.items.append(item)\n",
+      "end_line": 9,
+      "evidence_id": "E005",
+      "kind": "canonical_patch",
+      "owner": "subject",
+      "path": "patch.diff",
+      "source_state": null,
+      "start_line": 1
+    },
+    {
+      "artifact_sha256": "dfc0d7d3b8853d543cb34bf05acbc7d9a39e3afa06f1b4f8cf799d9a77d1b5a6",
+      "content": "Command: python -I -S -B .patchbench-eval/runner.py\nExit code: 1\nDuration seconds: 0.000000\n\nSTDOUT:\n\nSTDERR:\ntest_add (_patchbench_frozen_0.Contract.test_add) ... FAIL\n\n======================================================================\nFAIL: test_add (_patchbench_frozen_0.Contract.test_add)\n----------------------------------------------------------------------\nTraceback (most recent call last):\n  File \"/tmp/patchbench-diagnosis-v1-candidate-stage/semantic-08/workspaces/evaluation-subject-work/test_contract.py\", line 7, in test_add\n    q=Queue(); q.add('x'); self.assertEqual((q.items,q.count,q.version),(['x'],1,1))\n                           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\nAssertionError: Tuples differ: (['x'], 0, 0) != (['x'], 1, 1)\n\nFirst differing element 1:\n0\n1\n\n- (['x'], 0, 0)\n?         ^  ^\n\n+ (['x'], 1, 1)\n?         ^  ^\n\n\n----------------------------------------------------------------------\nRan 1 test in 0.000s\n\nFAILED (failures=1)",
+      "end_line": 33,
+      "evidence_id": "E006",
+      "kind": "evaluation_output",
+      "owner": "subject",
+      "path": "test.log",
+      "source_state": null,
+      "start_line": 1
+    },
+    {
+      "artifact_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "content": "",
+      "end_line": null,
+      "evidence_id": "E007",
+      "kind": "production_source",
+      "owner": "subject",
+      "path": "src/__init__.py",
+      "source_state": "candidate",
+      "start_line": null
+    },
+    {
+      "artifact_sha256": "a0f8723f9aa8f08c8e2604560b444226cdc5f9f7a413dd642428b8afdf8ef5aa",
+      "content": "class Queue:\n def __init__(self): self.items=[]; self.count=0; self.version=0\n def add(self,item): self.items.append(item)\n",
+      "end_line": 3,
+      "evidence_id": "E008",
+      "kind": "production_source",
+      "owner": "subject",
+      "path": "src/queue.py",
+      "source_state": "candidate",
+      "start_line": 1
+    }
+  ],
+  "mode": "blind",
+  "official_evaluation_passed": false,
+  "peer_run_id": null,
+  "provenance": {
+    "peer": null,
+    "subject": {
+      "base_source_snapshot_sha256": "484236413984234b84abd859d802a868992477e55f1988aafef86d9d98f2d682",
+      "benchmark_definition_sha256": "ba319c50bcde373c6a2550f636d39ec4d35dcb7dc15cd40d8777359f25f2f31d",
+      "candidate_source_snapshot_sha256": "7114ea20d06b285510f642b27758d3ece80e04fc086cadffecc9d9c9d143f096",
+      "canonical_patch_sha256": "39a3af2682ae7cee567ad157917448229dbc364dcc47ce8e9612d1e71c3b36cc",
+      "evaluation_log_sha256": "dfc0d7d3b8853d543cb34bf05acbc7d9a39e3afa06f1b4f8cf799d9a77d1b5a6",
+      "frozen_tests_snapshot_sha256": "f0b63619f279eb2805b27578eb33275db5579f433083c1147d18af243c544001",
+      "task_contract_sha256": "55056797cdad616f730d767b3297b18ab6fe7334ad2d7e269a6cf028e49564e0"
+    }
+  },
+  "schema_version": 1,
+  "source_snapshot_policy": "full_bounded_production_v1:5872fe6c90dcbe418f35d9548e49b7e473794cb388faa8e9374f7a283f7ac77b",
+  "subject_run_id": "semantic-08-subject",
+  "task_fingerprint_sha256": "c7af39cee10441d233cbf74e6ae42e069d586f8ea49e3978b2144dc24acfd613",
+  "task_id": "semantic-08"
+}

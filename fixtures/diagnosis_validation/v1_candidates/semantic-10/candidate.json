@@ -1,0 +1,10 @@
+{
+  "blind_bundle_sha256": "81d32d1700eba0e7d10fa386ec67e332615c7d4570d4a7128c00fe3750003c0d",
+  "candidate_id": "semantic-10",
+  "expected_route": "semantic_diagnosis",
+  "peer_experiment_id": "semantic-10-peers",
+  "peer_run_id": "semantic-10-peer",
+  "schema_version": 1,
+  "subject_evidence_sha256": "febdae74b8e6c58b1e9b2392239fda755968f1bf9b89e60cfcf4cfe3396a8cb4",
+  "subject_run_id": "semantic-10-subject"
+}

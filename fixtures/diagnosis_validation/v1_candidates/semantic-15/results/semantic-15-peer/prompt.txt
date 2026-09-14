@@ -1,0 +1,1 @@
+Return the latest stored value through the cache-backed interface.

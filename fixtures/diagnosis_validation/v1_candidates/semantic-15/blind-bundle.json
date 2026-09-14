@@ -1,0 +1,117 @@
+{
+  "agent_status": "completed",
+  "base_commit": "bb0de7ba348906c96ba1dcf91154a535ab51f43c",
+  "benchmark_definition_sha256": "74dd706ced9089af30377c349a3ed071d9c20e9398ec03128a85c915648b351e",
+  "bundle_id": "blind-41b3f22a7ed76767f4010efe9418a9c829d5ee5b26357b5e86219d0f195f99e5",
+  "bundle_sha256": "9cdf0ad4e903404b7e589d322abd0c60350c1bbe98850ac61d3655052c816b6a",
+  "evidence_items": [
+    {
+      "artifact_sha256": "4aad47f90f3405af452a937fe3bbbd4bfd4dc5311e2c33fc868c9e14f681e294",
+      "content": "import unittest\nunittest.runner.time.perf_counter = lambda: 0.0\nfrom src.cache import put,get\nimport unittest\nclass Contract(unittest.TestCase):\n def test_latest(self): put('x',2); self.assertEqual(get('x'),2)\n",
+      "end_line": 6,
+      "evidence_id": "E001",
+      "kind": "frozen_test",
+      "owner": "benchmark",
+      "path": "test_contract.py",
+      "source_state": "frozen",
+      "start_line": 1
+    },
+    {
+      "artifact_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "content": "",
+      "end_line": null,
+      "evidence_id": "E002",
+      "kind": "production_source",
+      "owner": "benchmark",
+      "path": "src/__init__.py",
+      "source_state": "base",
+      "start_line": null
+    },
+    {
+      "artifact_sha256": "2468fb3c5a85cc2ffbd0ca8b2c9e281ed4f115af63e72d016aeb108055d91efd",
+      "content": "DATA={'x':1}; CACHE={}\ndef put(k,v): DATA[k]=v\ndef get(k): return CACHE.get(k,DATA.get(k))\n",
+      "end_line": 3,
+      "evidence_id": "E003",
+      "kind": "production_source",
+      "owner": "benchmark",
+      "path": "src/cache.py",
+      "source_state": "base",
+      "start_line": 1
+    },
+    {
+      "artifact_sha256": "3fe782728cdee410df5d170c1572c646dbfb7e214aa4a0c668bfbcac7e279b61",
+      "content": "evaluation:\n  command: python -I -S -B .patchbench-eval/runner.py\n  frozen_unittest:\n    test_files:\n    - test_contract.py\n    version: 1\n  timeout_seconds: 30\nid: semantic-15\nmetadata:\n  language: python\nrepository:\n  base_commit: bb0de7ba348906c96ba1dcf91154a535ab51f43c\n  path: repository\n  type: local\nschema_version: 1\ntask:\n  prompt: Return the latest stored value through the cache-backed interface.\n",
+      "end_line": 17,
+      "evidence_id": "E004",
+      "kind": "task_contract",
+      "owner": "benchmark",
+      "path": null,
+      "source_state": null,
+      "start_line": 1
+    },
+    {
+      "artifact_sha256": "3a3356a4f382d76572366cb3d58a0ceabbfd55411e4e7c5a4dd8273cbc08d329",
+      "content": "diff --git a/src/cache.py b/src/cache.py\nindex 7498bee..5c3fe73 100644\n--- a/src/cache.py\n+++ b/src/cache.py\n@@ -1,3 +1,3 @@\n-DATA={'x':1}; CACHE={}\n+DATA={'x':1}; CACHE={'x':1}\n def put(k,v): DATA[k]=v\n def get(k): return CACHE.get(k,DATA.get(k))\n",
+      "end_line": 9,
+      "evidence_id": "E005",
+      "kind": "canonical_patch",
+      "owner": "subject",
+      "path": "patch.diff",
+      "source_state": null,
+      "start_line": 1
+    },
+    {
+      "artifact_sha256": "d601fdcafbc7cba6767ec923c0dd662593d6e776607e519c7dfca2d5af2eac47",
+      "content": "Command: python -I -S -B .patchbench-eval/runner.py\nExit code: 1\nDuration seconds: 0.000000\n\nSTDOUT:\n\nSTDERR:\ntest_latest (_patchbench_frozen_0.Contract.test_latest) ... FAIL\n\n======================================================================\nFAIL: test_latest (_patchbench_frozen_0.Contract.test_latest)\n----------------------------------------------------------------------\nTraceback (most recent call last):\n  File \"/tmp/patchbench-diagnosis-v1-candidate-stage/semantic-15/workspaces/evaluation-subject-work/test_contract.py\", line 6, in test_latest\n    def test_latest(self): put('x',2); self.assertEqual(get('x'),2)\n                                       ^^^^^^^^^^^^^^^^^^^^^^^^^^^^\nAssertionError: 1 != 2\n\n----------------------------------------------------------------------\nRan 1 test in 0.000s\n\nFAILED (failures=1)",
+      "end_line": 22,
+      "evidence_id": "E006",
+      "kind": "evaluation_output",
+      "owner": "subject",
+      "path": "test.log",
+      "source_state": null,
+      "start_line": 1
+    },
+    {
+      "artifact_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "content": "",
+      "end_line": null,
+      "evidence_id": "E007",
+      "kind": "production_source",
+      "owner": "subject",
+      "path": "src/__init__.py",
+      "source_state": "candidate",
+      "start_line": null
+    },
+    {
+      "artifact_sha256": "ff0806f4862ff4a4914310ab6c7cae862f6698f4fa0a7c210ab39094edea9e13",
+      "content": "DATA={'x':1}; CACHE={'x':1}\ndef put(k,v): DATA[k]=v\ndef get(k): return CACHE.get(k,DATA.get(k))\n",
+      "end_line": 3,
+      "evidence_id": "E008",
+      "kind": "production_source",
+      "owner": "subject",
+      "path": "src/cache.py",
+      "source_state": "candidate",
+      "start_line": 1
+    }
+  ],
+  "mode": "blind",
+  "official_evaluation_passed": false,
+  "peer_run_id": null,
+  "provenance": {
+    "peer": null,
+    "subject": {
+      "base_source_snapshot_sha256": "f8db7f929962cc3dc5116ec56d74a51a2c9716705be71842742f3c255849243c",
+      "benchmark_definition_sha256": "74dd706ced9089af30377c349a3ed071d9c20e9398ec03128a85c915648b351e",
+      "candidate_source_snapshot_sha256": "2587ce3bf3fb8a182f8b1e77c71c18971c6a01500ac52a8ff22ceb5c78871b84",
+      "canonical_patch_sha256": "3a3356a4f382d76572366cb3d58a0ceabbfd55411e4e7c5a4dd8273cbc08d329",
+      "evaluation_log_sha256": "d601fdcafbc7cba6767ec923c0dd662593d6e776607e519c7dfca2d5af2eac47",
+      "frozen_tests_snapshot_sha256": "e2f780a11eb1ed78a3ffcdc2443d56c5edcf2e3dfb9982a2f815f0647f791f8c",
+      "task_contract_sha256": "3fe782728cdee410df5d170c1572c646dbfb7e214aa4a0c668bfbcac7e279b61"
+    }
+  },
+  "schema_version": 1,
+  "source_snapshot_policy": "full_bounded_production_v1:5872fe6c90dcbe418f35d9548e49b7e473794cb388faa8e9374f7a283f7ac77b",
+  "subject_run_id": "semantic-15-subject",
+  "task_fingerprint_sha256": "8a8e3846b51669d49821ca30151d952a02434c11a5255ca0e3bb484713227972",
+  "task_id": "semantic-15"
+}

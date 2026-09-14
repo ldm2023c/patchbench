@@ -1,0 +1,17 @@
+evaluation:
+  command: python -I -S -B .patchbench-eval/runner.py
+  frozen_unittest:
+    test_files:
+    - test_contract.py
+    version: 1
+  timeout_seconds: 30
+id: semantic-10
+metadata:
+  language: python
+repository:
+  base_commit: c9fa0417ff736151b56eb6be6f3dfb2546033efe
+  path: repository
+  type: local
+schema_version: 1
+task:
+  prompt: Accept zero without accepting negative values.

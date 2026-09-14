@@ -1,0 +1,17 @@
+evaluation:
+  command: python -I -S -B .patchbench-eval/runner.py
+  frozen_unittest:
+    test_files:
+    - test_contract.py
+    version: 1
+  timeout_seconds: 30
+id: semantic-05
+metadata:
+  language: python
+repository:
+  base_commit: f3819cdab1dee9a8169647ea92f608a1b9d71a41
+  path: repository
+  type: local
+schema_version: 1
+task:
+  prompt: Accept explicit null timeout as the documented default.

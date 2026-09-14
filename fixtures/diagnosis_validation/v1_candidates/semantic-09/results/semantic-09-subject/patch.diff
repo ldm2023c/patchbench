@@ -1,0 +1,9 @@
+diff --git a/src/message.py b/src/message.py
+index 379d142..0d4c50f 100644
+--- a/src/message.py
++++ b/src/message.py
+@@ -1,2 +1,2 @@
+-def render(name):
+- return 'Hello '+name+'.'
++def render(name, excited=True):
++ return ('Hello '+name)+('!' if excited else '.')

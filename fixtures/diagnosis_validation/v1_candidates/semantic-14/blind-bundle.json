@@ -1,0 +1,139 @@
+{
+  "agent_status": "completed",
+  "base_commit": "82b8b7685956ce0a2025b583a34afa0c1b409ae9",
+  "benchmark_definition_sha256": "fdcac80380b00ae8e54ccc5ff000f22d2cb394239d986042def660980f2e011b",
+  "bundle_id": "blind-ef4e90af8f7dd3f094cd976c8926cbac111fe9e38f513dabf788b757214e7570",
+  "bundle_sha256": "51e93690a3a3d1064b7f7f7155f7704e7e704c0b2003db99e0996f1b634ce730",
+  "evidence_items": [
+    {
+      "artifact_sha256": "1fd5303dd4c380e581c43545c80fe07f0ee6c04582afb1ea209703f460cf16c8",
+      "content": "import unittest\nunittest.runner.time.perf_counter = lambda: 0.0\nfrom src.adapter import adapt\nimport unittest\nclass Contract(unittest.TestCase):\n def test_adapt(self): self.assertEqual((adapt('a'),adapt('b')),(1,2))\n",
+      "end_line": 6,
+      "evidence_id": "E001",
+      "kind": "frozen_test",
+      "owner": "benchmark",
+      "path": "test_contract.py",
+      "source_state": "frozen",
+      "start_line": 1
+    },
+    {
+      "artifact_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "content": "",
+      "end_line": null,
+      "evidence_id": "E002",
+      "kind": "production_source",
+      "owner": "benchmark",
+      "path": "src/__init__.py",
+      "source_state": "base",
+      "start_line": null
+    },
+    {
+      "artifact_sha256": "0c4c3041fbac4b2c90e6b556ba73b5740082988720d0cbb856feaf12c78206f8",
+      "content": "from .codes import code\ndef adapt(v): return code(v)\n",
+      "end_line": 2,
+      "evidence_id": "E003",
+      "kind": "production_source",
+      "owner": "benchmark",
+      "path": "src/adapter.py",
+      "source_state": "base",
+      "start_line": 1
+    },
+    {
+      "artifact_sha256": "f4f1c3c8b295c3c2fa6d629fbf12718e1044511595492e235d6ec1da52cc3be9",
+      "content": "CODES={'a':1}\ndef code(v): return CODES.get(v)\n",
+      "end_line": 2,
+      "evidence_id": "E004",
+      "kind": "production_source",
+      "owner": "benchmark",
+      "path": "src/codes.py",
+      "source_state": "base",
+      "start_line": 1
+    },
+    {
+      "artifact_sha256": "5bf3bf61cb933b3709bef0f577cb3db35148bc168f1bef47e42b0bcb6e54b896",
+      "content": "evaluation:\n  command: python -I -S -B .patchbench-eval/runner.py\n  frozen_unittest:\n    test_files:\n    - test_contract.py\n    version: 1\n  timeout_seconds: 30\nid: semantic-14\nmetadata:\n  language: python\nrepository:\n  base_commit: 82b8b7685956ce0a2025b583a34afa0c1b409ae9\n  path: repository\n  type: local\nschema_version: 1\ntask:\n  prompt: Expose registered code values unchanged through the adapter.\n",
+      "end_line": 17,
+      "evidence_id": "E005",
+      "kind": "task_contract",
+      "owner": "benchmark",
+      "path": null,
+      "source_state": null,
+      "start_line": 1
+    },
+    {
+      "artifact_sha256": "7e794dc0336f02b1479cde6295a2d0f9479c22e7ff481a525d004c85c9401cf0",
+      "content": "diff --git a/src/adapter.py b/src/adapter.py\nindex 896c232..d8be62d 100644\n--- a/src/adapter.py\n+++ b/src/adapter.py\n@@ -1,2 +1,2 @@\n from .codes import code\n-def adapt(v): return code(v)\n+def adapt(v): return code(v)+1 if code(v) else None\ndiff --git a/src/codes.py b/src/codes.py\nindex ca93684..a70c27f 100644\n--- a/src/codes.py\n+++ b/src/codes.py\n@@ -1,2 +1,2 @@\n-CODES={'a':1}\n+CODES={'a':1,'b':2}\n def code(v): return CODES.get(v)\n",
+      "end_line": 16,
+      "evidence_id": "E006",
+      "kind": "canonical_patch",
+      "owner": "subject",
+      "path": "patch.diff",
+      "source_state": null,
+      "start_line": 1
+    },
+    {
+      "artifact_sha256": "0dadbaae958aac930ec4a1f35ac2288938f2b416944bab1ea56afd85b3c54ce2",
+      "content": "Command: python -I -S -B .patchbench-eval/runner.py\nExit code: 1\nDuration seconds: 0.000000\n\nSTDOUT:\n\nSTDERR:\ntest_adapt (_patchbench_frozen_0.Contract.test_adapt) ... FAIL\n\n======================================================================\nFAIL: test_adapt (_patchbench_frozen_0.Contract.test_adapt)\n----------------------------------------------------------------------\nTraceback (most recent call last):\n  File \"/tmp/patchbench-diagnosis-v1-candidate-stage/semantic-14/workspaces/evaluation-subject-work/test_contract.py\", line 6, in test_adapt\n    def test_adapt(self): self.assertEqual((adapt('a'),adapt('b')),(1,2))\n                          ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\nAssertionError: Tuples differ: (2, 3) != (1, 2)\n\nFirst differing element 0:\n2\n1\n\n- (2, 3)\n+ (1, 2)\n\n----------------------------------------------------------------------\nRan 1 test in 0.000s\n\nFAILED (failures=1)",
+      "end_line": 29,
+      "evidence_id": "E007",
+      "kind": "evaluation_output",
+      "owner": "subject",
+      "path": "test.log",
+      "source_state": null,
+      "start_line": 1
+    },
+    {
+      "artifact_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "content": "",
+      "end_line": null,
+      "evidence_id": "E008",
+      "kind": "production_source",
+      "owner": "subject",
+      "path": "src/__init__.py",
+      "source_state": "candidate",
+      "start_line": null
+    },
+    {
+      "artifact_sha256": "563276d3bd07c01207596e571a17bbdbe45e31334a9c13ed2d47ec7753f46ea3",
+      "content": "from .codes import code\ndef adapt(v): return code(v)+1 if code(v) else None\n",
+      "end_line": 2,
+      "evidence_id": "E009",
+      "kind": "production_source",
+      "owner": "subject",
+      "path": "src/adapter.py",
+      "source_state": "candidate",
+      "start_line": 1
+    },
+    {
+      "artifact_sha256": "924867d3323a08149c8fe211a15fc6a5d27355236ec6fc83cb4c9f5ba89d2bc2",
+      "content": "CODES={'a':1,'b':2}\ndef code(v): return CODES.get(v)\n",
+      "end_line": 2,
+      "evidence_id": "E010",
+      "kind": "production_source",
+      "owner": "subject",
+      "path": "src/codes.py",
+      "source_state": "candidate",
+      "start_line": 1
+    }
+  ],
+  "mode": "blind",
+  "official_evaluation_passed": false,
+  "peer_run_id": null,
+  "provenance": {
+    "peer": null,
+    "subject": {
+      "base_source_snapshot_sha256": "ad4a4fb0ee261c3a686c796bce224c400547de2694c43d42b34ee4bcc748b134",
+      "benchmark_definition_sha256": "fdcac80380b00ae8e54ccc5ff000f22d2cb394239d986042def660980f2e011b",
+      "candidate_source_snapshot_sha256": "0b0a30d0c95770449af946cd08f536f479503696b9ef182ce800ab2eda503a00",
+      "canonical_patch_sha256": "7e794dc0336f02b1479cde6295a2d0f9479c22e7ff481a525d004c85c9401cf0",
+      "evaluation_log_sha256": "0dadbaae958aac930ec4a1f35ac2288938f2b416944bab1ea56afd85b3c54ce2",
+      "frozen_tests_snapshot_sha256": "99177cf8f01648c847aa6edf20f4500e244579901370b271d799c3f7e212a223",
+      "task_contract_sha256": "5bf3bf61cb933b3709bef0f577cb3db35148bc168f1bef47e42b0bcb6e54b896"
+    }
+  },
+  "schema_version": 1,
+  "source_snapshot_policy": "full_bounded_production_v1:5872fe6c90dcbe418f35d9548e49b7e473794cb388faa8e9374f7a283f7ac77b",
+  "subject_run_id": "semantic-14-subject",
+  "task_fingerprint_sha256": "45e3fb590f28a27a922301f1fb3b984bfc1b8d992cbfb99b5c2f675714f8f53a",
+  "task_id": "semantic-14"
+}

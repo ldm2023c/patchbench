@@ -1,0 +1,1 @@
+Accept zero without accepting negative values.

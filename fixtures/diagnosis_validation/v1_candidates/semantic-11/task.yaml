@@ -1,0 +1,17 @@
+evaluation:
+  command: python -I -S -B .patchbench-eval/runner.py
+  frozen_unittest:
+    test_files:
+    - test_contract.py
+    version: 1
+  timeout_seconds: 30
+id: semantic-11
+metadata:
+  language: python
+repository:
+  base_commit: 481710a64ed7889f9421028178875d92db6ea561
+  path: repository
+  type: local
+schema_version: 1
+task:
+  prompt: Preserve the documented pipeline output for padded mixed-case input.

@@ -1,0 +1,10 @@
+{
+  "blind_bundle_sha256": "51e93690a3a3d1064b7f7f7155f7704e7e704c0b2003db99e0996f1b634ce730",
+  "candidate_id": "semantic-14",
+  "expected_route": "semantic_diagnosis",
+  "peer_experiment_id": "semantic-14-peers",
+  "peer_run_id": "semantic-14-peer",
+  "schema_version": 1,
+  "subject_evidence_sha256": "b6d1cc8f2d6bac1bc65ee8a940d04243dee6b474e19a77f469329f92c41c4e26",
+  "subject_run_id": "semantic-14-subject"
+}

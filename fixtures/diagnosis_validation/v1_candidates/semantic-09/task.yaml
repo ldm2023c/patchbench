@@ -1,0 +1,17 @@
+evaluation:
+  command: python -I -S -B .patchbench-eval/runner.py
+  frozen_unittest:
+    test_files:
+    - test_contract.py
+    version: 1
+  timeout_seconds: 30
+id: semantic-09
+metadata:
+  language: python
+repository:
+  base_commit: 027be02c096fcee1e712e1724b1a49df49f812fc
+  path: repository
+  type: local
+schema_version: 1
+task:
+  prompt: Add opt-in excited rendering while retaining legacy default output.

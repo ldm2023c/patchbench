@@ -1,0 +1,17 @@
+evaluation:
+  command: python -I -S -B .patchbench-eval/runner.py
+  frozen_unittest:
+    test_files:
+    - test_contract.py
+    version: 1
+  timeout_seconds: 30
+id: semantic-08
+metadata:
+  language: python
+repository:
+  base_commit: d03c659d5455d80f80ea25a63bc62aaba4a7b4fe
+  path: repository
+  type: local
+schema_version: 1
+task:
+  prompt: Update the queue and its observable metadata atomically.

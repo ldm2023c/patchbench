@@ -1,0 +1,117 @@
+{
+  "agent_status": "completed",
+  "base_commit": "c9fa0417ff736151b56eb6be6f3dfb2546033efe",
+  "benchmark_definition_sha256": "9b97a238c3a24761ba29db24404171f0e5fcaf94cbeb46d1401238810e58f522",
+  "bundle_id": "blind-27ef9cebc36dc698a9e459ce36ad3f72a65d705760d63eb76fff3359e9a1a689",
+  "bundle_sha256": "81d32d1700eba0e7d10fa386ec67e332615c7d4570d4a7128c00fe3750003c0d",
+  "evidence_items": [
+    {
+      "artifact_sha256": "bf38653ed3443ad6821492e17ef22cad576333694bf71a09e54f94890fa60dc5",
+      "content": "import unittest\nunittest.runner.time.perf_counter = lambda: 0.0\nfrom src.threshold import accepted\nimport unittest\nclass Contract(unittest.TestCase):\n def test_boundary(self): self.assertTrue(accepted(0)); self.assertFalse(accepted(-1))\n",
+      "end_line": 6,
+      "evidence_id": "E001",
+      "kind": "frozen_test",
+      "owner": "benchmark",
+      "path": "test_contract.py",
+      "source_state": "frozen",
+      "start_line": 1
+    },
+    {
+      "artifact_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "content": "",
+      "end_line": null,
+      "evidence_id": "E002",
+      "kind": "production_source",
+      "owner": "benchmark",
+      "path": "src/__init__.py",
+      "source_state": "base",
+      "start_line": null
+    },
+    {
+      "artifact_sha256": "5f0cf045123a83d07b5f78ca2c2dcf7849a81978365fc280bdb21fd52dea2151",
+      "content": "def accepted(value):\n return value > 0\n",
+      "end_line": 2,
+      "evidence_id": "E003",
+      "kind": "production_source",
+      "owner": "benchmark",
+      "path": "src/threshold.py",
+      "source_state": "base",
+      "start_line": 1
+    },
+    {
+      "artifact_sha256": "b9d0cf299af380c4d8a84a00b5bd9605ce8fbd9323569419eb27f92baade8e43",
+      "content": "evaluation:\n  command: python -I -S -B .patchbench-eval/runner.py\n  frozen_unittest:\n    test_files:\n    - test_contract.py\n    version: 1\n  timeout_seconds: 30\nid: semantic-10\nmetadata:\n  language: python\nrepository:\n  base_commit: c9fa0417ff736151b56eb6be6f3dfb2546033efe\n  path: repository\n  type: local\nschema_version: 1\ntask:\n  prompt: Accept zero without accepting negative values.\n",
+      "end_line": 17,
+      "evidence_id": "E004",
+      "kind": "task_contract",
+      "owner": "benchmark",
+      "path": null,
+      "source_state": null,
+      "start_line": 1
+    },
+    {
+      "artifact_sha256": "9792ebc11f3621c21218710951b38ee0766b3e30087e93f56f03daf6fc5f3b66",
+      "content": "diff --git a/src/threshold.py b/src/threshold.py\nindex 8cf6027..1a66ba4 100644\n--- a/src/threshold.py\n+++ b/src/threshold.py\n@@ -1,2 +1,2 @@\n def accepted(value):\n- return value > 0\n+ return value >= -1\n",
+      "end_line": 8,
+      "evidence_id": "E005",
+      "kind": "canonical_patch",
+      "owner": "subject",
+      "path": "patch.diff",
+      "source_state": null,
+      "start_line": 1
+    },
+    {
+      "artifact_sha256": "abb6c974526a3086e90cf14af1713e9fc58a80093c20d42c1397868be379742f",
+      "content": "Command: python -I -S -B .patchbench-eval/runner.py\nExit code: 1\nDuration seconds: 0.000000\n\nSTDOUT:\n\nSTDERR:\ntest_boundary (_patchbench_frozen_0.Contract.test_boundary) ... FAIL\n\n======================================================================\nFAIL: test_boundary (_patchbench_frozen_0.Contract.test_boundary)\n----------------------------------------------------------------------\nTraceback (most recent call last):\n  File \"/tmp/patchbench-diagnosis-v1-candidate-stage/semantic-10/workspaces/evaluation-subject-work/test_contract.py\", line 6, in test_boundary\n    def test_boundary(self): self.assertTrue(accepted(0)); self.assertFalse(accepted(-1))\n                                                           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\nAssertionError: True is not false\n\n----------------------------------------------------------------------\nRan 1 test in 0.000s\n\nFAILED (failures=1)",
+      "end_line": 22,
+      "evidence_id": "E006",
+      "kind": "evaluation_output",
+      "owner": "subject",
+      "path": "test.log",
+      "source_state": null,
+      "start_line": 1
+    },
+    {
+      "artifact_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "content": "",
+      "end_line": null,
+      "evidence_id": "E007",
+      "kind": "production_source",
+      "owner": "subject",
+      "path": "src/__init__.py",
+      "source_state": "candidate",
+      "start_line": null
+    },
+    {
+      "artifact_sha256": "8eb6f995e52ee3e25ecdab7f93741962a82d0d67241a4eae7bc5287d9c25814f",
+      "content": "def accepted(value):\n return value >= -1\n",
+      "end_line": 2,
+      "evidence_id": "E008",
+      "kind": "production_source",
+      "owner": "subject",
+      "path": "src/threshold.py",
+      "source_state": "candidate",
+      "start_line": 1
+    }
+  ],
+  "mode": "blind",
+  "official_evaluation_passed": false,
+  "peer_run_id": null,
+  "provenance": {
+    "peer": null,
+    "subject": {
+      "base_source_snapshot_sha256": "bfa7d451ec0c22ea59f592c3ea0c092ee66b6b11e0345cf08d87f9685aae43f6",
+      "benchmark_definition_sha256": "9b97a238c3a24761ba29db24404171f0e5fcaf94cbeb46d1401238810e58f522",
+      "candidate_source_snapshot_sha256": "478d1c3c708a496772feeb8781f03fc33bada72d346fbe58f3caee85d76a6192",
+      "canonical_patch_sha256": "9792ebc11f3621c21218710951b38ee0766b3e30087e93f56f03daf6fc5f3b66",
+      "evaluation_log_sha256": "abb6c974526a3086e90cf14af1713e9fc58a80093c20d42c1397868be379742f",
+      "frozen_tests_snapshot_sha256": "7209315876c235a3e9e14bc4aa0d6f9fcc37a742ffcaf6424539230832e84ea3",
+      "task_contract_sha256": "b9d0cf299af380c4d8a84a00b5bd9605ce8fbd9323569419eb27f92baade8e43"
+    }
+  },
+  "schema_version": 1,
+  "source_snapshot_policy": "full_bounded_production_v1:5872fe6c90dcbe418f35d9548e49b7e473794cb388faa8e9374f7a283f7ac77b",
+  "subject_run_id": "semantic-10-subject",
+  "task_fingerprint_sha256": "0c7ca096e9db08be450e397db47b00df3f122d9d295c4d4590141d142915b38b",
+  "task_id": "semantic-10"
+}

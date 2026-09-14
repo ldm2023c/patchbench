@@ -1,0 +1,17 @@
+evaluation:
+  command: python -I -S -B .patchbench-eval/runner.py
+  frozen_unittest:
+    test_files:
+    - test_contract.py
+    version: 1
+  timeout_seconds: 30
+id: semantic-14
+metadata:
+  language: python
+repository:
+  base_commit: 82b8b7685956ce0a2025b583a34afa0c1b409ae9
+  path: repository
+  type: local
+schema_version: 1
+task:
+  prompt: Expose registered code values unchanged through the adapter.

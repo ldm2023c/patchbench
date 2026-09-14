@@ -1,0 +1,1 @@
+Select nonempty normalized values according to the public contract.

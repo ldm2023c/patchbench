@@ -1,0 +1,8 @@
+diff --git a/src/limits.py b/src/limits.py
+index 41f3e39..b0cb8c6 100644
+--- a/src/limits.py
++++ b/src/limits.py
+@@ -1,2 +1,2 @@
+ def cap(value):
+-    return min(value, 100)
++    return max(value, 80)

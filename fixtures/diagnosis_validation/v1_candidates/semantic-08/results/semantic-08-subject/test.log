@@ -1,0 +1,33 @@
+Command: python -I -S -B .patchbench-eval/runner.py
+Exit code: 1
+Duration seconds: 0.000000
+
+STDOUT:
+
+STDERR:
+test_add (_patchbench_frozen_0.Contract.test_add) ... FAIL
+
+======================================================================
+FAIL: test_add (_patchbench_frozen_0.Contract.test_add)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/tmp/patchbench-diagnosis-v1-candidate-stage/semantic-08/workspaces/evaluation-subject-work/test_contract.py", line 7, in test_add
+    q=Queue(); q.add('x'); self.assertEqual((q.items,q.count,q.version),(['x'],1,1))
+                           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+AssertionError: Tuples differ: (['x'], 0, 0) != (['x'], 1, 1)
+
+First differing element 1:
+0
+1
+
+- (['x'], 0, 0)
+?         ^  ^
+
++ (['x'], 1, 1)
+?         ^  ^
+
+
+----------------------------------------------------------------------
+Ran 1 test in 0.000s
+
+FAILED (failures=1)

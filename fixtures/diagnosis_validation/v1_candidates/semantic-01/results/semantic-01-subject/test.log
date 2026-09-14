@@ -1,0 +1,22 @@
+Command: python -I -S -B .patchbench-eval/runner.py
+Exit code: 1
+Duration seconds: 0.000000
+
+STDOUT:
+
+STDERR:
+test_access (_patchbench_frozen_0.Contract.test_access) ... FAIL
+
+======================================================================
+FAIL: test_access (_patchbench_frozen_0.Contract.test_access)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/tmp/patchbench-diagnosis-v1-candidate-stage/semantic-01/workspaces/evaluation-subject-work/test_contract.py", line 7, in test_access
+    self.assertTrue(allowed(20, True)); self.assertFalse(allowed(20, False)); self.assertFalse(allowed(16, True))
+                                        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+AssertionError: True is not false
+
+----------------------------------------------------------------------
+Ran 1 test in 0.000s
+
+FAILED (failures=1)

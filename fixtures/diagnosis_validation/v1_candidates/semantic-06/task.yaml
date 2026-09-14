@@ -1,0 +1,17 @@
+evaluation:
+  command: python -I -S -B .patchbench-eval/runner.py
+  frozen_unittest:
+    test_files:
+    - test_contract.py
+    version: 1
+  timeout_seconds: 30
+id: semantic-06
+metadata:
+  language: python
+repository:
+  base_commit: 112e9710f7a79db407e6e233ce4fd710ddf4bdac
+  path: repository
+  type: local
+schema_version: 1
+task:
+  prompt: Accept numeric and textual identifiers while preserving textual form.

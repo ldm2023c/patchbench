@@ -1,0 +1,74 @@
+{
+  "candidates": [
+    {
+      "candidate_id": "semantic-01",
+      "expected_route": "semantic_diagnosis"
+    },
+    {
+      "candidate_id": "semantic-02",
+      "expected_route": "semantic_diagnosis"
+    },
+    {
+      "candidate_id": "semantic-03",
+      "expected_route": "semantic_diagnosis"
+    },
+    {
+      "candidate_id": "semantic-04",
+      "expected_route": "semantic_diagnosis"
+    },
+    {
+      "candidate_id": "semantic-05",
+      "expected_route": "semantic_diagnosis"
+    },
+    {
+      "candidate_id": "semantic-06",
+      "expected_route": "semantic_diagnosis"
+    },
+    {
+      "candidate_id": "semantic-07",
+      "expected_route": "semantic_diagnosis"
+    },
+    {
+      "candidate_id": "semantic-08",
+      "expected_route": "semantic_diagnosis"
+    },
+    {
+      "candidate_id": "semantic-09",
+      "expected_route": "semantic_diagnosis"
+    },
+    {
+      "candidate_id": "semantic-10",
+      "expected_route": "semantic_diagnosis"
+    },
+    {
+      "candidate_id": "semantic-11",
+      "expected_route": "semantic_diagnosis"
+    },
+    {
+      "candidate_id": "semantic-12",
+      "expected_route": "semantic_diagnosis"
+    },
+    {
+      "candidate_id": "semantic-13",
+      "expected_route": "semantic_diagnosis"
+    },
+    {
+      "candidate_id": "semantic-14",
+      "expected_route": "semantic_diagnosis"
+    },
+    {
+      "candidate_id": "semantic-15",
+      "expected_route": "semantic_diagnosis"
+    },
+    {
+      "candidate_id": "operational-01",
+      "expected_route": "operational_only"
+    },
+    {
+      "candidate_id": "operational-02",
+      "expected_route": "operational_only"
+    }
+  ],
+  "schema_version": 1,
+  "status": "draft"
+}

@@ -1,0 +1,8 @@
+diff --git a/src/threshold.py b/src/threshold.py
+index 8cf6027..ee32805 100644
+--- a/src/threshold.py
++++ b/src/threshold.py
+@@ -1,2 +1,2 @@
+ def accepted(value):
+- return value > 0
++ return value >= 0

@@ -1,0 +1,88 @@
+{
+  "agent": {
+    "backend": "host",
+    "duration_seconds": 0.0,
+    "exit_code": 0,
+    "name": "controlled-fixture",
+    "requested_model": null,
+    "status": "completed",
+    "timeout_seconds": 30.0
+  },
+  "artifacts": {
+    "agent_log": "results/semantic-09-subject/agent.log",
+    "agent_stderr_log": "results/semantic-09-subject/agent.stderr.log",
+    "directory": "results/semantic-09-subject",
+    "metadata": "results/semantic-09-subject/metadata.json",
+    "patch": "results/semantic-09-subject/patch.diff",
+    "prompt": "results/semantic-09-subject/prompt.txt",
+    "test_log": "results/semantic-09-subject/test.log"
+  },
+  "duration_seconds": 0.0,
+  "evaluation_evidence": {
+    "duration_seconds": 0.0,
+    "error_count": 0,
+    "exit_code": 1,
+    "failing_cases": [
+      {
+        "name": "test_render (_patchbench_frozen_0.Contract.test_render)",
+        "outcome": "fail"
+      }
+    ],
+    "failure_count": 1,
+    "framework": "unittest",
+    "output_tail": [
+      "Exit code: 1",
+      "Duration seconds: 0.000000",
+      "STDOUT:",
+      "STDERR:",
+      "test_render (_patchbench_frozen_0.Contract.test_render) ... FAIL",
+      "======================================================================",
+      "FAIL: test_render (_patchbench_frozen_0.Contract.test_render)",
+      "----------------------------------------------------------------------",
+      "Traceback (most recent call last):",
+      "  File \"/tmp/patchbench-diagnosis-v1-candidate-stage/semantic-09/workspaces/evaluation-subject-work/test_contract.py\", line 6, in test_render",
+      "    def test_render(self): self.assertEqual(render('Ada'),'Hello Ada.'); self.assertEqual(render('Ada',True),'Hello Ada!')",
+      "                           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^",
+      "AssertionError: 'Hello Ada!' != 'Hello Ada.'",
+      "- Hello Ada!",
+      "?          ^",
+      "+ Hello Ada.",
+      "?          ^",
+      "----------------------------------------------------------------------",
+      "Ran 1 test in 0.000s",
+      "FAILED (failures=1)"
+    ],
+    "passed": false,
+    "test_log_sha256": "faa0bf386c5c0a5805a25738803cef173826cb3be0a79787f9698deb86ab4930",
+    "tests_run": 1
+  },
+  "evaluation_passed": false,
+  "patch_summary": {
+    "changed_file_count": 1,
+    "files": [
+      {
+        "added_lines": 2,
+        "binary": false,
+        "change_type": "modified",
+        "deleted_lines": 2,
+        "diff_sha256": "de91a976e4f90efb2bee9a9c1974dafc2e4479cd6a131e1e9d19bb8b0b976748",
+        "path": "src/message.py",
+        "role": "non_test"
+      }
+    ],
+    "patch_bytes": 263,
+    "patch_sha256": "de91a976e4f90efb2bee9a9c1974dafc2e4479cd6a131e1e9d19bb8b0b976748",
+    "text_added_lines": 2,
+    "text_deleted_lines": 2
+  },
+  "provenance": {
+    "base_commit_used": "027be02c096fcee1e712e1724b1a49df49f812fc",
+    "evaluation_backend": "host",
+    "evaluation_command": "python -I -S -B .patchbench-eval/runner.py",
+    "evaluation_timeout_seconds": 30,
+    "task_fingerprint_sha256": "d0056c0a61ca8b97b6cddfdf8c1945c3449a0d2ab961598d2434ece440a8da51"
+  },
+  "run_id": "semantic-09-subject",
+  "status": "failed",
+  "task_id": "semantic-09"
+}

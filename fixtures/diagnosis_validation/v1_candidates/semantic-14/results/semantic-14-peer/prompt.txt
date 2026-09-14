@@ -1,0 +1,1 @@
+Expose registered code values unchanged through the adapter.

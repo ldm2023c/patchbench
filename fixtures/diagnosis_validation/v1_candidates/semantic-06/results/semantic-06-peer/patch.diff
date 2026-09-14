@@ -1,0 +1,8 @@
+diff --git a/src/identity.py b/src/identity.py
+index cef97e7..6c548aa 100644
+--- a/src/identity.py
++++ b/src/identity.py
+@@ -1,2 +1,2 @@
+ def identifier(value):
+- return str(int(value))
++ return str(value)

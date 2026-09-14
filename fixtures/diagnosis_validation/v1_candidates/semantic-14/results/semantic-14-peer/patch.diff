@@ -1,0 +1,8 @@
+diff --git a/src/codes.py b/src/codes.py
+index ca93684..a70c27f 100644
+--- a/src/codes.py
++++ b/src/codes.py
+@@ -1,2 +1,2 @@
+-CODES={'a':1}
++CODES={'a':1,'b':2}
+ def code(v): return CODES.get(v)

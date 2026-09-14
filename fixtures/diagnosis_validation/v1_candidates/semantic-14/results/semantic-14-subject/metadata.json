@@ -1,0 +1,97 @@
+{
+  "agent": {
+    "backend": "host",
+    "duration_seconds": 0.0,
+    "exit_code": 0,
+    "name": "controlled-fixture",
+    "requested_model": null,
+    "status": "completed",
+    "timeout_seconds": 30.0
+  },
+  "artifacts": {
+    "agent_log": "results/semantic-14-subject/agent.log",
+    "agent_stderr_log": "results/semantic-14-subject/agent.stderr.log",
+    "directory": "results/semantic-14-subject",
+    "metadata": "results/semantic-14-subject/metadata.json",
+    "patch": "results/semantic-14-subject/patch.diff",
+    "prompt": "results/semantic-14-subject/prompt.txt",
+    "test_log": "results/semantic-14-subject/test.log"
+  },
+  "duration_seconds": 0.0,
+  "evaluation_evidence": {
+    "duration_seconds": 0.0,
+    "error_count": 0,
+    "exit_code": 1,
+    "failing_cases": [
+      {
+        "name": "test_adapt (_patchbench_frozen_0.Contract.test_adapt)",
+        "outcome": "fail"
+      }
+    ],
+    "failure_count": 1,
+    "framework": "unittest",
+    "output_tail": [
+      "Duration seconds: 0.000000",
+      "STDOUT:",
+      "STDERR:",
+      "test_adapt (_patchbench_frozen_0.Contract.test_adapt) ... FAIL",
+      "======================================================================",
+      "FAIL: test_adapt (_patchbench_frozen_0.Contract.test_adapt)",
+      "----------------------------------------------------------------------",
+      "Traceback (most recent call last):",
+      "  File \"/tmp/patchbench-diagnosis-v1-candidate-stage/semantic-14/workspaces/evaluation-subject-work/test_contract.py\", line 6, in test_adapt",
+      "    def test_adapt(self): self.assertEqual((adapt('a'),adapt('b')),(1,2))",
+      "                          ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^",
+      "AssertionError: Tuples differ: (2, 3) != (1, 2)",
+      "First differing element 0:",
+      "2",
+      "1",
+      "- (2, 3)",
+      "+ (1, 2)",
+      "----------------------------------------------------------------------",
+      "Ran 1 test in 0.000s",
+      "FAILED (failures=1)"
+    ],
+    "passed": false,
+    "test_log_sha256": "0dadbaae958aac930ec4a1f35ac2288938f2b416944bab1ea56afd85b3c54ce2",
+    "tests_run": 1
+  },
+  "evaluation_passed": false,
+  "patch_summary": {
+    "changed_file_count": 2,
+    "files": [
+      {
+        "added_lines": 1,
+        "binary": false,
+        "change_type": "modified",
+        "deleted_lines": 1,
+        "diff_sha256": "a4810168c4e7e2bddf932c1c521074c22d7b82647bc836614782715dda5f9baf",
+        "path": "src/adapter.py",
+        "role": "non_test"
+      },
+      {
+        "added_lines": 1,
+        "binary": false,
+        "change_type": "modified",
+        "deleted_lines": 1,
+        "diff_sha256": "219adf10edaba62548079441e305dd154b89064bcd0419cf45eaac7c361d1db9",
+        "path": "src/codes.py",
+        "role": "non_test"
+      }
+    ],
+    "patch_bytes": 436,
+    "patch_sha256": "7e794dc0336f02b1479cde6295a2d0f9479c22e7ff481a525d004c85c9401cf0",
+    "text_added_lines": 2,
+    "text_deleted_lines": 2
+  },
+  "provenance": {
+    "base_commit_used": "82b8b7685956ce0a2025b583a34afa0c1b409ae9",
+    "evaluation_backend": "host",
+    "evaluation_command": "python -I -S -B .patchbench-eval/runner.py",
+    "evaluation_timeout_seconds": 30,
+    "task_fingerprint_sha256": "45e3fb590f28a27a922301f1fb3b984bfc1b8d992cbfb99b5c2f675714f8f53a"
+  },
+  "run_id": "semantic-14-subject",
+  "status": "failed",
+  "task_id": "semantic-14"
+}

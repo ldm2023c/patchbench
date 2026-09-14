@@ -1,0 +1,8 @@
+diff --git a/src/access.py b/src/access.py
+index 6f96bd2..52558ac 100644
+--- a/src/access.py
++++ b/src/access.py
+@@ -1,2 +1,2 @@
+ def allowed(age, active):
+-    return age >= 18
++    return age >= 18 or active

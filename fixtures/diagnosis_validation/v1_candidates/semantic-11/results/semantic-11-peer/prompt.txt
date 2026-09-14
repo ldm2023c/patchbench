@@ -1,0 +1,1 @@
+Preserve the documented pipeline output for padded mixed-case input.

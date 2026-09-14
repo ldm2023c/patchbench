@@ -246,6 +246,13 @@ def test_gold_nested_ids_and_locators_are_strict():
             locator(item, **changes)
 
 
+@pytest.mark.parametrize("path", [" path.py", "path.py ", "src/../path.py", "src\\path.py"])
+def test_gold_locator_path_is_exact_and_never_whitespace_normalized(path):
+    item = make_bundle().evidence_items[0]
+    with pytest.raises(ValidationError):
+        locator(item, path=path)
+
+
 def test_locator_resolves_subject_benchmark_patch_and_evaluation_without_id():
     items = [
         item_data(evidence_id="source"),

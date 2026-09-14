@@ -1,0 +1,25 @@
+Command: python -I -S -B .patchbench-eval/runner.py
+Exit code: 1
+Duration seconds: 0.000000
+
+STDOUT:
+
+STDERR:
+test_execute (_patchbench_frozen_0.Contract.test_execute) ... FAIL
+
+======================================================================
+FAIL: test_execute (_patchbench_frozen_0.Contract.test_execute)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/tmp/patchbench-diagnosis-v1-candidate-stage/semantic-12/workspaces/evaluation-subject-work/test_contract.py", line 6, in test_execute
+    def test_execute(self): self.assertEqual(execute(),'safe')
+                            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+AssertionError: 'fast-cached' != 'safe'
+- fast-cached
++ safe
+
+
+----------------------------------------------------------------------
+Ran 1 test in 0.000s
+
+FAILED (failures=1)

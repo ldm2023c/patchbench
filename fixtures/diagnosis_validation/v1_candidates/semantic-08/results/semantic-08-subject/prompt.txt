@@ -1,0 +1,1 @@
+Update the queue and its observable metadata atomically.

@@ -1,0 +1,1 @@
+Accept numeric and textual identifiers while preserving textual form.

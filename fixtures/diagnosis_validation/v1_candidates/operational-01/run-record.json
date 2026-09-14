@@ -1,0 +1,28 @@
+{
+  "agent": {
+    "backend": "host",
+    "duration_seconds": 0.0,
+    "exit_code": 7,
+    "name": "controlled-fixture",
+    "requested_model": null,
+    "status": "command_failed",
+    "timeout_seconds": 30.0
+  },
+  "artifacts": {
+    "agent_log": "results/operational-01-run/agent.log",
+    "agent_stderr_log": "results/operational-01-run/agent.stderr.log",
+    "directory": "results/operational-01-run",
+    "metadata": "results/operational-01-run/metadata.json",
+    "patch": "results/operational-01-run/patch.diff",
+    "prompt": "results/operational-01-run/prompt.txt",
+    "test_log": "results/operational-01-run/test.log"
+  },
+  "duration_seconds": 0.0,
+  "evaluation_evidence": null,
+  "evaluation_passed": false,
+  "patch_summary": null,
+  "provenance": null,
+  "run_id": "operational-01-run",
+  "status": "failed",
+  "task_id": "operational-01"
+}

@@ -1,0 +1,25 @@
+Command: python -I -S -B .patchbench-eval/runner.py
+Exit code: 1
+Duration seconds: 0.000000
+
+STDOUT:
+
+STDERR:
+test_forms (_patchbench_frozen_0.Contract.test_forms) ... FAIL
+
+======================================================================
+FAIL: test_forms (_patchbench_frozen_0.Contract.test_forms)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/tmp/patchbench-diagnosis-v1-candidate-stage/semantic-06/workspaces/evaluation-subject-work/test_contract.py", line 6, in test_forms
+    def test_forms(self): self.assertEqual(identifier(7),'7'); self.assertEqual(identifier('007'),'007')
+                                                               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+AssertionError: '7' != '007'
+- 7
++ 007
+
+
+----------------------------------------------------------------------
+Ran 1 test in 0.000s
+
+FAILED (failures=1)

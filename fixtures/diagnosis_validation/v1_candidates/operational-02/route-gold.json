@@ -1,0 +1,7 @@
+{
+  "case_id": "operational-02",
+  "expected_route": "operational_only",
+  "schema_version": 1,
+  "semantic_gold": null,
+  "subject_evidence_sha256": null
+}

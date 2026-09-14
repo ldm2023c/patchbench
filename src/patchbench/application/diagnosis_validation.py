@@ -118,6 +118,31 @@ def _resolve_locator(bundle: DiagnosisEvidenceBundle, locator: GoldEvidenceLocat
     return item
 
 
+def _resolve_semantic_gold_evidence(
+    bundle: DiagnosisEvidenceBundle, gold: DiagnosisGoldCase,
+) -> list[list[tuple[GoldEvidenceLocator, EvidenceItem]]]:
+    if gold.expected_route is not DiagnosisRoute.SEMANTIC_DIAGNOSIS or gold.semantic_gold is None:
+        raise DiagnosisValidationError(
+            DiagnosisValidationReason.GOLD_NOT_SEMANTIC,
+            "semantic evidence validation requires semantic Diagnosis gold",
+        )
+    if compute_subject_evidence_sha256(bundle) != gold.subject_evidence_sha256:
+        raise DiagnosisValidationError(
+            DiagnosisValidationReason.SUBJECT_EVIDENCE_MISMATCH,
+            "gold subject identity differs from the supplied Bundle",
+        )
+    return [[(locator, _resolve_locator(bundle, locator))
+             for locator in requirement.acceptable_locators]
+            for requirement in gold.semantic_gold.required_evidence]
+
+
+def validate_semantic_gold_evidence(
+    bundle: DiagnosisEvidenceBundle, gold: DiagnosisGoldCase,
+) -> None:
+    """Validate subject identity and resolve every exact Human Gold locator once."""
+    _resolve_semantic_gold_evidence(bundle, gold)
+
+
 _CITATION_ISSUE_CODES = {
     DiagnosisAuditIssueCode.EVIDENCE_NOT_FOUND,
     DiagnosisAuditIssueCode.NULL_RANGE_FOR_NONEMPTY_EVIDENCE,
@@ -166,17 +191,7 @@ def score_semantic_diagnosis(
         )
 
     subject_sha = compute_subject_evidence_sha256(bundle)
-    if subject_sha != gold.subject_evidence_sha256:
-        raise DiagnosisValidationError(
-            DiagnosisValidationReason.SUBJECT_EVIDENCE_MISMATCH,
-            "gold subject identity differs from the supplied Bundle",
-        )
-
-    resolved_requirements = [
-        [(locator, _resolve_locator(bundle, locator))
-         for locator in requirement.acceptable_locators]
-        for requirement in gold.semantic_gold.required_evidence
-    ]
+    resolved_requirements = _resolve_semantic_gold_evidence(bundle, gold)
 
     claims = {claim.claim_id for claim in gold.semantic_gold.forbidden_claims}
     if overclaim_review is not None:

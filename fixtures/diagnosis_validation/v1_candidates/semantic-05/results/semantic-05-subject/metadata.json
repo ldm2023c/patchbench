@@ -1,0 +1,88 @@
+{
+  "agent": {
+    "backend": "host",
+    "duration_seconds": 0.0,
+    "exit_code": 0,
+    "name": "controlled-fixture",
+    "requested_model": null,
+    "status": "completed",
+    "timeout_seconds": 30.0
+  },
+  "artifacts": {
+    "agent_log": "results/semantic-05-subject/agent.log",
+    "agent_stderr_log": "results/semantic-05-subject/agent.stderr.log",
+    "directory": "results/semantic-05-subject",
+    "metadata": "results/semantic-05-subject/metadata.json",
+    "patch": "results/semantic-05-subject/patch.diff",
+    "prompt": "results/semantic-05-subject/prompt.txt",
+    "test_log": "results/semantic-05-subject/test.log"
+  },
+  "duration_seconds": 0.0,
+  "evaluation_evidence": {
+    "duration_seconds": 0.0,
+    "error_count": 1,
+    "exit_code": 1,
+    "failing_cases": [
+      {
+        "name": "test_timeout (_patchbench_frozen_0.Contract.test_timeout)",
+        "outcome": "error"
+      }
+    ],
+    "failure_count": 0,
+    "framework": "unittest",
+    "output_tail": [
+      "Command: python -I -S -B .patchbench-eval/runner.py",
+      "Exit code: 1",
+      "Duration seconds: 0.000000",
+      "STDOUT:",
+      "STDERR:",
+      "test_timeout (_patchbench_frozen_0.Contract.test_timeout) ... ERROR",
+      "======================================================================",
+      "ERROR: test_timeout (_patchbench_frozen_0.Contract.test_timeout)",
+      "----------------------------------------------------------------------",
+      "Traceback (most recent call last):",
+      "  File \"/tmp/patchbench-diagnosis-v1-candidate-stage/semantic-05/workspaces/evaluation-subject-work/test_contract.py\", line 6, in test_timeout",
+      "    def test_timeout(self): self.assertEqual(timeout({'timeout':None}),30); self.assertEqual(timeout({'timeout':'8'}),8)",
+      "                                             ^^^^^^^^^^^^^^^^^^^^^^^^^",
+      "  File \"/tmp/patchbench-diagnosis-v1-candidate-stage/semantic-05/workspaces/evaluation-subject-work/src/config.py\", line 2, in timeout",
+      "    return int(data.get('timeout',30))",
+      "           ^^^^^^^^^^^^^^^^^^^^^^^^^^^",
+      "TypeError: int() argument must be a string, a bytes-like object or a real number, not 'NoneType'",
+      "----------------------------------------------------------------------",
+      "Ran 1 test in 0.000s",
+      "FAILED (errors=1)"
+    ],
+    "passed": false,
+    "test_log_sha256": "7226d9307b3cbd730a85bf4411011fd877fbf92cd4b252864964e401c2234368",
+    "tests_run": 1
+  },
+  "evaluation_passed": false,
+  "patch_summary": {
+    "changed_file_count": 1,
+    "files": [
+      {
+        "added_lines": 1,
+        "binary": false,
+        "change_type": "modified",
+        "deleted_lines": 1,
+        "diff_sha256": "4ef8484024a8edaab8757341ab6edf86ad47e0c0789be37d033886abca05b8ed",
+        "path": "src/config.py",
+        "role": "non_test"
+      }
+    ],
+    "patch_bytes": 218,
+    "patch_sha256": "4ef8484024a8edaab8757341ab6edf86ad47e0c0789be37d033886abca05b8ed",
+    "text_added_lines": 1,
+    "text_deleted_lines": 1
+  },
+  "provenance": {
+    "base_commit_used": "f3819cdab1dee9a8169647ea92f608a1b9d71a41",
+    "evaluation_backend": "host",
+    "evaluation_command": "python -I -S -B .patchbench-eval/runner.py",
+    "evaluation_timeout_seconds": 30,
+    "task_fingerprint_sha256": "8b2ba6335436341e03ac11832148fd55fd158715ce62d939793c17c31640ce82"
+  },
+  "run_id": "semantic-05-subject",
+  "status": "failed",
+  "task_id": "semantic-05"
+}

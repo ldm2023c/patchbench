@@ -1,0 +1,117 @@
+{
+  "agent_status": "completed",
+  "base_commit": "95000f4f2b0ee590219cb5de6520b0184df3f6f4",
+  "benchmark_definition_sha256": "d4af1cce070b0fb9de528998725924dbe86cdebe87105c71fd9cee433091c726",
+  "bundle_id": "blind-5d794979d4e64fbb7d56e56e889d82b18989f829c55bfda2ffe807eb27774d38",
+  "bundle_sha256": "0d77196933dac3487840a0ee40bc9bf7c82f08e563dbb49f93e6d23f487383aa",
+  "evidence_items": [
+    {
+      "artifact_sha256": "2c8a24d9ecc05993ad2119b3e3b408cd7b94f2d9a1826cb0e80e6d7907ff90f3",
+      "content": "import unittest\nunittest.runner.time.perf_counter = lambda: 0.0\nfrom src.store import Store\nimport unittest\nclass Contract(unittest.TestCase):\n def test_rename(self):\n  s=Store(); s.rename('old','new'); self.assertEqual(s.data,{'new':1}); self.assertEqual(s.names,{'new'})\n",
+      "end_line": 7,
+      "evidence_id": "E001",
+      "kind": "frozen_test",
+      "owner": "benchmark",
+      "path": "test_contract.py",
+      "source_state": "frozen",
+      "start_line": 1
+    },
+    {
+      "artifact_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "content": "",
+      "end_line": null,
+      "evidence_id": "E002",
+      "kind": "production_source",
+      "owner": "benchmark",
+      "path": "src/__init__.py",
+      "source_state": "base",
+      "start_line": null
+    },
+    {
+      "artifact_sha256": "6d2b11673f9b388a76a660326a80a9f643087ac4366385617ef36b8474300040",
+      "content": "class Store:\n def __init__(self): self.data={'old':1}; self.names={'old'}\n def rename(self,old,new): pass\n",
+      "end_line": 3,
+      "evidence_id": "E003",
+      "kind": "production_source",
+      "owner": "benchmark",
+      "path": "src/store.py",
+      "source_state": "base",
+      "start_line": 1
+    },
+    {
+      "artifact_sha256": "6f3877870a17e9e537a228985a0ef25cb796cb59f14c3c0cc6c12dda276ad0b4",
+      "content": "evaluation:\n  command: python -I -S -B .patchbench-eval/runner.py\n  frozen_unittest:\n    test_files:\n    - test_contract.py\n    version: 1\n  timeout_seconds: 30\nid: semantic-07\nmetadata:\n  language: python\nrepository:\n  base_commit: 95000f4f2b0ee590219cb5de6520b0184df3f6f4\n  path: repository\n  type: local\nschema_version: 1\ntask:\n  prompt: Keep all Store views consistent when renaming an entry.\n",
+      "end_line": 17,
+      "evidence_id": "E004",
+      "kind": "task_contract",
+      "owner": "benchmark",
+      "path": null,
+      "source_state": null,
+      "start_line": 1
+    },
+    {
+      "artifact_sha256": "a5e66f64c427dca39e8cbd755c8c15516d5889cf8ae8fd52968832ec63807b7e",
+      "content": "diff --git a/src/store.py b/src/store.py\nindex 646ad8e..f643c59 100644\n--- a/src/store.py\n+++ b/src/store.py\n@@ -1,3 +1,3 @@\n class Store:\n  def __init__(self): self.data={'old':1}; self.names={'old'}\n- def rename(self,old,new): pass\n+ def rename(self,old,new): self.data[new]=self.data.pop(old)\n",
+      "end_line": 9,
+      "evidence_id": "E005",
+      "kind": "canonical_patch",
+      "owner": "subject",
+      "path": "patch.diff",
+      "source_state": null,
+      "start_line": 1
+    },
+    {
+      "artifact_sha256": "15fd00a2dd29954978447f11a03f8389dc9efda676fcca33176bc9ddfd50b8e1",
+      "content": "Command: python -I -S -B .patchbench-eval/runner.py\nExit code: 1\nDuration seconds: 0.000000\n\nSTDOUT:\n\nSTDERR:\ntest_rename (_patchbench_frozen_0.Contract.test_rename) ... FAIL\n\n======================================================================\nFAIL: test_rename (_patchbench_frozen_0.Contract.test_rename)\n----------------------------------------------------------------------\nTraceback (most recent call last):\n  File \"/tmp/patchbench-diagnosis-v1-candidate-stage/semantic-07/workspaces/evaluation-subject-work/test_contract.py\", line 7, in test_rename\n    s=Store(); s.rename('old','new'); self.assertEqual(s.data,{'new':1}); self.assertEqual(s.names,{'new'})\n                                                                          ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\nAssertionError: Items in the first set but not the second:\n'old'\nItems in the second set but not the first:\n'new'\n\n----------------------------------------------------------------------\nRan 1 test in 0.000s\n\nFAILED (failures=1)",
+      "end_line": 25,
+      "evidence_id": "E006",
+      "kind": "evaluation_output",
+      "owner": "subject",
+      "path": "test.log",
+      "source_state": null,
+      "start_line": 1
+    },
+    {
+      "artifact_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "content": "",
+      "end_line": null,
+      "evidence_id": "E007",
+      "kind": "production_source",
+      "owner": "subject",
+      "path": "src/__init__.py",
+      "source_state": "candidate",
+      "start_line": null
+    },
+    {
+      "artifact_sha256": "52463602819f313a7bf9fc9f64542662a402be5d7e89a114d609ddeeef9e2b82",
+      "content": "class Store:\n def __init__(self): self.data={'old':1}; self.names={'old'}\n def rename(self,old,new): self.data[new]=self.data.pop(old)\n",
+      "end_line": 3,
+      "evidence_id": "E008",
+      "kind": "production_source",
+      "owner": "subject",
+      "path": "src/store.py",
+      "source_state": "candidate",
+      "start_line": 1
+    }
+  ],
+  "mode": "blind",
+  "official_evaluation_passed": false,
+  "peer_run_id": null,
+  "provenance": {
+    "peer": null,
+    "subject": {
+      "base_source_snapshot_sha256": "9cd8854e166cfd92113684a866d489a955f23e8ac0a93b8f4fa23f2f4fd5b126",
+      "benchmark_definition_sha256": "d4af1cce070b0fb9de528998725924dbe86cdebe87105c71fd9cee433091c726",
+      "candidate_source_snapshot_sha256": "9658477a6a04f9b7613d1d3124a5f7c2aac2f48e287fe6df69e1161dd29a8388",
+      "canonical_patch_sha256": "a5e66f64c427dca39e8cbd755c8c15516d5889cf8ae8fd52968832ec63807b7e",
+      "evaluation_log_sha256": "15fd00a2dd29954978447f11a03f8389dc9efda676fcca33176bc9ddfd50b8e1",
+      "frozen_tests_snapshot_sha256": "5ee263b8575f4d3d8a83a4133569bca9c6572b4ff2c8bc818d23598cbb6efcb2",
+      "task_contract_sha256": "6f3877870a17e9e537a228985a0ef25cb796cb59f14c3c0cc6c12dda276ad0b4"
+    }
+  },
+  "schema_version": 1,
+  "source_snapshot_policy": "full_bounded_production_v1:5872fe6c90dcbe418f35d9548e49b7e473794cb388faa8e9374f7a283f7ac77b",
+  "subject_run_id": "semantic-07-subject",
+  "task_fingerprint_sha256": "e84ecccccf8180165b1931d40ad688d4a3770d61d63bbaf5dbd8a2882d601b71",
+  "task_id": "semantic-07"
+}

@@ -1,0 +1,10 @@
+diff --git a/src/registry.py b/src/registry.py
+index 0d492bc..0d69da0 100644
+--- a/src/registry.py
++++ b/src/registry.py
+@@ -1,4 +1,4 @@
+ SUPPORTED=('txt',)
+-HANDLERS={'txt':'text'}
++HANDLERS={'txt':'text','png':'image'}
+ def lookup(kind):
+  return HANDLERS[kind] if kind in SUPPORTED else None

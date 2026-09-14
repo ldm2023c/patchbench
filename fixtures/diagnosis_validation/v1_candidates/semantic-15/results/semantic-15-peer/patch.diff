@@ -1,0 +1,9 @@
+diff --git a/src/cache.py b/src/cache.py
+index 7498bee..dbdd773 100644
+--- a/src/cache.py
++++ b/src/cache.py
+@@ -1,3 +1,3 @@
+ DATA={'x':1}; CACHE={}
+-def put(k,v): DATA[k]=v
++def put(k,v): DATA[k]=v; CACHE[k]=v
+ def get(k): return CACHE.get(k,DATA.get(k))

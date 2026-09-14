@@ -2,7 +2,7 @@
 
 from typing import Annotated, Self
 
-from pydantic import ConfigDict, Field, model_validator
+from pydantic import ConfigDict, Field, field_validator, model_validator
 
 from patchbench.domain.diagnosis import (
     DiagnosisMode,
@@ -19,7 +19,7 @@ from patchbench.domain.models import DomainModel, NonEmptyString, Sha256Hex
 class GoldEvidenceLocator(DomainModel):
     """Stable subject/benchmark evidence coordinates, independent of Bundle IDs."""
 
-    model_config = ConfigDict(extra="forbid", frozen=True, str_strip_whitespace=True)
+    model_config = ConfigDict(extra="forbid", frozen=True, str_strip_whitespace=False)
 
     owner: EvidenceOwner
     kind: EvidenceKind
@@ -28,6 +28,18 @@ class GoldEvidenceLocator(DomainModel):
     source_state: EvidenceSourceState | None = None
     start_line: int | None = Field(default=None, strict=True, ge=1)
     end_line: int | None = Field(default=None, strict=True, ge=1)
+
+    @field_validator("path")
+    @classmethod
+    def validate_path(cls, path: str | None) -> str | None:
+        if path is None:
+            return None
+        if (not path or path != path.strip() or path.startswith("/")
+                or "\\" in path or ":" in path
+                or any(ord(char) < 32 or ord(char) == 127 for char in path)
+                or any(part in ("", ".", "..") for part in path.split("/"))):
+            raise ValueError("gold evidence path must be a canonical repo-relative POSIX path")
+        return path
 
     @model_validator(mode="after")
     def validate_subject_evidence(self) -> Self:

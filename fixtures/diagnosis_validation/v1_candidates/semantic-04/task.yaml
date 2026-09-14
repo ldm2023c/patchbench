@@ -1,0 +1,17 @@
+evaluation:
+  command: python -I -S -B .patchbench-eval/runner.py
+  frozen_unittest:
+    test_files:
+    - test_contract.py
+    version: 1
+  timeout_seconds: 30
+id: semantic-04
+metadata:
+  language: python
+repository:
+  base_commit: bdce4b126c9efb6d91455224811cdae972416c22
+  path: repository
+  type: local
+schema_version: 1
+task:
+  prompt: Support the png kind through the registry lookup.

@@ -1,0 +1,22 @@
+Command: python -I -S -B .patchbench-eval/runner.py
+Exit code: 1
+Duration seconds: 0.000000
+
+STDOUT:
+
+STDERR:
+test_boundary (_patchbench_frozen_0.Contract.test_boundary) ... FAIL
+
+======================================================================
+FAIL: test_boundary (_patchbench_frozen_0.Contract.test_boundary)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/tmp/patchbench-diagnosis-v1-candidate-stage/semantic-10/workspaces/evaluation-subject-work/test_contract.py", line 6, in test_boundary
+    def test_boundary(self): self.assertTrue(accepted(0)); self.assertFalse(accepted(-1))
+                                                           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+AssertionError: True is not false
+
+----------------------------------------------------------------------
+Ran 1 test in 0.000s
+
+FAILED (failures=1)

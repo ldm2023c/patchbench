@@ -1,0 +1,8 @@
+diff --git a/src/parser.py b/src/parser.py
+index a9007c8..a9f3f65 100644
+--- a/src/parser.py
++++ b/src/parser.py
+@@ -1,2 +1,2 @@
+ def normalize(value):
+-    return value.upper()
++    return value.lower()

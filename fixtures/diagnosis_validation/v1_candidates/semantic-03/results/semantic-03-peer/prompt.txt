@@ -1,0 +1,1 @@
+Return normalized lowercase values through the public submit API.

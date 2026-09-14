@@ -1,0 +1,85 @@
+{
+  "agent": {
+    "backend": "host",
+    "duration_seconds": 0.0,
+    "exit_code": 0,
+    "name": "controlled-fixture",
+    "requested_model": null,
+    "status": "completed",
+    "timeout_seconds": 30.0
+  },
+  "artifacts": {
+    "agent_log": "results/semantic-10-subject/agent.log",
+    "agent_stderr_log": "results/semantic-10-subject/agent.stderr.log",
+    "directory": "results/semantic-10-subject",
+    "metadata": "results/semantic-10-subject/metadata.json",
+    "patch": "results/semantic-10-subject/patch.diff",
+    "prompt": "results/semantic-10-subject/prompt.txt",
+    "test_log": "results/semantic-10-subject/test.log"
+  },
+  "duration_seconds": 0.0,
+  "evaluation_evidence": {
+    "duration_seconds": 0.0,
+    "error_count": 0,
+    "exit_code": 1,
+    "failing_cases": [
+      {
+        "name": "test_boundary (_patchbench_frozen_0.Contract.test_boundary)",
+        "outcome": "fail"
+      }
+    ],
+    "failure_count": 1,
+    "framework": "unittest",
+    "output_tail": [
+      "Command: python -I -S -B .patchbench-eval/runner.py",
+      "Exit code: 1",
+      "Duration seconds: 0.000000",
+      "STDOUT:",
+      "STDERR:",
+      "test_boundary (_patchbench_frozen_0.Contract.test_boundary) ... FAIL",
+      "======================================================================",
+      "FAIL: test_boundary (_patchbench_frozen_0.Contract.test_boundary)",
+      "----------------------------------------------------------------------",
+      "Traceback (most recent call last):",
+      "  File \"/tmp/patchbench-diagnosis-v1-candidate-stage/semantic-10/workspaces/evaluation-subject-work/test_contract.py\", line 6, in test_boundary",
+      "    def test_boundary(self): self.assertTrue(accepted(0)); self.assertFalse(accepted(-1))",
+      "                                                           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^",
+      "AssertionError: True is not false",
+      "----------------------------------------------------------------------",
+      "Ran 1 test in 0.000s",
+      "FAILED (failures=1)"
+    ],
+    "passed": false,
+    "test_log_sha256": "abb6c974526a3086e90cf14af1713e9fc58a80093c20d42c1397868be379742f",
+    "tests_run": 1
+  },
+  "evaluation_passed": false,
+  "patch_summary": {
+    "changed_file_count": 1,
+    "files": [
+      {
+        "added_lines": 1,
+        "binary": false,
+        "change_type": "modified",
+        "deleted_lines": 1,
+        "diff_sha256": "9792ebc11f3621c21218710951b38ee0766b3e30087e93f56f03daf6fc5f3b66",
+        "path": "src/threshold.py",
+        "role": "non_test"
+      }
+    ],
+    "patch_bytes": 203,
+    "patch_sha256": "9792ebc11f3621c21218710951b38ee0766b3e30087e93f56f03daf6fc5f3b66",
+    "text_added_lines": 1,
+    "text_deleted_lines": 1
+  },
+  "provenance": {
+    "base_commit_used": "c9fa0417ff736151b56eb6be6f3dfb2546033efe",
+    "evaluation_backend": "host",
+    "evaluation_command": "python -I -S -B .patchbench-eval/runner.py",
+    "evaluation_timeout_seconds": 30,
+    "task_fingerprint_sha256": "0c7ca096e9db08be450e397db47b00df3f122d9d295c4d4590141d142915b38b"
+  },
+  "run_id": "semantic-10-subject",
+  "status": "failed",
+  "task_id": "semantic-10"
+}

@@ -1,0 +1,17 @@
+evaluation:
+  command: python -I -S -B .patchbench-eval/runner.py
+  frozen_unittest:
+    test_files:
+    - test_contract.py
+    version: 1
+  timeout_seconds: 30
+id: semantic-15
+metadata:
+  language: python
+repository:
+  base_commit: bb0de7ba348906c96ba1dcf91154a535ab51f43c
+  path: repository
+  type: local
+schema_version: 1
+task:
+  prompt: Return the latest stored value through the cache-backed interface.

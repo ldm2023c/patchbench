@@ -1,0 +1,117 @@
+{
+  "agent_status": "completed",
+  "base_commit": "bdce4b126c9efb6d91455224811cdae972416c22",
+  "benchmark_definition_sha256": "bad13fa332e06eaa512c0c40dfceed81c11120090f51c2463bc759a6f89eeee1",
+  "bundle_id": "blind-123321bba04467fceb84eb2e22461f68b939ee7d9d3e25f7f17dbd8c82e6967b",
+  "bundle_sha256": "74ec46235f5f8efc3332560e62f67f4fa5ceb47a82eaa7d06d81b6674c6972b6",
+  "evidence_items": [
+    {
+      "artifact_sha256": "3f4056df6d0f599b89dcad1c957993eb89331646ba9b4ee7f5e9a33bff7e624d",
+      "content": "import unittest\nunittest.runner.time.perf_counter = lambda: 0.0\nfrom src.registry import lookup\nimport unittest\nclass Contract(unittest.TestCase):\n def test_png(self): self.assertEqual(lookup('png'),'image')\n",
+      "end_line": 6,
+      "evidence_id": "E001",
+      "kind": "frozen_test",
+      "owner": "benchmark",
+      "path": "test_contract.py",
+      "source_state": "frozen",
+      "start_line": 1
+    },
+    {
+      "artifact_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "content": "",
+      "end_line": null,
+      "evidence_id": "E002",
+      "kind": "production_source",
+      "owner": "benchmark",
+      "path": "src/__init__.py",
+      "source_state": "base",
+      "start_line": null
+    },
+    {
+      "artifact_sha256": "979452c1fc3d69885e1c3cd1e3bf6b1e42b01c708fa8c7e40300ae8626a5a113",
+      "content": "SUPPORTED=('txt',)\nHANDLERS={'txt':'text'}\ndef lookup(kind):\n return HANDLERS[kind] if kind in SUPPORTED else None\n",
+      "end_line": 4,
+      "evidence_id": "E003",
+      "kind": "production_source",
+      "owner": "benchmark",
+      "path": "src/registry.py",
+      "source_state": "base",
+      "start_line": 1
+    },
+    {
+      "artifact_sha256": "799bbf70b8158b5d36f39e8831769ad0e9bb84b3287cbd3e157c499aee1517a5",
+      "content": "evaluation:\n  command: python -I -S -B .patchbench-eval/runner.py\n  frozen_unittest:\n    test_files:\n    - test_contract.py\n    version: 1\n  timeout_seconds: 30\nid: semantic-04\nmetadata:\n  language: python\nrepository:\n  base_commit: bdce4b126c9efb6d91455224811cdae972416c22\n  path: repository\n  type: local\nschema_version: 1\ntask:\n  prompt: Support the png kind through the registry lookup.\n",
+      "end_line": 17,
+      "evidence_id": "E004",
+      "kind": "task_contract",
+      "owner": "benchmark",
+      "path": null,
+      "source_state": null,
+      "start_line": 1
+    },
+    {
+      "artifact_sha256": "9da83a50752c9ebe9abcad23735029b6ef7c8e43f97a3b1e2a1a07a7bc4dbf89",
+      "content": "diff --git a/src/registry.py b/src/registry.py\nindex 0d492bc..0d69da0 100644\n--- a/src/registry.py\n+++ b/src/registry.py\n@@ -1,4 +1,4 @@\n SUPPORTED=('txt',)\n-HANDLERS={'txt':'text'}\n+HANDLERS={'txt':'text','png':'image'}\n def lookup(kind):\n  return HANDLERS[kind] if kind in SUPPORTED else None\n",
+      "end_line": 10,
+      "evidence_id": "E005",
+      "kind": "canonical_patch",
+      "owner": "subject",
+      "path": "patch.diff",
+      "source_state": null,
+      "start_line": 1
+    },
+    {
+      "artifact_sha256": "a60b7835cb0f96efd0a3de9a978d39a1eef4cc18fa9a3b19e5af325f48663389",
+      "content": "Command: python -I -S -B .patchbench-eval/runner.py\nExit code: 1\nDuration seconds: 0.000000\n\nSTDOUT:\n\nSTDERR:\ntest_png (_patchbench_frozen_0.Contract.test_png) ... FAIL\n\n======================================================================\nFAIL: test_png (_patchbench_frozen_0.Contract.test_png)\n----------------------------------------------------------------------\nTraceback (most recent call last):\n  File \"/tmp/patchbench-diagnosis-v1-candidate-stage/semantic-04/workspaces/evaluation-subject-work/test_contract.py\", line 6, in test_png\n    def test_png(self): self.assertEqual(lookup('png'),'image')\n                        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\nAssertionError: None != 'image'\n\n----------------------------------------------------------------------\nRan 1 test in 0.000s\n\nFAILED (failures=1)",
+      "end_line": 22,
+      "evidence_id": "E006",
+      "kind": "evaluation_output",
+      "owner": "subject",
+      "path": "test.log",
+      "source_state": null,
+      "start_line": 1
+    },
+    {
+      "artifact_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "content": "",
+      "end_line": null,
+      "evidence_id": "E007",
+      "kind": "production_source",
+      "owner": "subject",
+      "path": "src/__init__.py",
+      "source_state": "candidate",
+      "start_line": null
+    },
+    {
+      "artifact_sha256": "4caaddd4c7c220d56a387e257f25115ecead5f9fc0213481ca9af65c181b97e3",
+      "content": "SUPPORTED=('txt',)\nHANDLERS={'txt':'text','png':'image'}\ndef lookup(kind):\n return HANDLERS[kind] if kind in SUPPORTED else None\n",
+      "end_line": 4,
+      "evidence_id": "E008",
+      "kind": "production_source",
+      "owner": "subject",
+      "path": "src/registry.py",
+      "source_state": "candidate",
+      "start_line": 1
+    }
+  ],
+  "mode": "blind",
+  "official_evaluation_passed": false,
+  "peer_run_id": null,
+  "provenance": {
+    "peer": null,
+    "subject": {
+      "base_source_snapshot_sha256": "1659441d85d25292546d451a095dbe01c58886263a55a6f8726cbbf93885b489",
+      "benchmark_definition_sha256": "bad13fa332e06eaa512c0c40dfceed81c11120090f51c2463bc759a6f89eeee1",
+      "candidate_source_snapshot_sha256": "190acb6536dc35b3936b7e667d6eceb869a1843319fb597f9eaf1fdb1fd738e1",
+      "canonical_patch_sha256": "9da83a50752c9ebe9abcad23735029b6ef7c8e43f97a3b1e2a1a07a7bc4dbf89",
+      "evaluation_log_sha256": "a60b7835cb0f96efd0a3de9a978d39a1eef4cc18fa9a3b19e5af325f48663389",
+      "frozen_tests_snapshot_sha256": "ddba0f6549f8a372310c634c5080cdd5447b61a2dcbf9fd944387464d1e44434",
+      "task_contract_sha256": "799bbf70b8158b5d36f39e8831769ad0e9bb84b3287cbd3e157c499aee1517a5"
+    }
+  },
+  "schema_version": 1,
+  "source_snapshot_policy": "full_bounded_production_v1:5872fe6c90dcbe418f35d9548e49b7e473794cb388faa8e9374f7a283f7ac77b",
+  "subject_run_id": "semantic-04-subject",
+  "task_fingerprint_sha256": "c32f6e24758153ee32b89d52dc753669a66ce617bbbc5676f46cbb8db347c70b",
+  "task_id": "semantic-04"
+}

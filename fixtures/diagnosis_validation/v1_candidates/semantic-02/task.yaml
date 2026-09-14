@@ -1,0 +1,17 @@
+evaluation:
+  command: python -I -S -B .patchbench-eval/runner.py
+  frozen_unittest:
+    test_files:
+    - test_contract.py
+    version: 1
+  timeout_seconds: 30
+id: semantic-02
+metadata:
+  language: python
+repository:
+  base_commit: 806d6842e7cdcb0184c9d99e84c656a5b344ab45
+  path: repository
+  type: local
+schema_version: 1
+task:
+  prompt: Cap values at the revised upper boundary of 80.

@@ -1,0 +1,16 @@
+diff --git a/src/policy.py b/src/policy.py
+index f958d90..b20cdad 100644
+--- a/src/policy.py
++++ b/src/policy.py
+@@ -1,2 +1,2 @@
+-MODE='safe'
++MODE='fast'
+ def mode(): return MODE
+diff --git a/src/runner.py b/src/runner.py
+index 98bb564..70ff400 100644
+--- a/src/runner.py
++++ b/src/runner.py
+@@ -1,2 +1,2 @@
+ from .policy import mode
+-def execute(): return mode()
++def execute(): return mode()+'-cached'

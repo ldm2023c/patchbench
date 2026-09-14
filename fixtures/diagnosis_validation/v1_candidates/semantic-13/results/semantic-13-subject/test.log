@@ -1,0 +1,31 @@
+Command: python -I -S -B .patchbench-eval/runner.py
+Exit code: 1
+Duration seconds: 0.000000
+
+STDOUT:
+
+STDERR:
+test_select (_patchbench_frozen_0.Contract.test_select) ... FAIL
+
+======================================================================
+FAIL: test_select (_patchbench_frozen_0.Contract.test_select)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/tmp/patchbench-diagnosis-v1-candidate-stage/semantic-13/workspaces/evaluation-subject-work/test_contract.py", line 6, in test_select
+    def test_select(self): self.assertEqual(select([' a ',' ','bc']),['a','bc'])
+                           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+AssertionError: Lists differ: [' a', 'bc'] != ['a', 'bc']
+
+First differing element 0:
+' a'
+'a'
+
+- [' a', 'bc']
+?   -
+
++ ['a', 'bc']
+
+----------------------------------------------------------------------
+Ran 1 test in 0.000s
+
+FAILED (failures=1)

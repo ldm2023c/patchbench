@@ -1,0 +1,25 @@
+Command: python -I -S -B .patchbench-eval/runner.py
+Exit code: 1
+Duration seconds: 0.000000
+
+STDOUT:
+
+STDERR:
+test_timeout (_patchbench_frozen_0.Contract.test_timeout) ... ERROR
+
+======================================================================
+ERROR: test_timeout (_patchbench_frozen_0.Contract.test_timeout)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/tmp/patchbench-diagnosis-v1-candidate-stage/semantic-05/workspaces/evaluation-subject-work/test_contract.py", line 6, in test_timeout
+    def test_timeout(self): self.assertEqual(timeout({'timeout':None}),30); self.assertEqual(timeout({'timeout':'8'}),8)
+                                             ^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/tmp/patchbench-diagnosis-v1-candidate-stage/semantic-05/workspaces/evaluation-subject-work/src/config.py", line 2, in timeout
+    return int(data.get('timeout',30))
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^
+TypeError: int() argument must be a string, a bytes-like object or a real number, not 'NoneType'
+
+----------------------------------------------------------------------
+Ran 1 test in 0.000s
+
+FAILED (errors=1)

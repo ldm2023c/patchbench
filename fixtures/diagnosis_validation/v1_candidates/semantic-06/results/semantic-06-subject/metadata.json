@@ -1,0 +1,87 @@
+{
+  "agent": {
+    "backend": "host",
+    "duration_seconds": 0.0,
+    "exit_code": 0,
+    "name": "controlled-fixture",
+    "requested_model": null,
+    "status": "completed",
+    "timeout_seconds": 30.0
+  },
+  "artifacts": {
+    "agent_log": "results/semantic-06-subject/agent.log",
+    "agent_stderr_log": "results/semantic-06-subject/agent.stderr.log",
+    "directory": "results/semantic-06-subject",
+    "metadata": "results/semantic-06-subject/metadata.json",
+    "patch": "results/semantic-06-subject/patch.diff",
+    "prompt": "results/semantic-06-subject/prompt.txt",
+    "test_log": "results/semantic-06-subject/test.log"
+  },
+  "duration_seconds": 0.0,
+  "evaluation_evidence": {
+    "duration_seconds": 0.0,
+    "error_count": 0,
+    "exit_code": 1,
+    "failing_cases": [
+      {
+        "name": "test_forms (_patchbench_frozen_0.Contract.test_forms)",
+        "outcome": "fail"
+      }
+    ],
+    "failure_count": 1,
+    "framework": "unittest",
+    "output_tail": [
+      "Command: python -I -S -B .patchbench-eval/runner.py",
+      "Exit code: 1",
+      "Duration seconds: 0.000000",
+      "STDOUT:",
+      "STDERR:",
+      "test_forms (_patchbench_frozen_0.Contract.test_forms) ... FAIL",
+      "======================================================================",
+      "FAIL: test_forms (_patchbench_frozen_0.Contract.test_forms)",
+      "----------------------------------------------------------------------",
+      "Traceback (most recent call last):",
+      "  File \"/tmp/patchbench-diagnosis-v1-candidate-stage/semantic-06/workspaces/evaluation-subject-work/test_contract.py\", line 6, in test_forms",
+      "    def test_forms(self): self.assertEqual(identifier(7),'7'); self.assertEqual(identifier('007'),'007')",
+      "                                                               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^",
+      "AssertionError: '7' != '007'",
+      "- 7",
+      "+ 007",
+      "----------------------------------------------------------------------",
+      "Ran 1 test in 0.000s",
+      "FAILED (failures=1)"
+    ],
+    "passed": false,
+    "test_log_sha256": "458b072f5190df8089f30fa0b95bada71ec056c96b205e3a0abd26e3cff08546",
+    "tests_run": 1
+  },
+  "evaluation_passed": false,
+  "patch_summary": {
+    "changed_file_count": 1,
+    "files": [
+      {
+        "added_lines": 1,
+        "binary": false,
+        "change_type": "modified",
+        "deleted_lines": 0,
+        "diff_sha256": "0fd8a0fa8a0e2a117ddc7fa37dd5cb6379ec9742e5e6d2c50114d42f038798d0",
+        "path": "src/identity.py",
+        "role": "non_test"
+      }
+    ],
+    "patch_bytes": 232,
+    "patch_sha256": "0fd8a0fa8a0e2a117ddc7fa37dd5cb6379ec9742e5e6d2c50114d42f038798d0",
+    "text_added_lines": 1,
+    "text_deleted_lines": 0
+  },
+  "provenance": {
+    "base_commit_used": "112e9710f7a79db407e6e233ce4fd710ddf4bdac",
+    "evaluation_backend": "host",
+    "evaluation_command": "python -I -S -B .patchbench-eval/runner.py",
+    "evaluation_timeout_seconds": 30,
+    "task_fingerprint_sha256": "2f2dc70c7791c58ccb23ff72e024daa3837781c6199617f857522d9e5d964fb5"
+  },
+  "run_id": "semantic-06-subject",
+  "status": "failed",
+  "task_id": "semantic-06"
+}

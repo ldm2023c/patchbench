@@ -1,0 +1,8 @@
+diff --git a/src/config.py b/src/config.py
+index 4f82769..aafafff 100644
+--- a/src/config.py
++++ b/src/config.py
+@@ -1,2 +1,2 @@
+ def timeout(data):
+- return data.get('timeout',30)
++ return int(data.get('timeout',30))

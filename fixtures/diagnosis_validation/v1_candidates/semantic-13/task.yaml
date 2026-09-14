@@ -1,0 +1,17 @@
+evaluation:
+  command: python -I -S -B .patchbench-eval/runner.py
+  frozen_unittest:
+    test_files:
+    - test_contract.py
+    version: 1
+  timeout_seconds: 30
+id: semantic-13
+metadata:
+  language: python
+repository:
+  base_commit: 9ed0dda4116f1b5c346d3cd7ed4aa730dc6e7ee5
+  path: repository
+  type: local
+schema_version: 1
+task:
+  prompt: Select nonempty normalized values according to the public contract.

@@ -1,0 +1,22 @@
+Command: python -I -S -B .patchbench-eval/runner.py
+Exit code: 1
+Duration seconds: 0.000000
+
+STDOUT:
+
+STDERR:
+test_cap (_patchbench_frozen_0.Contract.test_cap) ... FAIL
+
+======================================================================
+FAIL: test_cap (_patchbench_frozen_0.Contract.test_cap)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/tmp/patchbench-diagnosis-v1-candidate-stage/semantic-02/workspaces/evaluation-subject-work/test_contract.py", line 7, in test_cap
+    self.assertEqual(cap(20),20); self.assertEqual(cap(90),80)
+    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+AssertionError: 80 != 20
+
+----------------------------------------------------------------------
+Ran 1 test in 0.000s
+
+FAILED (failures=1)

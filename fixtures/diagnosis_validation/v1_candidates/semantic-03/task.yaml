@@ -1,0 +1,17 @@
+evaluation:
+  command: python -I -S -B .patchbench-eval/runner.py
+  frozen_unittest:
+    test_files:
+    - test_contract.py
+    version: 1
+  timeout_seconds: 30
+id: semantic-03
+metadata:
+  language: python
+repository:
+  base_commit: 220e333d840ff63c274b1028bb8a449f6f4494c8
+  path: repository
+  type: local
+schema_version: 1
+task:
+  prompt: Return normalized lowercase values through the public submit API.
