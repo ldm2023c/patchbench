@@ -12,9 +12,16 @@ from patchbench.application.diagnosis_peer import (
 from patchbench.application.diagnosis_contrastive import (
     ContrastiveCompilationError, ContrastiveCompilationReason, compile_contrastive_diagnosis_evidence,
 )
+from patchbench.application.diagnosis_validation import (
+    DiagnosisValidationError, DiagnosisValidationReason,
+    compute_subject_evidence_sha256, score_diagnosis_route,
+    score_semantic_diagnosis,
+)
 
 __all__ = ["ReplayError", "ReplayExecution", "replay_run", "run_task",
            "DiagnosisExecution", "DiagnosisExecutionError", "DiagnosisExecutionReason", "execute_blind_diagnosis",
            "execute_contrastive_diagnosis", "ContrastivePeerSelection", "DiagnosisPeerError", "DiagnosisPeerReason",
            "select_contrastive_peer", "ContrastiveCompilationError", "ContrastiveCompilationReason",
-           "compile_contrastive_diagnosis_evidence"]
+           "compile_contrastive_diagnosis_evidence", "DiagnosisValidationError",
+           "DiagnosisValidationReason", "compute_subject_evidence_sha256",
+           "score_diagnosis_route", "score_semantic_diagnosis"]

@@ -79,8 +79,21 @@ from patchbench.domain.diagnosis_execution import (
     DiagnosisProviderProvenance, DiagnosisExecutionRecord, compute_execution_sha256,
     DiagnosisPromptTemplateVersion,
 )
+from patchbench.domain.diagnosis_validation import (
+    DiagnosisGoldCase, DiagnosisOverclaimReview, DiagnosisRouteScore,
+    ForbiddenClaim, GoldEvidenceLocator, GoldEvidenceRequirement,
+    SemanticDiagnosisGold, SemanticDiagnosisScore,
+)
 
 __all__ = [
+    "DiagnosisGoldCase",
+    "DiagnosisOverclaimReview",
+    "DiagnosisRouteScore",
+    "ForbiddenClaim",
+    "GoldEvidenceLocator",
+    "GoldEvidenceRequirement",
+    "SemanticDiagnosisGold",
+    "SemanticDiagnosisScore",
     "DiagnosisPromptTemplateVersion",
     "DiagnosisExternalLLMPolicy",
     "DiagnosisProviderUsage",
