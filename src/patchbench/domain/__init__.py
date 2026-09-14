@@ -84,8 +84,22 @@ from patchbench.domain.diagnosis_validation import (
     ForbiddenClaim, GoldEvidenceLocator, GoldEvidenceRequirement,
     SemanticDiagnosisGold, SemanticDiagnosisScore,
 )
+from patchbench.domain.diagnosis_metrics import (
+    BlindContrastiveComparison, DiagnosisRouteAggregate, MetricMean, MetricRatio,
+    PairedDiagnosisDelta, PairTransition, PairTransitionSummary,
+    RequiredEvidenceTransitionSummary, SemanticDiagnosisAggregate,
+)
 
 __all__ = [
+    "BlindContrastiveComparison",
+    "DiagnosisRouteAggregate",
+    "MetricMean",
+    "MetricRatio",
+    "PairedDiagnosisDelta",
+    "PairTransition",
+    "PairTransitionSummary",
+    "RequiredEvidenceTransitionSummary",
+    "SemanticDiagnosisAggregate",
     "DiagnosisGoldCase",
     "DiagnosisOverclaimReview",
     "DiagnosisRouteScore",
