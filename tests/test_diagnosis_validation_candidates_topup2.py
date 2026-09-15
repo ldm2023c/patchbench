@@ -22,7 +22,7 @@ from scripts.prepare_diagnosis_validation_candidates import (
 ROOT = Path("fixtures/diagnosis_validation/v1_candidates")
 GOLD_ROOT = Path("fixtures/diagnosis_validation/v1_human_gold_drafts")
 PRE_TOPUP2_TREE_SHA256 = "e6a48d8f787693bcba535957852e82b8abb32e1637d07d4165141a94305d833d"
-LOCKED_GOLD_TREE_SHA256 = "8c3ac1a280e7d8ea8d4ba0f892194a0141bf0f9ad55e5254541504ea3ef0c43d"
+LOCKED_GOLD_TREE_SHA256 = "b214dfc8184a92e1de1926e3a6121f48b0d7d56fba2859d57319dacc5b507726"
 
 
 def _tree_entries(root, names=None):
@@ -65,7 +65,7 @@ def test_all_pre_topup2_candidate_assets_remain_byte_exact():
 
 def test_locked_human_gold_tree_remains_byte_exact():
     entries = _tree_entries(GOLD_ROOT)
-    assert len(entries) == 18
+    assert len(entries) == 26
     assert _entries_sha256(entries) == LOCKED_GOLD_TREE_SHA256
 
 

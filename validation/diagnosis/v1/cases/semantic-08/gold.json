@@ -1,0 +1,108 @@
+{
+  "case_id": "semantic-08",
+  "expected_route": "semantic_diagnosis",
+  "schema_version": 1,
+  "semantic_gold": {
+    "acceptable_families": [
+      "state_consistency_violation"
+    ],
+    "forbidden_claims": [
+      {
+        "claim_id": "F1",
+        "description": "不得声称失败来自外部队列服务、事务系统、并发控制或隐藏 metadata backend；当前 Blind evidence 只显示 Queue.items/count/version 未同步更新。"
+      }
+    ],
+    "preferred_family": "state_consistency_violation",
+    "required_evidence": [
+      {
+        "acceptable_locators": [
+          {
+            "artifact_sha256": "55056797cdad616f730d767b3297b18ab6fe7334ad2d7e269a6cf028e49564e0",
+            "end_line": 17,
+            "kind": "task_contract",
+            "owner": "benchmark",
+            "path": null,
+            "source_state": null,
+            "start_line": 17
+          },
+          {
+            "artifact_sha256": "e4df1d2b5c93c58bfddf229599d0ee962c2c9e48fbf9d606f9c222e525704a8c",
+            "end_line": 7,
+            "kind": "frozen_test",
+            "owner": "benchmark",
+            "path": "test_contract.py",
+            "source_state": "frozen",
+            "start_line": 6
+          }
+        ],
+        "description": "证明 task / frozen test 要求 Queue.add 同时更新 items、count 和 version。",
+        "requirement_id": "R1"
+      },
+      {
+        "acceptable_locators": [
+          {
+            "artifact_sha256": "504b6432cee40cf150c0fb86867e0a9f680446ffcaade5a00983c1b1f0f12abb",
+            "end_line": 3,
+            "kind": "production_source",
+            "owner": "benchmark",
+            "path": "src/queue.py",
+            "source_state": "base",
+            "start_line": 1
+          },
+          {
+            "artifact_sha256": "a0f8723f9aa8f08c8e2604560b444226cdc5f9f7a413dd642428b8afdf8ef5aa",
+            "end_line": 3,
+            "kind": "production_source",
+            "owner": "subject",
+            "path": "src/queue.py",
+            "source_state": "candidate",
+            "start_line": 1
+          }
+        ],
+        "description": "证明 Queue 对象同时维护 items、count、version 三个 observable 状态。",
+        "requirement_id": "R2"
+      },
+      {
+        "acceptable_locators": [
+          {
+            "artifact_sha256": "39a3af2682ae7cee567ad157917448229dbc364dcc47ce8e9612d1e71c3b36cc",
+            "end_line": 9,
+            "kind": "canonical_patch",
+            "owner": "subject",
+            "path": "patch.diff",
+            "source_state": null,
+            "start_line": 5
+          },
+          {
+            "artifact_sha256": "a0f8723f9aa8f08c8e2604560b444226cdc5f9f7a413dd642428b8afdf8ef5aa",
+            "end_line": 3,
+            "kind": "production_source",
+            "owner": "subject",
+            "path": "src/queue.py",
+            "source_state": "candidate",
+            "start_line": 3
+          }
+        ],
+        "description": "证明 subject add 只 append items，未更新 count 或 version。",
+        "requirement_id": "R3"
+      },
+      {
+        "acceptable_locators": [
+          {
+            "artifact_sha256": "dfc0d7d3b8853d543cb34bf05acbc7d9a39e3afa06f1b4f8cf799d9a77d1b5a6",
+            "end_line": 17,
+            "kind": "evaluation_output",
+            "owner": "subject",
+            "path": "test.log",
+            "source_state": null,
+            "start_line": 14
+          }
+        ],
+        "description": "证明 official evaluation 中结果为 ([\"x\"], 0, 0) 而不是 ([\"x\"], 1, 1)。",
+        "requirement_id": "R4"
+      }
+    ],
+    "should_abstain": false
+  },
+  "subject_evidence_sha256": "57251368f4e18a676c8f5b11b68ed65ddd4d66516be39ea55faaed6b9d183995"
+}

@@ -94,8 +94,16 @@ from patchbench.domain.diagnosis_suite import (
     DiagnosisValidationSuiteCase, DiagnosisValidationSuiteCaseFile,
     FrozenValidationFile, compute_diagnosis_validation_suite_sha256,
 )
+from patchbench.domain.diagnosis_gold_lock import (
+    DiagnosisGoldLockCase, DiagnosisGoldLockManifest, DiagnosisGoldLockSuite,
+    compute_diagnosis_gold_lock_suite_sha256,
+)
 
 __all__ = [
+    "DiagnosisGoldLockCase",
+    "DiagnosisGoldLockManifest",
+    "DiagnosisGoldLockSuite",
+    "compute_diagnosis_gold_lock_suite_sha256",
     "DiagnosisValidationFreezeManifest",
     "DiagnosisValidationSuite",
     "DiagnosisValidationSuiteCase",

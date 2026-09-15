@@ -1,0 +1,84 @@
+{
+  "case_id": "semantic-02",
+  "expected_route": "semantic_diagnosis",
+  "schema_version": 1,
+  "semantic_gold": {
+    "acceptable_families": [
+      "incorrect_local_logic"
+    ],
+    "forbidden_claims": [
+      {
+        "claim_id": "F1",
+        "description": "不得声称失败涉及 src/limits.py 之外的其他模块、单位转换、配置加载或外部阈值来源；当前 Blind evidence 只支持单个函数中上下界逻辑写反导致失败。"
+      }
+    ],
+    "preferred_family": "incorrect_local_logic",
+    "required_evidence": [
+      {
+        "acceptable_locators": [
+          {
+            "artifact_sha256": "cde871b97c710b28d8c84b1bc2da30d6dd042a4f19d06fa31f8904cd61addaca",
+            "end_line": 17,
+            "kind": "task_contract",
+            "owner": "benchmark",
+            "path": null,
+            "source_state": null,
+            "start_line": 17
+          },
+          {
+            "artifact_sha256": "50c3896dd41eed342e37e32f8a413c58bc777cb771f9588f5130fb55d88ef7c6",
+            "end_line": 7,
+            "kind": "frozen_test",
+            "owner": "benchmark",
+            "path": "test_contract.py",
+            "source_state": "frozen",
+            "start_line": 7
+          }
+        ],
+        "description": "证明 task / frozen test 要求的是上边界 cap 到 80，低于 80 的值应保持原样。",
+        "requirement_id": "R1"
+      },
+      {
+        "acceptable_locators": [
+          {
+            "artifact_sha256": "e5ce0395cdbaefab9252addbef04b58f626ace9f0613a1808b5f7df844b5e694",
+            "end_line": 8,
+            "kind": "canonical_patch",
+            "owner": "subject",
+            "path": "patch.diff",
+            "source_state": null,
+            "start_line": 6
+          },
+          {
+            "artifact_sha256": "00484d0360bb5baeb97a6ebbfbb795fd3fca56e3c54deee09b810eee4bbd02df",
+            "end_line": 2,
+            "kind": "production_source",
+            "owner": "subject",
+            "path": "src/limits.py",
+            "source_state": "candidate",
+            "start_line": 2
+          }
+        ],
+        "description": "证明 subject patch / candidate source 将上界逻辑误改为 max(value, 80)。",
+        "requirement_id": "R2"
+      },
+      {
+        "acceptable_locators": [
+          {
+            "artifact_sha256": "76455c4c4721d9861f861efbd93fb559d9244adbe3085972e5b97b47f490b144",
+            "end_line": 17,
+            "kind": "evaluation_output",
+            "owner": "subject",
+            "path": "test.log",
+            "source_state": null,
+            "start_line": 14
+          }
+        ],
+        "description": "证明 official evaluation 中 cap(20) 因返回 80 而失败。",
+        "requirement_id": "R3"
+      }
+    ],
+    "should_abstain": false
+  },
+  "subject_evidence_sha256": "6049bbb3e378b7fde577672a7c180b53dc9b7ee9a036c56cdfb050fa6d6a7e92"
+}

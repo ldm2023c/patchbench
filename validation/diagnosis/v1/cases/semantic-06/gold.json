@@ -1,0 +1,84 @@
+{
+  "case_id": "semantic-06",
+  "expected_route": "semantic_diagnosis",
+  "schema_version": 1,
+  "semantic_gold": {
+    "acceptable_families": [
+      "partial_contract_handling"
+    ],
+    "forbidden_claims": [
+      {
+        "claim_id": "F1",
+        "description": "不得声称失败来自数据库 ID、序列化层、格式化配置或外部 identifier 系统；当前 Blind evidence 只支持 identifier 函数对 textual form 的处理不完整。"
+      }
+    ],
+    "preferred_family": "partial_contract_handling",
+    "required_evidence": [
+      {
+        "acceptable_locators": [
+          {
+            "artifact_sha256": "3ccb3923e864f0e03962098cc6b6b887a9663cdfbbedd5e927341fe0e9c175f2",
+            "end_line": 17,
+            "kind": "task_contract",
+            "owner": "benchmark",
+            "path": null,
+            "source_state": null,
+            "start_line": 17
+          },
+          {
+            "artifact_sha256": "c06200048fae2d818310a5c611ea8e9a633c6a054aa6c0edb6e44e17c35bf224",
+            "end_line": 6,
+            "kind": "frozen_test",
+            "owner": "benchmark",
+            "path": "test_contract.py",
+            "source_state": "frozen",
+            "start_line": 6
+          }
+        ],
+        "description": "证明 contract / frozen test 要求 numeric identifier 转成文本，同时 textual identifier 必须保留原文本形式。",
+        "requirement_id": "R1"
+      },
+      {
+        "acceptable_locators": [
+          {
+            "artifact_sha256": "0fd8a0fa8a0e2a117ddc7fa37dd5cb6379ec9742e5e6d2c50114d42f038798d0",
+            "end_line": 8,
+            "kind": "canonical_patch",
+            "owner": "subject",
+            "path": "patch.diff",
+            "source_state": null,
+            "start_line": 5
+          },
+          {
+            "artifact_sha256": "80047f9f4475ec2059b8512ddbe01bb13cc0cabdd3d92d49ded3958e1fe2267c",
+            "end_line": 3,
+            "kind": "production_source",
+            "owner": "subject",
+            "path": "src/identity.py",
+            "source_state": "candidate",
+            "start_line": 1
+          }
+        ],
+        "description": "证明 subject 只为 int 输入新增特殊处理，非 int 仍执行 str(int(value))。",
+        "requirement_id": "R2"
+      },
+      {
+        "acceptable_locators": [
+          {
+            "artifact_sha256": "458b072f5190df8089f30fa0b95bada71ec056c96b205e3a0abd26e3cff08546",
+            "end_line": 17,
+            "kind": "evaluation_output",
+            "owner": "subject",
+            "path": "test.log",
+            "source_state": null,
+            "start_line": 14
+          }
+        ],
+        "description": "证明 official evaluation 中 identifier(\"007\") 返回 \"7\" 而不是 \"007\"。",
+        "requirement_id": "R3"
+      }
+    ],
+    "should_abstain": false
+  },
+  "subject_evidence_sha256": "7d8fafaba6893ae28f6a6f60bc7809da7e9eaddbf9d06e447186e1b1a5ce2ac1"
+}

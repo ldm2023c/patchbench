@@ -1,0 +1,84 @@
+{
+  "case_id": "semantic-16",
+  "expected_route": "semantic_diagnosis",
+  "schema_version": 1,
+  "semantic_gold": {
+    "acceptable_families": [
+      "incomplete_cross_file_repair"
+    ],
+    "forbidden_claims": [
+      {
+        "claim_id": "F1",
+        "description": "Do not claim the failure is caused by engine.archive() returning the wrong archive string; Blind evidence shows the observed failure is missing public command routing for 'archive'."
+      }
+    ],
+    "preferred_family": "incomplete_cross_file_repair",
+    "required_evidence": [
+      {
+        "acceptable_locators": [
+          {
+            "artifact_sha256": "c52bfa487e0a30ca5c41696a1fb5ee76939f71a0db9a0d8a0bd975321dcf2831",
+            "end_line": 17,
+            "kind": "task_contract",
+            "owner": "benchmark",
+            "path": null,
+            "source_state": null,
+            "start_line": 17
+          },
+          {
+            "artifact_sha256": "d3182b2009e23dbb48043def3056a05681a8f3b1c210a2c5d4faf569b7bebed1",
+            "end_line": 6,
+            "kind": "frozen_test",
+            "owner": "benchmark",
+            "path": "test_contract.py",
+            "source_state": "frozen",
+            "start_line": 6
+          }
+        ],
+        "description": "Prove the public command interface must support the archive action.",
+        "requirement_id": "R1"
+      },
+      {
+        "acceptable_locators": [
+          {
+            "artifact_sha256": "4648f94ea8fc349f87cff1c43cfb53eb8ce1a3919910edd36446728ce4b587fa",
+            "end_line": 8,
+            "kind": "canonical_patch",
+            "owner": "subject",
+            "path": "patch.diff",
+            "source_state": null,
+            "start_line": 1
+          },
+          {
+            "artifact_sha256": "54e6bf9aff3d0ea1ac0f212e4e336b5950f46bf194c2fa85948e87610b2f97a1",
+            "end_line": 3,
+            "kind": "production_source",
+            "owner": "subject",
+            "path": "src/commands.py",
+            "source_state": "candidate",
+            "start_line": 1
+          }
+        ],
+        "description": "Prove the subject changed engine.archive() output but left the public command routing table without an archive handler.",
+        "requirement_id": "R2"
+      },
+      {
+        "acceptable_locators": [
+          {
+            "artifact_sha256": "091cc3e623a1c6b02e690b475874bee45475f586ebd0b15bc11ca5d5f634c322",
+            "end_line": 20,
+            "kind": "evaluation_output",
+            "owner": "subject",
+            "path": "test.log",
+            "source_state": null,
+            "start_line": 14
+          }
+        ],
+        "description": "Prove official evaluation fails because execute('archive', ...) cannot find an archive handler.",
+        "requirement_id": "R3"
+      }
+    ],
+    "should_abstain": false
+  },
+  "subject_evidence_sha256": "7066db000de8293e623ba11edd4607ee0d18ec1e593240d26f898180845dca9f"
+}

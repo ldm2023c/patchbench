@@ -1,0 +1,84 @@
+{
+  "case_id": "semantic-05",
+  "expected_route": "semantic_diagnosis",
+  "schema_version": 1,
+  "semantic_gold": {
+    "acceptable_families": [
+      "partial_contract_handling"
+    ],
+    "forbidden_claims": [
+      {
+        "claim_id": "F1",
+        "description": "不得声称失败来自配置文件、环境变量、外部默认值来源或单位换算；当前 Blind evidence 只支持 data 字典中 explicit None 未被作为默认值处理。"
+      }
+    ],
+    "preferred_family": "partial_contract_handling",
+    "required_evidence": [
+      {
+        "acceptable_locators": [
+          {
+            "artifact_sha256": "37b884184e336b42978dd654f46e225a7b6870fb9e341997a5c3b769a88283be",
+            "end_line": 17,
+            "kind": "task_contract",
+            "owner": "benchmark",
+            "path": null,
+            "source_state": null,
+            "start_line": 17
+          },
+          {
+            "artifact_sha256": "d2a38a511f36507208a91e22e95811995f21fd06bd48b538ee85d368aabd154e",
+            "end_line": 6,
+            "kind": "frozen_test",
+            "owner": "benchmark",
+            "path": "test_contract.py",
+            "source_state": "frozen",
+            "start_line": 6
+          }
+        ],
+        "description": "证明 contract / frozen test 要求 explicit null timeout 使用默认值 30，同时字符串 timeout \"8\" 应解析为 8。",
+        "requirement_id": "R1"
+      },
+      {
+        "acceptable_locators": [
+          {
+            "artifact_sha256": "4ef8484024a8edaab8757341ab6edf86ad47e0c0789be37d033886abca05b8ed",
+            "end_line": 8,
+            "kind": "canonical_patch",
+            "owner": "subject",
+            "path": "patch.diff",
+            "source_state": null,
+            "start_line": 6
+          },
+          {
+            "artifact_sha256": "5ddc4c2d17ef509477dfb3ae50a5fd4fa89f95d5808b11441c4f2ade4808301c",
+            "end_line": 2,
+            "kind": "production_source",
+            "owner": "subject",
+            "path": "src/config.py",
+            "source_state": "candidate",
+            "start_line": 1
+          }
+        ],
+        "description": "证明 subject 将 timeout 实现为 int(data.get(\"timeout\", 30))。",
+        "requirement_id": "R2"
+      },
+      {
+        "acceptable_locators": [
+          {
+            "artifact_sha256": "7226d9307b3cbd730a85bf4411011fd877fbf92cd4b252864964e401c2234368",
+            "end_line": 20,
+            "kind": "evaluation_output",
+            "owner": "subject",
+            "path": "test.log",
+            "source_state": null,
+            "start_line": 14
+          }
+        ],
+        "description": "证明 official evaluation 中 timeout({\"timeout\": None}) 对 None 调用 int 并抛出 TypeError。",
+        "requirement_id": "R3"
+      }
+    ],
+    "should_abstain": false
+  },
+  "subject_evidence_sha256": "ad6a0385de1b10bb91ef6316c59b0fa01b7b61bca1c7e7db49a0982722abff6a"
+}

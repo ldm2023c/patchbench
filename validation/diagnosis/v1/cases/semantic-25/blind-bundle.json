@@ -1,0 +1,139 @@
+{
+  "agent_status": "completed",
+  "base_commit": "ddff1b033c33161d7f10dbb40db8452f8995487d",
+  "benchmark_definition_sha256": "965815deaa92fa0b266aaafa098867ceb654c25f488124b64f47ef484b90d16e",
+  "bundle_id": "blind-225f2ad72fea1825c9f04d43d2d280e70e81e9cb62c7a8286ea88de0a1f2ddeb",
+  "bundle_sha256": "3806cc629b6cb348cd09906042b9424df4de370588729de395cb037f03bc9887",
+  "evidence_items": [
+    {
+      "artifact_sha256": "e2564e20d01aa027c1a135e76bee63bfcc974cd4db6e01bf7f5607a1987192a9",
+      "content": "import unittest\nunittest.runner.time.perf_counter = lambda: 0.0\nfrom src.quote import quote\nimport unittest\nclass Contract(unittest.TestCase):\n def test_quote(self): self.assertEqual(quote(5),5)\n",
+      "end_line": 6,
+      "evidence_id": "E001",
+      "kind": "frozen_test",
+      "owner": "benchmark",
+      "path": "test_contract.py",
+      "source_state": "frozen",
+      "start_line": 1
+    },
+    {
+      "artifact_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "content": "",
+      "end_line": null,
+      "evidence_id": "E002",
+      "kind": "production_source",
+      "owner": "benchmark",
+      "path": "src/__init__.py",
+      "source_state": "base",
+      "start_line": null
+    },
+    {
+      "artifact_sha256": "2ad6bec2c26c30fbeddef945c6aa2aef4580fae21b5bb82bb7fcc9b548ada5db",
+      "content": "from execution_context import active\nfrom .rates import TABLE\ndef quote(value): return value if active() else TABLE[value]\n",
+      "end_line": 3,
+      "evidence_id": "E003",
+      "kind": "production_source",
+      "owner": "benchmark",
+      "path": "src/quote.py",
+      "source_state": "base",
+      "start_line": 1
+    },
+    {
+      "artifact_sha256": "5fa86f4a2f4af9afcca4752074e09a2946c91e4283e311ea0d218fecf8cbc52f",
+      "content": "TABLE={5:5}\n",
+      "end_line": 1,
+      "evidence_id": "E004",
+      "kind": "production_source",
+      "owner": "benchmark",
+      "path": "src/rates.py",
+      "source_state": "base",
+      "start_line": 1
+    },
+    {
+      "artifact_sha256": "a11e9259aebb351ad0539e526f342a6cee278562d62308463cc161355be71705",
+      "content": "evaluation:\n  command: python -I -S -B .patchbench-eval/runner.py\n  frozen_unittest:\n    test_files:\n    - test_contract.py\n    version: 1\n  timeout_seconds: 30\nid: semantic-25\nmetadata:\n  language: python\nrepository:\n  base_commit: ddff1b033c33161d7f10dbb40db8452f8995487d\n  path: repository\n  type: local\nschema_version: 1\ntask:\n  prompt: Preserve quoted values in every supported execution context.\n",
+      "end_line": 17,
+      "evidence_id": "E005",
+      "kind": "task_contract",
+      "owner": "benchmark",
+      "path": null,
+      "source_state": null,
+      "start_line": 1
+    },
+    {
+      "artifact_sha256": "0bfd315cc08c33fe96473193f2a90ff9ff22bec6d0369185b8a097b77d780073",
+      "content": "diff --git a/src/quote.py b/src/quote.py\nindex 64ba9bc..d49aeda 100644\n--- a/src/quote.py\n+++ b/src/quote.py\n@@ -1,3 +1,3 @@\n from execution_context import active\n from .rates import TABLE\n-def quote(value): return value if active() else TABLE[value]\n+def quote(value): return max(value-1,0) if active() else TABLE[value]\ndiff --git a/src/rates.py b/src/rates.py\nindex 2e1f772..e85feba 100644\n--- a/src/rates.py\n+++ b/src/rates.py\n@@ -1 +1 @@\n-TABLE={5:5}\n+TABLE={5:4}\n",
+      "end_line": 16,
+      "evidence_id": "E006",
+      "kind": "canonical_patch",
+      "owner": "subject",
+      "path": "patch.diff",
+      "source_state": null,
+      "start_line": 1
+    },
+    {
+      "artifact_sha256": "ce7c63993313790bfdfd3fae4a5b9465b8a53299440a10d673683e13211ba1f4",
+      "content": "Command: python -I -S -B .patchbench-eval/runner.py\nExit code: 1\nDuration seconds: 0.000000\n\nSTDOUT:\n\nSTDERR:\ntest_quote (_patchbench_frozen_0.Contract.test_quote) ... FAIL\n\n======================================================================\nFAIL: test_quote (_patchbench_frozen_0.Contract.test_quote)\n----------------------------------------------------------------------\nTraceback (most recent call last):\n  File \"/tmp/patchbench-diagnosis-v1-candidate-stage/semantic-25/workspaces/evaluation-subject-observation/test_contract.py\", line 6, in test_quote\n    def test_quote(self): self.assertEqual(quote(5),5)\n                          ^^^^^^^^^^^^^^^^^^^^^^^^^^^^\nAssertionError: 4 != 5\n\n----------------------------------------------------------------------\nRan 1 test in 0.000s\n\nFAILED (failures=1)",
+      "end_line": 22,
+      "evidence_id": "E007",
+      "kind": "evaluation_output",
+      "owner": "subject",
+      "path": "test.log",
+      "source_state": null,
+      "start_line": 1
+    },
+    {
+      "artifact_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "content": "",
+      "end_line": null,
+      "evidence_id": "E008",
+      "kind": "production_source",
+      "owner": "subject",
+      "path": "src/__init__.py",
+      "source_state": "candidate",
+      "start_line": null
+    },
+    {
+      "artifact_sha256": "f1c2eae8188eba08b7634108eacde1a16e289f6e2696a4e7bef12d795a022858",
+      "content": "from execution_context import active\nfrom .rates import TABLE\ndef quote(value): return max(value-1,0) if active() else TABLE[value]\n",
+      "end_line": 3,
+      "evidence_id": "E009",
+      "kind": "production_source",
+      "owner": "subject",
+      "path": "src/quote.py",
+      "source_state": "candidate",
+      "start_line": 1
+    },
+    {
+      "artifact_sha256": "a15f3d31d8822b9d556178fcdc096a316ee4ba4746d1af20dc192f23c774b83f",
+      "content": "TABLE={5:4}\n",
+      "end_line": 1,
+      "evidence_id": "E010",
+      "kind": "production_source",
+      "owner": "subject",
+      "path": "src/rates.py",
+      "source_state": "candidate",
+      "start_line": 1
+    }
+  ],
+  "mode": "blind",
+  "official_evaluation_passed": false,
+  "peer_run_id": null,
+  "provenance": {
+    "peer": null,
+    "subject": {
+      "base_source_snapshot_sha256": "99ca9ecfa42d891fb813f12d551e74d0c2cb5ee554f3370f043585763feca454",
+      "benchmark_definition_sha256": "965815deaa92fa0b266aaafa098867ceb654c25f488124b64f47ef484b90d16e",
+      "candidate_source_snapshot_sha256": "a24654f784e048451a34d7bb07e59ff328bbb979b51b3d9c71c094b09a1fdbec",
+      "canonical_patch_sha256": "0bfd315cc08c33fe96473193f2a90ff9ff22bec6d0369185b8a097b77d780073",
+      "evaluation_log_sha256": "ce7c63993313790bfdfd3fae4a5b9465b8a53299440a10d673683e13211ba1f4",
+      "frozen_tests_snapshot_sha256": "6e6c00a2e1be4f336b63a0e07d00e8b34f7e3cd71c34334c26061c9025793572",
+      "task_contract_sha256": "a11e9259aebb351ad0539e526f342a6cee278562d62308463cc161355be71705"
+    }
+  },
+  "schema_version": 1,
+  "source_snapshot_policy": "full_bounded_production_v1:5872fe6c90dcbe418f35d9548e49b7e473794cb388faa8e9374f7a283f7ac77b",
+  "subject_run_id": "semantic-25-subject",
+  "task_fingerprint_sha256": "7823e4a139ceb1d47ea072f4a1ef18ef29857a6a68a2b813072f57c95c588714",
+  "task_id": "semantic-25"
+}

@@ -26,8 +26,14 @@ from patchbench.application.diagnosis_metrics import (
     DiagnosisMetricsError, DiagnosisMetricsReason, aggregate_route_scores,
     aggregate_semantic_scores, compare_blind_contrastive,
 )
+from patchbench.application.diagnosis_gold_lock import (
+    DiagnosisGoldLockError, DiagnosisGoldLockReason,
+    build_diagnosis_gold_lock, verify_diagnosis_gold_lock,
+)
 
 __all__ = ["ReplayError", "ReplayExecution", "replay_run", "run_task",
+           "DiagnosisGoldLockError", "DiagnosisGoldLockReason",
+           "build_diagnosis_gold_lock", "verify_diagnosis_gold_lock",
            "DiagnosisExecution", "DiagnosisExecutionError", "DiagnosisExecutionReason", "execute_blind_diagnosis",
            "execute_contrastive_diagnosis", "ContrastivePeerSelection", "DiagnosisPeerError", "DiagnosisPeerReason",
            "select_contrastive_peer", "ContrastiveCompilationError", "ContrastiveCompilationReason",

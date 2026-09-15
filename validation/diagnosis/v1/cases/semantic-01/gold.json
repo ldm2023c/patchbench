@@ -1,0 +1,84 @@
+{
+  "case_id": "semantic-01",
+  "expected_route": "semantic_diagnosis",
+  "schema_version": 1,
+  "semantic_gold": {
+    "acceptable_families": [
+      "incorrect_local_logic"
+    ],
+    "forbidden_claims": [
+      {
+        "claim_id": "F1",
+        "description": "不得将失败根因归因于 src/access.py 之外的其他模块、外部权限系统或运行时账户状态；当前 Blind evidence 未提供支持这些机制的证据。"
+      }
+    ],
+    "preferred_family": "incorrect_local_logic",
+    "required_evidence": [
+      {
+        "acceptable_locators": [
+          {
+            "artifact_sha256": "5744c5f2c83a4686018a78a02ad4761a190568e4997f79f0cd07082fffcca2ba",
+            "end_line": 17,
+            "kind": "task_contract",
+            "owner": "benchmark",
+            "path": null,
+            "source_state": null,
+            "start_line": 17
+          },
+          {
+            "artifact_sha256": "8d63c1ffe824e873c90d81528169b4dc41ff9d3a8928734ca4bf71564c522c5d",
+            "end_line": 7,
+            "kind": "frozen_test",
+            "owner": "benchmark",
+            "path": "test_contract.py",
+            "source_state": "frozen",
+            "start_line": 7
+          }
+        ],
+        "description": "证明 task / frozen test 要求访问必须同时满足成年与 active，active=False 时即使成年也应拒绝。",
+        "requirement_id": "R1"
+      },
+      {
+        "acceptable_locators": [
+          {
+            "artifact_sha256": "8275316e43330c872979d6d295840ae03c6f99a062983f3669980eea684362d4",
+            "end_line": 8,
+            "kind": "canonical_patch",
+            "owner": "subject",
+            "path": "patch.diff",
+            "source_state": null,
+            "start_line": 6
+          },
+          {
+            "artifact_sha256": "ca8b7741b66d2ec09932faef6827a043e67755809db89b1f05fb184d3adebab9",
+            "end_line": 2,
+            "kind": "production_source",
+            "owner": "subject",
+            "path": "src/access.py",
+            "source_state": "candidate",
+            "start_line": 2
+          }
+        ],
+        "description": "证明 subject patch / candidate source 将条件实现为 age >= 18 or active。",
+        "requirement_id": "R2"
+      },
+      {
+        "acceptable_locators": [
+          {
+            "artifact_sha256": "235f7e32bac120078f84c4bc6c6d53903ea20166d09c299b3428d7e7e4a56a03",
+            "end_line": 17,
+            "kind": "evaluation_output",
+            "owner": "subject",
+            "path": "test.log",
+            "source_state": null,
+            "start_line": 14
+          }
+        ],
+        "description": "证明 official evaluation 中 allowed(20, False) 因返回 True 而失败。",
+        "requirement_id": "R3"
+      }
+    ],
+    "should_abstain": false
+  },
+  "subject_evidence_sha256": "d85357837152a84f6c5757d03665e23b96f7f95599cc9551c805737984c9e4ce"
+}

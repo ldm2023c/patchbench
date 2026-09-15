@@ -1,0 +1,99 @@
+{
+  "case_id": "semantic-11",
+  "expected_route": "semantic_diagnosis",
+  "schema_version": 1,
+  "semantic_gold": {
+    "acceptable_families": [
+      "regression_introduced"
+    ],
+    "forbidden_claims": [
+      {
+        "claim_id": "F1",
+        "description": "不得声称失败来自未出现的 pipeline stage、外部 parser/emitter、编码问题或运行时环境；当前 Blind evidence 只支持 src/pipeline.py 中 parse/emit 行为被改坏。"
+      }
+    ],
+    "preferred_family": "regression_introduced",
+    "required_evidence": [
+      {
+        "acceptable_locators": [
+          {
+            "artifact_sha256": "e94bcbdce09a247922ec487556f9e87b6a447ffe5b68efc7710fdce4c9e57080",
+            "end_line": 17,
+            "kind": "task_contract",
+            "owner": "benchmark",
+            "path": null,
+            "source_state": null,
+            "start_line": 17
+          },
+          {
+            "artifact_sha256": "6367c872d3b6acefb407ecaafdc362b0d8d7ac8b0299628b832b944d741743e2",
+            "end_line": 6,
+            "kind": "frozen_test",
+            "owner": "benchmark",
+            "path": "test_contract.py",
+            "source_state": "frozen",
+            "start_line": 6
+          }
+        ],
+        "description": "证明 task / frozen test 要求 padded mixed-case input 仍输出 documented lowercase trimmed result。",
+        "requirement_id": "R1"
+      },
+      {
+        "acceptable_locators": [
+          {
+            "artifact_sha256": "68a7e31967fc19511dfda33573c023cc1f652d0da1fd8515fd51031e45a9078b",
+            "end_line": 3,
+            "kind": "production_source",
+            "owner": "benchmark",
+            "path": "src/pipeline.py",
+            "source_state": "base",
+            "start_line": 1
+          }
+        ],
+        "description": "证明 base pipeline 通过 parse(v).strip() 与 emit(v).lower() 产生该 documented output。",
+        "requirement_id": "R2"
+      },
+      {
+        "acceptable_locators": [
+          {
+            "artifact_sha256": "10d5a4b8da0f991e6e9c9d74e2b1f94f4d6b7f7ac3e9eb569f52a6f90209a25f",
+            "end_line": 10,
+            "kind": "canonical_patch",
+            "owner": "subject",
+            "path": "patch.diff",
+            "source_state": null,
+            "start_line": 5
+          },
+          {
+            "artifact_sha256": "85909cea208aa7ecc97b88e12ea1d15878569eaa7864ad5d2fa173b5f6a4c41b",
+            "end_line": 3,
+            "kind": "production_source",
+            "owner": "subject",
+            "path": "src/pipeline.py",
+            "source_state": "candidate",
+            "start_line": 1
+          }
+        ],
+        "description": "证明 subject 将 parse 改为 strip(\"!\") 且 emit 改为 upper()。",
+        "requirement_id": "R3"
+      },
+      {
+        "acceptable_locators": [
+          {
+            "artifact_sha256": "a65bd716b456ea03a2ead6d60d77f8e829e5fbdd0c06ed7ecd40e287b0ee8ca2",
+            "end_line": 17,
+            "kind": "evaluation_output",
+            "owner": "subject",
+            "path": "test.log",
+            "source_state": null,
+            "start_line": 14
+          }
+        ],
+        "description": "证明 official evaluation 中 process(\" Mixed \") 返回 \" MIXED \" 而不是 \"mixed\"。",
+        "requirement_id": "R4"
+      }
+    ],
+    "should_abstain": false
+  },
+  "subject_evidence_sha256": "6572541f3b18eb9d619a902086c342cf156fce2dda266149bf8908604eda8553"
+}
