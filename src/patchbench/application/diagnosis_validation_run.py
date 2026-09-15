@@ -14,8 +14,9 @@ from patchbench.application.diagnosis_execution import (
 )
 from patchbench.application.diagnosis_gold_lock import SEMANTIC_CASE_IDS
 from patchbench.application.diagnosis_suite import verify_diagnosis_validation_freeze
-from patchbench.domain.diagnosis import DiagnosisEvidenceBundle, DiagnosisMode
+from patchbench.domain.diagnosis import DiagnosisEvidenceBundle, DiagnosisMode, DiagnosisRoute
 from patchbench.domain.diagnosis_execution import DiagnosisExternalLLMPolicy
+from patchbench.domain.diagnosis_gold_lock import DiagnosisGoldLockCase, DiagnosisGoldLockSuite
 from patchbench.domain.diagnosis_validation_run import (
     DiagnosisValidationRunRecord,
     DiagnosisValidationRunSlot,
@@ -27,6 +28,7 @@ from patchbench.storage.filesystem import ArtifactStoreError, FilesystemArtifact
 
 class DiagnosisValidationRunReason(str, Enum):
     INVALID_FREEZE = "invalid_freeze"
+    INVALID_RUN_ID = "invalid_run_id"
     RUN_ALREADY_EXISTS = "run_already_exists"
     INVALID_PLAN = "invalid_plan"
 
@@ -42,30 +44,70 @@ def _disk_json_bytes(value) -> bytes:
     return json.dumps(raw, ensure_ascii=False, sort_keys=True, indent=2).encode("utf-8") + b"\n"
 
 
-def _bundle(root: Path, case_id: str, mode: DiagnosisMode) -> DiagnosisEvidenceBundle:
-    name = "blind-bundle.json" if mode is DiagnosisMode.BLIND else "contrastive-bundle.json"
+def _parse_model(model, path: Path, label: str):
     try:
-        return DiagnosisEvidenceBundle.model_validate_json(
-            (root / "cases" / case_id / name).read_bytes())
+        return model.model_validate_json(path.read_bytes())
     except (OSError, UnicodeError, ValidationError) as error:
         raise DiagnosisValidationRunError(
             DiagnosisValidationRunReason.INVALID_FREEZE,
-            f"{case_id} {mode.value} bundle is invalid",
+            f"{label} is invalid",
         ) from error
+
+
+def _bundle(root: Path, path: str, case_id: str, mode: DiagnosisMode) -> DiagnosisEvidenceBundle:
+    bundle = _parse_model(DiagnosisEvidenceBundle, root / path, f"{case_id} {mode.value} bundle")
+    if bundle.mode is not mode or bundle.bundle_sha256 is None:
+        raise DiagnosisValidationRunError(
+            DiagnosisValidationRunReason.INVALID_FREEZE,
+            f"{case_id} {mode.value} bundle identity is invalid",
+        )
+    return bundle
+
+
+def _suite_cases(root: Path) -> list[DiagnosisGoldLockCase]:
+    suite = _parse_model(DiagnosisGoldLockSuite, root / "suite.json", "frozen suite")
+    return list(suite.cases)
 
 
 def build_diagnosis_validation_run_plan(
     validation_root: Path,
 ) -> list[DiagnosisValidationRunSlot]:
     root = Path(validation_root)
+    semantic_cases = [
+        case for case in _suite_cases(root)
+        if case.expected_route is DiagnosisRoute.SEMANTIC_DIAGNOSIS
+    ]
+    if len(semantic_cases) != 13:
+        raise DiagnosisValidationRunError(
+            DiagnosisValidationRunReason.INVALID_PLAN,
+            "frozen suite must declare exactly 13 semantic diagnosis cases",
+        )
+
     plan = []
-    for case_id in SEMANTIC_CASE_IDS:
-        for mode in (DiagnosisMode.BLIND, DiagnosisMode.CONTRASTIVE):
-            bundle = _bundle(root, case_id, mode)
+    for case in semantic_cases:
+        contrastive_path = f"cases/{case.case_id}/contrastive-bundle.json"
+        contrastive_bundle = _bundle(root, contrastive_path, case.case_id, DiagnosisMode.CONTRASTIVE)
+        bundle_specs = (
+            (DiagnosisMode.BLIND, case.blind_bundle_path, case.blind_bundle_sha256),
+            (DiagnosisMode.CONTRASTIVE, contrastive_path, contrastive_bundle.bundle_sha256),
+        )
+        for mode, bundle_path, expected_sha in bundle_specs:
+            if bundle_path is None or expected_sha is None:
+                raise DiagnosisValidationRunError(
+                    DiagnosisValidationRunReason.INVALID_PLAN,
+                    f"{case.case_id} is missing {mode.value} bundle identity",
+                )
+            bundle = _bundle(root, bundle_path, case.case_id, mode)
+            if bundle.bundle_sha256 != expected_sha:
+                raise DiagnosisValidationRunError(
+                    DiagnosisValidationRunReason.INVALID_PLAN,
+                    f"{case.case_id} {mode.value} bundle SHA differs from frozen suite case",
+                )
             plan.append(DiagnosisValidationRunSlot(
-                case_id=case_id,
+                case_id=case.case_id,
                 mode=mode,
-                frozen_bundle_sha256=bundle.bundle_sha256,
+                frozen_bundle_path=bundle_path,
+                frozen_bundle_sha256=expected_sha,
             ))
     return plan
 
@@ -102,6 +144,25 @@ def _record(
     )
 
 
+def _safe_run_root(results_root: Path, run_id: str) -> Path:
+    if (not isinstance(run_id, str) or not run_id or run_id in (".", "..")
+            or run_id != run_id.strip() or run_id.startswith("/")
+            or "/" in run_id or "\\" in run_id
+            or any(ord(char) < 32 or ord(char) == 127 for char in run_id)):
+        raise DiagnosisValidationRunError(
+            DiagnosisValidationRunReason.INVALID_RUN_ID,
+            "run_id must be a safe direct-child identifier",
+        )
+    namespace = results_root / "diagnosis-validation-v1"
+    run_root = namespace / run_id
+    if run_root.resolve(strict=False).parent != namespace.resolve(strict=False):
+        raise DiagnosisValidationRunError(
+            DiagnosisValidationRunReason.INVALID_RUN_ID,
+            "run_id must resolve to one direct child of the validation run namespace",
+        )
+    return run_root
+
+
 def run_frozen_diagnosis_validation(
     *,
     validation_root: Path,
@@ -132,7 +193,7 @@ def run_frozen_diagnosis_validation(
             "frozen execution plan differs from accepted V1 order",
         )
 
-    run_root = results_root / "diagnosis-validation-v1" / run_id
+    run_root = _safe_run_root(results_root, run_id)
     try:
         run_root.mkdir(parents=True, exist_ok=False)
     except OSError as error:
@@ -150,7 +211,7 @@ def run_frozen_diagnosis_validation(
         external_policy=external_policy, plan=plan, slots=slots))
 
     for index, slot in enumerate(plan):
-        bundle = _bundle(validation_root, slot.case_id, slot.mode)
+        bundle = _bundle(validation_root, slot.frozen_bundle_path, slot.case_id, slot.mode)
         try:
             if slot.mode is DiagnosisMode.BLIND:
                 result = execute_blind_diagnosis(

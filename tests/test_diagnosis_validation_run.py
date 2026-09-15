@@ -6,6 +6,7 @@ import shutil
 from pathlib import Path
 
 import pytest
+from pydantic import ValidationError
 
 from patchbench.application.diagnosis_execution import (
     DiagnosisExecutionError,
@@ -17,8 +18,10 @@ from patchbench.application.diagnosis_validation_run import (
     build_diagnosis_validation_run_plan,
     run_frozen_diagnosis_validation,
 )
-from patchbench.domain import DiagnosisMode, DiagnosisValidationRunRecord
+from patchbench.domain import DiagnosisMode, DiagnosisRoute, DiagnosisValidationRunRecord
 from patchbench.domain.diagnosis_execution import DiagnosisExternalLLMPolicy
+from patchbench.domain.diagnosis_gold_lock import DiagnosisGoldLockSuite
+from patchbench.domain.diagnosis_validation_run import DiagnosisValidationRunSlotResult
 from tests.test_diagnosis_execution import FakeProvider
 
 
@@ -30,6 +33,12 @@ def tree_identity(root: Path) -> dict[str, str]:
     return {path.relative_to(root).as_posix(): hashlib.sha256(path.read_bytes()).hexdigest()
             for path in sorted(root.rglob("*")) if path.is_file()}
 
+
+
+
+def frozen_suite_semantic_cases():
+    suite = DiagnosisGoldLockSuite.model_validate_json((VALIDATION / "suite.json").read_bytes())
+    return [case for case in suite.cases if case.expected_route is DiagnosisRoute.SEMANTIC_DIAGNOSIS]
 
 def policy(limit=1_000_000):
     return DiagnosisExternalLLMPolicy(
@@ -73,6 +82,24 @@ def test_exact_plan_is_26_slots_case_order_blind_then_contrastive():
         (case_id, mode)
         for case_id in SEMANTIC_CASE_IDS
         for mode in (DiagnosisMode.BLIND, DiagnosisMode.CONTRASTIVE)
+    ]
+
+
+def test_plan_is_driven_by_frozen_suite_semantic_case_order_and_bundle_fields():
+    semantic_cases = frozen_suite_semantic_cases()
+    plan = build_diagnosis_validation_run_plan(VALIDATION)
+    assert len(semantic_cases) == 13
+    assert [(slot.case_id, slot.mode, slot.frozen_bundle_path, slot.frozen_bundle_sha256)
+            for slot in plan] == [
+        expected
+        for case in semantic_cases
+        for expected in (
+            (case.case_id, DiagnosisMode.BLIND, case.blind_bundle_path, case.blind_bundle_sha256),
+            (case.case_id, DiagnosisMode.CONTRASTIVE,
+             f"cases/{case.case_id}/contrastive-bundle.json",
+             next(slot.frozen_bundle_sha256 for slot in plan
+                  if slot.case_id == case.case_id and slot.mode is DiagnosisMode.CONTRASTIVE)),
+        )
     ]
 
 
@@ -157,3 +184,53 @@ def test_existing_run_id_is_rejected_without_overwrite(tmp_path):
     assert caught.value.reason.value == "run_already_exists"
     assert provider.calls == []
     assert marker.read_text(encoding="utf-8") == "keep"
+
+
+@pytest.mark.parametrize("unsafe_run_id", ["../escape", "a/b", "/tmp/escape", "a\\b", ".", "..", "bad\nrun"])
+def test_unsafe_run_id_is_rejected_before_output_or_provider_call(tmp_path, unsafe_run_id):
+    provider = CountingProvider()
+    with pytest.raises(DiagnosisValidationRunError) as caught:
+        run_frozen_diagnosis_validation(validation_root=VALIDATION, candidate_root=CANDIDATES,
+            results_root=tmp_path / "results", run_id=unsafe_run_id, provider=provider,
+            external_policy=policy())
+    assert caught.value.reason.value == "invalid_run_id"
+    assert provider.calls == []
+    assert not (tmp_path / "escape").exists()
+    assert not (tmp_path / "results" / "escape").exists()
+    assert not (tmp_path / "results/diagnosis-validation-v1").exists()
+
+
+def test_valid_normal_run_id_is_accepted(tmp_path):
+    provider = CountingProvider(fail_at=1, reason=DiagnosisExecutionReason.PROVIDER_REFUSED)
+    record = run_frozen_diagnosis_validation(validation_root=VALIDATION, candidate_root=CANDIDATES,
+        results_root=tmp_path / "results", run_id="run-2026_09.16", provider=provider,
+        external_policy=policy())
+    assert len(provider.calls) == 1
+    assert record.run_id == "run-2026_09.16"
+    assert (tmp_path / "results/diagnosis-validation-v1/run-2026_09.16/run.json").exists()
+
+
+def test_slot_result_status_payload_invariants():
+    slot = build_diagnosis_validation_run_plan(VALIDATION)[0]
+    with pytest.raises(ValidationError):
+        DiagnosisValidationRunSlotResult(**slot.model_dump(mode="json"), status="pending",
+            failure_reason="provider_failed")
+    with pytest.raises(ValidationError):
+        DiagnosisValidationRunSlotResult(**slot.model_dump(mode="json"), status="completed",
+            diagnosis_id="diag-x")
+    with pytest.raises(ValidationError):
+        DiagnosisValidationRunSlotResult(**slot.model_dump(mode="json"), status="failed")
+
+
+def test_run_record_rejects_slots_that_do_not_match_plan(tmp_path):
+    provider = CountingProvider(fail_at=1, reason=DiagnosisExecutionReason.PROVIDER_REFUSED)
+    record = run_frozen_diagnosis_validation(validation_root=VALIDATION, candidate_root=CANDIDATES,
+        results_root=tmp_path / "results", run_id="mismatch-base", provider=provider,
+        external_policy=policy())
+    raw = record.model_dump(mode="json")
+    raw["slots"][0]["case_id"] = raw["plan"][1]["case_id"]
+    raw["slots"][0]["mode"] = raw["plan"][1]["mode"]
+    raw["slots"][0]["frozen_bundle_path"] = raw["plan"][1]["frozen_bundle_path"]
+    raw["slots"][0]["frozen_bundle_sha256"] = raw["plan"][1]["frozen_bundle_sha256"]
+    with pytest.raises(ValidationError):
+        DiagnosisValidationRunRecord.model_validate(raw)
