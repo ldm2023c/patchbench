@@ -2,15 +2,15 @@
 
 Authoring basis: Blind evidence only. No PASS peer, Contrastive evidence, candidate generator, candidate construction tests, intended family metadata, or other non human-facing Blind packet evidence was used for semantic decisions.
 
-Confirmation basis: semantic-01 and semantic-02 were individually confirmed by the human author; semantic-03 and semantic-14 acceptable-family expansions were explicitly confirmed after Blind audit; all other cases keep the first-round delegated Human Gold as requested by the human author.
+Confirmation basis: semantic-01 and semantic-02 were individually confirmed by the human author; semantic-03 and semantic-14 were explicitly re-reviewed after the Blind audit and their acceptable-family expansions were confirmed; semantic-04 through semantic-13 and semantic-15 were batch-confirmed by the human author after reviewing the Blind-only first-round results and the Blind audit. No PASS peer, Contrastive evidence, candidate generator, candidate construction tests, intended-family metadata, or other non-human-facing evidence was used for these confirmations.
 
 | case_id | human confirmation | should_abstain | preferred_family | acceptable_families | gold_sha256 |
 |---|---|---:|---|---|---|
-| semantic-01 | individual confirmation plus final update request | false | incorrect_local_logic | incorrect_local_logic | 5fdf6b511e063fb6f856e0751688088379f3a5348be015c46144a9fe533fb6be |
-| semantic-02 | individual confirmation plus final update request | false | incorrect_local_logic | incorrect_local_logic | db4c9f39cd49e2ff82eaada6668f3dce58e63fdf118f67adcd8ee341358f80eb |
-| semantic-03 | audit-confirmed acceptable-family expansion | false | incomplete_cross_file_repair | incomplete_cross_file_repair, incorrect_local_logic | c93bd139d818842e1eac7e209445b3f2f46c4a1176cc9252c62036cf662b27e6 |
-| semantic-04 | final update request kept first-round delegated Gold | false | state_consistency_violation | state_consistency_violation | 5e834485f1dc79ce582e4f6c069cd3670f7afc2e6cd94adcfea7002d430bd1c6 |
-| semantic-05 | final update request kept first-round delegated Gold | false | partial_contract_handling | partial_contract_handling | 9c8b5e83830cbc91444587ec872b917f67abe6bd8229a97b2ac8e113e08a2975 |
+| semantic-01 | individually confirmed | false | incorrect_local_logic | incorrect_local_logic | 5fdf6b511e063fb6f856e0751688088379f3a5348be015c46144a9fe533fb6be |
+| semantic-02 | individually confirmed | false | incorrect_local_logic | incorrect_local_logic | db4c9f39cd49e2ff82eaada6668f3dce58e63fdf118f67adcd8ee341358f80eb |
+| semantic-03 | audit re-reviewed and confirmed | false | incomplete_cross_file_repair | incomplete_cross_file_repair, incorrect_local_logic | c93bd139d818842e1eac7e209445b3f2f46c4a1176cc9252c62036cf662b27e6 |
+| semantic-04 | batch-confirmed after Blind-only review and audit | false | state_consistency_violation | state_consistency_violation | 5e834485f1dc79ce582e4f6c069cd3670f7afc2e6cd94adcfea7002d430bd1c6 |
+| semantic-05 | batch-confirmed after Blind-only review and audit | false | partial_contract_handling | partial_contract_handling | 9c8b5e83830cbc91444587ec872b917f67abe6bd8229a97b2ac8e113e08a2975 |
 | semantic-06 | final update request kept first-round delegated Gold | false | partial_contract_handling | partial_contract_handling | f6091ec2c99822d9c7ef629bf9db24a597215899a9e22e7776b0be7031eb8693 |
 | semantic-07 | final update request kept first-round delegated Gold | false | state_consistency_violation | state_consistency_violation | 31c84e989cd1b5acc61b295a239859ffe5c362dfbd627a5cc32aa8ff951c6297 |
 | semantic-08 | final update request kept first-round delegated Gold | false | state_consistency_violation | state_consistency_violation | 50c8397f712579afe1907864431e17663734503e0e0987c21ede24f76b0dff07 |
