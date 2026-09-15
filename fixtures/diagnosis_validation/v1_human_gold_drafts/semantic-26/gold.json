@@ -1,0 +1,99 @@
+{
+  "case_id": "semantic-26",
+  "expected_route": "semantic_diagnosis",
+  "schema_version": 1,
+  "semantic_gold": {
+    "acceptable_families": [
+      "incorrect_local_logic"
+    ],
+    "forbidden_claims": [
+      {
+        "claim_id": "F1",
+        "description": "Do not claim the failure depends on which execution context branch ran; Blind evidence shows both branches delegate to the same invalid handler."
+      }
+    ],
+    "preferred_family": "incorrect_local_logic",
+    "required_evidence": [
+      {
+        "acceptable_locators": [
+          {
+            "artifact_sha256": "d17ad139b4ce94fd620a9af61a82dfc25c8aab4cd21e9115d09837d1f0b1a285",
+            "end_line": 18,
+            "kind": "task_contract",
+            "owner": "benchmark",
+            "path": null,
+            "source_state": null,
+            "start_line": 17
+          },
+          {
+            "artifact_sha256": "55336e1cb94329b2b2d36cc1b7439a2e24ab6451701e296f058f2dce64a15b37",
+            "end_line": 6,
+            "kind": "frozen_test",
+            "owner": "benchmark",
+            "path": "test_contract.py",
+            "source_state": "frozen",
+            "start_line": 6
+          }
+        ],
+        "description": "Prove the contract requires the documented invalid marker for unsupported values in all contexts.",
+        "requirement_id": "R1"
+      },
+      {
+        "acceptable_locators": [
+          {
+            "artifact_sha256": "154deca736db37224ff79531603df6695eac287c0d1632ebae6a9fc4deb8a36f",
+            "end_line": 4,
+            "kind": "production_source",
+            "owner": "subject",
+            "path": "src/convert.py",
+            "source_state": "candidate",
+            "start_line": 1
+          }
+        ],
+        "description": "Prove candidate convert() delegates both contexts to invalid(value).",
+        "requirement_id": "R2"
+      },
+      {
+        "acceptable_locators": [
+          {
+            "artifact_sha256": "47d7c2898433ac07a72b4c1fe314bfa35cbfb90ff31c2b5b2de0df9e6c9ac5ba",
+            "end_line": 7,
+            "kind": "canonical_patch",
+            "owner": "subject",
+            "path": "patch.diff",
+            "source_state": null,
+            "start_line": 1
+          },
+          {
+            "artifact_sha256": "989aa8a7bc7d2ed25e741ebe10de1de623a3c75877e1a03d244334e8eb5978de",
+            "end_line": 1,
+            "kind": "production_source",
+            "owner": "subject",
+            "path": "src/handlers.py",
+            "source_state": "candidate",
+            "start_line": 1
+          }
+        ],
+        "description": "Prove subject changed invalid() to return 'incomplete'.",
+        "requirement_id": "R3"
+      },
+      {
+        "acceptable_locators": [
+          {
+            "artifact_sha256": "1d40b76e94fbc06f65e5e3a7d8c11a950755f5d577416060f913fa4d17a7fcd3",
+            "end_line": 17,
+            "kind": "evaluation_output",
+            "owner": "subject",
+            "path": "test.log",
+            "source_state": null,
+            "start_line": 14
+          }
+        ],
+        "description": "Prove official evaluation observes 'incomplete' instead of 'invalid'.",
+        "requirement_id": "R4"
+      }
+    ],
+    "should_abstain": false
+  },
+  "subject_evidence_sha256": "7ad53a167c5d70b71aeea7f021f2e299e206076582c78c1bb88b1d195011eb5a"
+}

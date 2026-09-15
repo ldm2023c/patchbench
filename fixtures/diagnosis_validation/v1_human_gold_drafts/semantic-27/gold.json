@@ -1,0 +1,104 @@
+{
+  "case_id": "semantic-27",
+  "expected_route": "semantic_diagnosis",
+  "schema_version": 1,
+  "semantic_gold": {
+    "acceptable_families": [
+      "regression_introduced",
+      "incorrect_local_logic"
+    ],
+    "forbidden_claims": [
+      {
+        "claim_id": "F1",
+        "description": "Do not claim the failure depends on a specific execution context branch; Blind evidence shows both branches use the same uppercase result."
+      },
+      {
+        "claim_id": "F2",
+        "description": "Do not claim the failure is only a whitespace bug or only a case bug; the observed output reflects both changed behaviors."
+      }
+    ],
+    "preferred_family": "regression_introduced",
+    "required_evidence": [
+      {
+        "acceptable_locators": [
+          {
+            "artifact_sha256": "ecd4aedd9adb31b5f95bb8ca67acfdc3ebf231323ab3e0ef382519040854033b",
+            "end_line": 17,
+            "kind": "task_contract",
+            "owner": "benchmark",
+            "path": null,
+            "source_state": null,
+            "start_line": 17
+          },
+          {
+            "artifact_sha256": "2b39ef36b32e86bc01cb161c922732bea39271ad5046dc54b58c8f260965bb2c",
+            "end_line": 6,
+            "kind": "frozen_test",
+            "owner": "benchmark",
+            "path": "test_contract.py",
+            "source_state": "frozen",
+            "start_line": 6
+          }
+        ],
+        "description": "Prove the contract requires surrounding whitespace and case normalization.",
+        "requirement_id": "R1"
+      },
+      {
+        "acceptable_locators": [
+          {
+            "artifact_sha256": "35959c308353ca9940788028f80846732583ca315f7a02d197b9b2ea38d8a094",
+            "end_line": 4,
+            "kind": "production_source",
+            "owner": "benchmark",
+            "path": "src/names.py",
+            "source_state": "base",
+            "start_line": 2
+          }
+        ],
+        "description": "Prove base behavior used strip() and lower() for the documented result.",
+        "requirement_id": "R2"
+      },
+      {
+        "acceptable_locators": [
+          {
+            "artifact_sha256": "b8616ae70b4f2a2124a598a80acf11714f13f5204024a424ae4d47b1a221ebaf",
+            "end_line": 11,
+            "kind": "canonical_patch",
+            "owner": "subject",
+            "path": "patch.diff",
+            "source_state": null,
+            "start_line": 5
+          },
+          {
+            "artifact_sha256": "e0149b601e2c0f015cbbebbd792a752b1cbfeb847a9a094570c78d14a1b8ffe3",
+            "end_line": 4,
+            "kind": "production_source",
+            "owner": "subject",
+            "path": "src/names.py",
+            "source_state": "candidate",
+            "start_line": 2
+          }
+        ],
+        "description": "Prove subject changed normalization to rstrip() and upper().",
+        "requirement_id": "R3"
+      },
+      {
+        "acceptable_locators": [
+          {
+            "artifact_sha256": "9188b442eaac7fc8f16d2b746962bcb9a3f9818deed459fe35216cff6730ca93",
+            "end_line": 17,
+            "kind": "evaluation_output",
+            "owner": "subject",
+            "path": "test.log",
+            "source_state": null,
+            "start_line": 14
+          }
+        ],
+        "description": "Prove official evaluation observes ' ADA' instead of 'ada'.",
+        "requirement_id": "R4"
+      }
+    ],
+    "should_abstain": false
+  },
+  "subject_evidence_sha256": "d89f0b200f403bc2a75e432db226528450de2c5cd9822a2268bc208960f9315d"
+}

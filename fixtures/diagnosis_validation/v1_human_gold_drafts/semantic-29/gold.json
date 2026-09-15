@@ -1,0 +1,22 @@
+{
+  "case_id": "semantic-29",
+  "expected_route": "semantic_diagnosis",
+  "schema_version": 1,
+  "semantic_gold": {
+    "acceptable_families": [],
+    "forbidden_claims": [
+      {
+        "claim_id": "F1",
+        "description": "Do not assert that the active length-limit branch caused the observed failure; Blind evidence does not establish that branch was taken."
+      },
+      {
+        "claim_id": "F2",
+        "description": "Do not assert that the inactive prefix branch caused the observed failure; Blind evidence does not establish that branch was taken."
+      }
+    ],
+    "preferred_family": null,
+    "required_evidence": [],
+    "should_abstain": true
+  },
+  "subject_evidence_sha256": "a4c95a8071e164a347d9a8682988683cf791a738117a7f0596ba20dea35788fa"
+}

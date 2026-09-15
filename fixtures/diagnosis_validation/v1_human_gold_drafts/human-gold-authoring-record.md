@@ -263,3 +263,129 @@ Authoring basis: Blind evidence only. No _support artifacts, PASS peer artifacts
 | semantic-19 | non-abstain diagnosis remains identifiable as state_consistency_violation | unconfirmed / rejected-for-abstention-candidate | Multiple possible passing repairs do not create diagnosis-level non-identifiability under the current Blind evidence. |
 | semantic-20 | non-abstain diagnosis remains identifiable as state_consistency_violation | unconfirmed / rejected-for-abstention-candidate | Multiple possible passing repairs do not create diagnosis-level non-identifiability under the current Blind evidence. |
 | semantic-21 | non-abstain diagnosis remains identifiable as state_consistency_violation | unconfirmed / rejected-for-abstention-candidate | Multiple possible passing repairs do not create diagnosis-level non-identifiability under the current Blind evidence. |
+
+## Top-up2 Authoring Status
+
+Authoring basis: Blind evidence only. No _support artifacts, generator, candidate-construction tests, Git diffs revealing construction logic, PASS peer artifacts, peer patches, experiment metadata, Contrastive evidence, hidden runtime construction, hidden selector state, intended role, intended-family information, intended-abstention information, or other non human-facing Blind packet evidence was used.
+
+Human confirmation: semantic-22 through semantic-29 provisional Human Gold decisions were explicitly confirmed by the human author. semantic-01 through semantic-17 existing Human Gold contents remain unchanged. semantic-18 through semantic-21 remain unconfirmed / rejected-for-abstention-candidate and have no gold.json draft.
+
+### Confirmed Gold Drafts
+
+| case_id | human confirmation | should_abstain | preferred_family | acceptable_families | gold_sha256 | status |
+|---|---|---:|---|---|---|---|
+| semantic-22 | confirmed by human author after Blind-only provisional analysis | true | null |  | d130e04a8ca41ccaf2b14c0ac5da2ee24c775cd84f3f243d6c71aeba34233ef3 | confirmed gold.json drafted |
+| semantic-23 | confirmed by human author after Blind-only provisional analysis | false | incorrect_local_logic | incorrect_local_logic | 0d33116d788769cac62d4473846c8d9c6905b5a4184b63bb58ee0664b399a9b5 | confirmed gold.json drafted |
+| semantic-24 | confirmed by human author after Blind-only provisional analysis | true | null |  | 531ca0f245adc937827216e09bfa21456259594f9fd05395a0b037b69e6fe620 | confirmed gold.json drafted |
+| semantic-25 | confirmed by human author after Blind-only provisional analysis | true | null |  | bdf7f23e7fb720adc9ea03ce272019f75f2fe036587ee6c6e09eb485ab0b052a | confirmed gold.json drafted |
+| semantic-26 | confirmed by human author after Blind-only provisional analysis | false | incorrect_local_logic | incorrect_local_logic | adffc0a75319713c8d4d4a0d456fd1c3398a1c374314ec35825aa50c12988375 | confirmed gold.json drafted |
+| semantic-27 | confirmed by human author after Blind-only provisional analysis | false | regression_introduced | regression_introduced, incorrect_local_logic | 3cc6fd6921943d97550c3c432a293698de3acca6e87581686e33b2840da93223 | confirmed gold.json drafted |
+| semantic-28 | confirmed by human author after Blind-only provisional analysis | true | null |  | c3dad0999e43e0bf0071b942b30804859105524da3891992b4410ca479e76db0 | confirmed gold.json drafted |
+| semantic-29 | confirmed by human author after Blind-only provisional analysis | true | null |  | 2a0e5f8a194509e0bcd778487ed3f87c1fc3224e31fd20c3ffbebda88e21d84a | confirmed gold.json drafted |
+
+### Case Details
+
+#### semantic-22
+
+- authoring_basis: Blind evidence only
+- should_abstain: true
+- preferred_family: null
+- acceptable_families:
+- requirement_descriptions:
+- forbidden_claims:
+  - F1: Do not assert that the active service.status() branch was the executed causal path; Blind evidence does not establish execution_context.active().
+  - F2: Do not assert that backend.current() was the executed causal path; Blind evidence does not establish the inactive branch was taken.
+- gold_sha256: d130e04a8ca41ccaf2b14c0ac5da2ee24c775cd84f3f243d6c71aeba34233ef3
+
+#### semantic-23
+
+- authoring_basis: Blind evidence only
+- should_abstain: false
+- preferred_family: incorrect_local_logic
+- acceptable_families: incorrect_local_logic
+- requirement_descriptions:
+  - R1: Prove the contract requires returning the first requested number of values.
+  - R2: Prove candidate local slice logic starts at index 1 and uses start+size+1.
+  - R3: Prove official evaluation observes ['b', 'c'] instead of ['a', 'b'].
+- forbidden_claims:
+  - F1: Do not claim the failure depends on an unknown execution context branch; Blind evidence shows both branches use the same start=1 value.
+- gold_sha256: 0d33116d788769cac62d4473846c8d9c6905b5a4184b63bb58ee0664b399a9b5
+
+#### semantic-24
+
+- authoring_basis: Blind evidence only
+- should_abstain: true
+- preferred_family: null
+- acceptable_families:
+- requirement_descriptions:
+- forbidden_claims:
+  - F1: Do not assert that the cache-backed active path caused the observed failure; Blind evidence does not establish that branch was taken.
+  - F2: Do not assert that the inactive value-is-None fallback caused the observed failure; Blind evidence does not establish that branch was taken.
+- gold_sha256: 531ca0f245adc937827216e09bfa21456259594f9fd05395a0b037b69e6fe620
+
+#### semantic-25
+
+- authoring_basis: Blind evidence only
+- should_abstain: true
+- preferred_family: null
+- acceptable_families:
+- requirement_descriptions:
+- forbidden_claims:
+  - F1: Do not assert that the active quote() decrement was the executed cause; Blind evidence does not establish the active branch was taken.
+  - F2: Do not assert that the rates table was the executed cause; Blind evidence does not establish the inactive branch was taken.
+- gold_sha256: bdf7f23e7fb720adc9ea03ce272019f75f2fe036587ee6c6e09eb485ab0b052a
+
+#### semantic-26
+
+- authoring_basis: Blind evidence only
+- should_abstain: false
+- preferred_family: incorrect_local_logic
+- acceptable_families: incorrect_local_logic
+- requirement_descriptions:
+  - R1: Prove the contract requires the documented invalid marker for unsupported values in all contexts.
+  - R2: Prove candidate convert() delegates both contexts to invalid(value).
+  - R3: Prove subject changed invalid() to return 'incomplete'.
+  - R4: Prove official evaluation observes 'incomplete' instead of 'invalid'.
+- forbidden_claims:
+  - F1: Do not claim the failure depends on which execution context branch ran; Blind evidence shows both branches delegate to the same invalid handler.
+- gold_sha256: adffc0a75319713c8d4d4a0d456fd1c3398a1c374314ec35825aa50c12988375
+
+#### semantic-27
+
+- authoring_basis: Blind evidence only
+- should_abstain: false
+- preferred_family: regression_introduced
+- acceptable_families: regression_introduced, incorrect_local_logic
+- requirement_descriptions:
+  - R1: Prove the contract requires surrounding whitespace and case normalization.
+  - R2: Prove base behavior used strip() and lower() for the documented result.
+  - R3: Prove subject changed normalization to rstrip() and upper().
+  - R4: Prove official evaluation observes ' ADA' instead of 'ada'.
+- forbidden_claims:
+  - F1: Do not claim the failure depends on a specific execution context branch; Blind evidence shows both branches use the same uppercase result.
+  - F2: Do not claim the failure is only a whitespace bug or only a case bug; the observed output reflects both changed behaviors.
+- gold_sha256: 3cc6fd6921943d97550c3c432a293698de3acca6e87581686e33b2840da93223
+
+#### semantic-28
+
+- authoring_basis: Blind evidence only
+- should_abstain: true
+- preferred_family: null
+- acceptable_families:
+- requirement_descriptions:
+- forbidden_claims:
+  - F1: Do not assert that the observed failure was caused by active-branch collection state inconsistency; Blind evidence does not establish the active branch was taken.
+  - F2: Do not assert that the observed failure was caused by values.accepted() rejecting the value; Blind evidence does not establish the inactive branch was taken.
+- gold_sha256: c3dad0999e43e0bf0071b942b30804859105524da3891992b4410ca479e76db0
+
+#### semantic-29
+
+- authoring_basis: Blind evidence only
+- should_abstain: true
+- preferred_family: null
+- acceptable_families:
+- requirement_descriptions:
+- forbidden_claims:
+  - F1: Do not assert that the active length-limit branch caused the observed failure; Blind evidence does not establish that branch was taken.
+  - F2: Do not assert that the inactive prefix branch caused the observed failure; Blind evidence does not establish that branch was taken.
+- gold_sha256: 2a0e5f8a194509e0bcd778487ed3f87c1fc3224e31fd20c3ffbebda88e21d84a

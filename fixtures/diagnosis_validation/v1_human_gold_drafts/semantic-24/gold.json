@@ -1,0 +1,22 @@
+{
+  "case_id": "semantic-24",
+  "expected_route": "semantic_diagnosis",
+  "schema_version": 1,
+  "semantic_gold": {
+    "acceptable_families": [],
+    "forbidden_claims": [
+      {
+        "claim_id": "F1",
+        "description": "Do not assert that the cache-backed active path caused the observed failure; Blind evidence does not establish that branch was taken."
+      },
+      {
+        "claim_id": "F2",
+        "description": "Do not assert that the inactive value-is-None fallback caused the observed failure; Blind evidence does not establish that branch was taken."
+      }
+    ],
+    "preferred_family": null,
+    "required_evidence": [],
+    "should_abstain": true
+  },
+  "subject_evidence_sha256": "4cc2f1c008cf1e6c14aca4f60facfa8a509edd699422ed136c2016537f4cc4f6"
+}

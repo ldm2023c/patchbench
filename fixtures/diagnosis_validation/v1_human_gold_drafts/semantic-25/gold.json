@@ -1,0 +1,22 @@
+{
+  "case_id": "semantic-25",
+  "expected_route": "semantic_diagnosis",
+  "schema_version": 1,
+  "semantic_gold": {
+    "acceptable_families": [],
+    "forbidden_claims": [
+      {
+        "claim_id": "F1",
+        "description": "Do not assert that the active quote() decrement was the executed cause; Blind evidence does not establish the active branch was taken."
+      },
+      {
+        "claim_id": "F2",
+        "description": "Do not assert that the rates table was the executed cause; Blind evidence does not establish the inactive branch was taken."
+      }
+    ],
+    "preferred_family": null,
+    "required_evidence": [],
+    "should_abstain": true
+  },
+  "subject_evidence_sha256": "c50911bf7efe118c3895d6d0c786fa66456524b4500a927e6dd51ba2655441fe"
+}

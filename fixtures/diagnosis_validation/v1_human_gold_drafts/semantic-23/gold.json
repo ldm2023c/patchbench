@@ -1,0 +1,84 @@
+{
+  "case_id": "semantic-23",
+  "expected_route": "semantic_diagnosis",
+  "schema_version": 1,
+  "semantic_gold": {
+    "acceptable_families": [
+      "incorrect_local_logic"
+    ],
+    "forbidden_claims": [
+      {
+        "claim_id": "F1",
+        "description": "Do not claim the failure depends on an unknown execution context branch; Blind evidence shows both branches use the same start=1 value."
+      }
+    ],
+    "preferred_family": "incorrect_local_logic",
+    "required_evidence": [
+      {
+        "acceptable_locators": [
+          {
+            "artifact_sha256": "1ea5c3d73496667b1f948c78203c7ecef43fcb4bdedc388f247302702d6462bb",
+            "end_line": 18,
+            "kind": "task_contract",
+            "owner": "benchmark",
+            "path": null,
+            "source_state": null,
+            "start_line": 17
+          },
+          {
+            "artifact_sha256": "a1a4f669787a361fd56a0dd6bde892d961f5fb4e16f10893a9ed9984a8ab90e3",
+            "end_line": 6,
+            "kind": "frozen_test",
+            "owner": "benchmark",
+            "path": "test_contract.py",
+            "source_state": "frozen",
+            "start_line": 6
+          }
+        ],
+        "description": "Prove the contract requires returning the first requested number of values.",
+        "requirement_id": "R1"
+      },
+      {
+        "acceptable_locators": [
+          {
+            "artifact_sha256": "3d5b8f83a1f86015de0362a29908e50f0b3d218454caf0b47a3a8518e60d3093",
+            "end_line": 10,
+            "kind": "canonical_patch",
+            "owner": "subject",
+            "path": "patch.diff",
+            "source_state": null,
+            "start_line": 5
+          },
+          {
+            "artifact_sha256": "8c8686d84708b4e1e74f275aad2bc09f54b83f3bc58881dcc3c694cb90cc1c0e",
+            "end_line": 4,
+            "kind": "production_source",
+            "owner": "subject",
+            "path": "src/window.py",
+            "source_state": "candidate",
+            "start_line": 2
+          }
+        ],
+        "description": "Prove candidate local slice logic starts at index 1 and uses start+size+1.",
+        "requirement_id": "R2"
+      },
+      {
+        "acceptable_locators": [
+          {
+            "artifact_sha256": "1e373ee30554eef68011b35ca86aaeeca5c89f2393835886aee222a8a3d46a3b",
+            "end_line": 17,
+            "kind": "evaluation_output",
+            "owner": "subject",
+            "path": "test.log",
+            "source_state": null,
+            "start_line": 14
+          }
+        ],
+        "description": "Prove official evaluation observes ['b', 'c'] instead of ['a', 'b'].",
+        "requirement_id": "R3"
+      }
+    ],
+    "should_abstain": false
+  },
+  "subject_evidence_sha256": "5a5b3f48d28804ea7e939b421dec9343940275c399154df584a0d747a39f9564"
+}

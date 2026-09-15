@@ -1,0 +1,22 @@
+{
+  "case_id": "semantic-28",
+  "expected_route": "semantic_diagnosis",
+  "schema_version": 1,
+  "semantic_gold": {
+    "acceptable_families": [],
+    "forbidden_claims": [
+      {
+        "claim_id": "F1",
+        "description": "Do not assert that the observed failure was caused by active-branch collection state inconsistency; Blind evidence does not establish the active branch was taken."
+      },
+      {
+        "claim_id": "F2",
+        "description": "Do not assert that the observed failure was caused by values.accepted() rejecting the value; Blind evidence does not establish the inactive branch was taken."
+      }
+    ],
+    "preferred_family": null,
+    "required_evidence": [],
+    "should_abstain": true
+  },
+  "subject_evidence_sha256": "c4c40dedc2b0aeb5b4cfcd4eba7554766791bcab3b7d36eaa8c7e0fa6ecd3852"
+}

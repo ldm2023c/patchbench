@@ -1,0 +1,22 @@
+{
+  "case_id": "semantic-22",
+  "expected_route": "semantic_diagnosis",
+  "schema_version": 1,
+  "semantic_gold": {
+    "acceptable_families": [],
+    "forbidden_claims": [
+      {
+        "claim_id": "F1",
+        "description": "Do not assert that the active service.status() branch was the executed causal path; Blind evidence does not establish execution_context.active()."
+      },
+      {
+        "claim_id": "F2",
+        "description": "Do not assert that backend.current() was the executed causal path; Blind evidence does not establish the inactive branch was taken."
+      }
+    ],
+    "preferred_family": null,
+    "required_evidence": [],
+    "should_abstain": true
+  },
+  "subject_evidence_sha256": "bd2d425ed336a246537569bf5e30c0ae50fa61fea77408120fdf8d0680b1cdf5"
+}
