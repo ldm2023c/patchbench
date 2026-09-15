@@ -11,16 +11,16 @@ Confirmation basis: semantic-01 and semantic-02 were individually confirmed by t
 | semantic-03 | audit re-reviewed and confirmed | false | incomplete_cross_file_repair | incomplete_cross_file_repair, incorrect_local_logic | c93bd139d818842e1eac7e209445b3f2f46c4a1176cc9252c62036cf662b27e6 |
 | semantic-04 | batch-confirmed after Blind-only review and audit | false | state_consistency_violation | state_consistency_violation | 5e834485f1dc79ce582e4f6c069cd3670f7afc2e6cd94adcfea7002d430bd1c6 |
 | semantic-05 | batch-confirmed after Blind-only review and audit | false | partial_contract_handling | partial_contract_handling | 9c8b5e83830cbc91444587ec872b917f67abe6bd8229a97b2ac8e113e08a2975 |
-| semantic-06 | final update request kept first-round delegated Gold | false | partial_contract_handling | partial_contract_handling | f6091ec2c99822d9c7ef629bf9db24a597215899a9e22e7776b0be7031eb8693 |
-| semantic-07 | final update request kept first-round delegated Gold | false | state_consistency_violation | state_consistency_violation | 31c84e989cd1b5acc61b295a239859ffe5c362dfbd627a5cc32aa8ff951c6297 |
-| semantic-08 | final update request kept first-round delegated Gold | false | state_consistency_violation | state_consistency_violation | 50c8397f712579afe1907864431e17663734503e0e0987c21ede24f76b0dff07 |
-| semantic-09 | final update request kept first-round delegated Gold | false | regression_introduced | regression_introduced | c18311528a3d959cad20c154cf45bb67d4dbc4e4b339ad991a74050c145a2edc |
-| semantic-10 | final update request kept first-round delegated Gold | false | incorrect_local_logic | incorrect_local_logic | 22035dc71a1f9797974982985799fce2dbbf40ddaf225253ce97060404fb1692 |
-| semantic-11 | final update request kept first-round delegated Gold | false | regression_introduced | regression_introduced | 8b3e4487dde91c8aa4f4aac9d423075406b8e8e8f6027ac7c577eceabfaeeaaa |
-| semantic-12 | final update request kept first-round delegated Gold | false | regression_introduced | regression_introduced | 2d82fdc2f97cb819fd2d670c0b21c64ef400fb931687f1655c36a87dcfd4d89e |
-| semantic-13 | final update request kept first-round delegated Gold | false | partial_contract_handling | partial_contract_handling | 16e1e9628b4a771b970abf2e8a14d79a982fd41ca0f37654a3a40d5710169333 |
-| semantic-14 | audit-confirmed acceptable-family expansion | false | regression_introduced | regression_introduced, incorrect_local_logic | fdddf78df37574449b82b6274922b471c14f9d945cfe6cef3c8482b114494857 |
-| semantic-15 | final update request kept first-round delegated Gold | false | state_consistency_violation | state_consistency_violation | d367bca71afc4f7598b7fbc25ddf6dd3842d92d087b83781467dadf958f9f69d |
+| semantic-06 | batch-confirmed after Blind-only review and audit | false | partial_contract_handling | partial_contract_handling | f6091ec2c99822d9c7ef629bf9db24a597215899a9e22e7776b0be7031eb8693 |
+| semantic-07 | batch-confirmed after Blind-only review and audit | false | state_consistency_violation | state_consistency_violation | 31c84e989cd1b5acc61b295a239859ffe5c362dfbd627a5cc32aa8ff951c6297 |
+| semantic-08 | batch-confirmed after Blind-only review and audit | false | state_consistency_violation | state_consistency_violation | 50c8397f712579afe1907864431e17663734503e0e0987c21ede24f76b0dff07 |
+| semantic-09 | batch-confirmed after Blind-only review and audit | false | regression_introduced | regression_introduced | c18311528a3d959cad20c154cf45bb67d4dbc4e4b339ad991a74050c145a2edc |
+| semantic-10 | batch-confirmed after Blind-only review and audit | false | incorrect_local_logic | incorrect_local_logic | 22035dc71a1f9797974982985799fce2dbbf40ddaf225253ce97060404fb1692 |
+| semantic-11 | batch-confirmed after Blind-only review and audit | false | regression_introduced | regression_introduced | 8b3e4487dde91c8aa4f4aac9d423075406b8e8e8f6027ac7c577eceabfaeeaaa |
+| semantic-12 | batch-confirmed after Blind-only review and audit | false | regression_introduced | regression_introduced | 2d82fdc2f97cb819fd2d670c0b21c64ef400fb931687f1655c36a87dcfd4d89e |
+| semantic-13 | batch-confirmed after Blind-only review and audit | false | partial_contract_handling | partial_contract_handling | 16e1e9628b4a771b970abf2e8a14d79a982fd41ca0f37654a3a40d5710169333 |
+| semantic-14 | audit re-reviewed and confirmed | false | regression_introduced | regression_introduced, incorrect_local_logic | fdddf78df37574449b82b6274922b471c14f9d945cfe6cef3c8482b114494857 |
+| semantic-15 | batch-confirmed after Blind-only review and audit | false | state_consistency_violation | state_consistency_violation | d367bca71afc4f7598b7fbc25ddf6dd3842d92d087b83781467dadf958f9f69d |
 
 ## Case Details
 
