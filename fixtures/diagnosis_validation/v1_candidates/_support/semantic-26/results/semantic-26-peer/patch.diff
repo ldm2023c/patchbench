@@ -1,0 +1,7 @@
+diff --git a/src/handlers.py b/src/handlers.py
+index 210e87b..47990e5 100644
+--- a/src/handlers.py
++++ b/src/handlers.py
+@@ -1 +1 @@
+-def invalid(value): return 'unknown'
++def invalid(value): return 'invalid'

@@ -1,0 +1,11 @@
+diff --git a/src/session.py b/src/session.py
+index 0508604..e5dfa4f 100644
+--- a/src/session.py
++++ b/src/session.py
+@@ -1,4 +1,4 @@
+ from execution_context import active
+-CACHE={'value':'missing'}
++CACHE={'value':'unavailable'}
+ def resolve(value):
+- return CACHE['value'] if active() else ('missing' if value is None else value)
++ return CACHE['value'] if active() else ('unavailable' if value is None else value)

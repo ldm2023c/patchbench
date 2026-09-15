@@ -1,0 +1,117 @@
+{
+  "agent_status": "completed",
+  "base_commit": "7dfdbc230b2f34d57a87007b6a8769dd23048641",
+  "benchmark_definition_sha256": "1a41cf55d659f564e50b4ccb617c2c9283c399e221c04f6a14cb874d3c5c8f58",
+  "bundle_id": "blind-246232a1bcb3ff6d4036d19ce5a887dae2cc2ac3cf50ca5a19c98896eaf14800",
+  "bundle_sha256": "8b3fe20f6e889adfd3d111ca859384f8889e343026145145bebd9191758bd59a",
+  "evidence_items": [
+    {
+      "artifact_sha256": "2b39ef36b32e86bc01cb161c922732bea39271ad5046dc54b58c8f260965bb2c",
+      "content": "import unittest\nunittest.runner.time.perf_counter = lambda: 0.0\nfrom src.names import normalize\nimport unittest\nclass Contract(unittest.TestCase):\n def test_name(self): self.assertEqual(normalize(' Ada '),'ada')\n",
+      "end_line": 6,
+      "evidence_id": "E001",
+      "kind": "frozen_test",
+      "owner": "benchmark",
+      "path": "test_contract.py",
+      "source_state": "frozen",
+      "start_line": 1
+    },
+    {
+      "artifact_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "content": "",
+      "end_line": null,
+      "evidence_id": "E002",
+      "kind": "production_source",
+      "owner": "benchmark",
+      "path": "src/__init__.py",
+      "source_state": "base",
+      "start_line": null
+    },
+    {
+      "artifact_sha256": "35959c308353ca9940788028f80846732583ca315f7a02d197b9b2ea38d8a094",
+      "content": "from execution_context import active\ndef normalize(value):\n core=value.strip()\n return core.lower() if active() else core.lower()\n",
+      "end_line": 4,
+      "evidence_id": "E003",
+      "kind": "production_source",
+      "owner": "benchmark",
+      "path": "src/names.py",
+      "source_state": "base",
+      "start_line": 1
+    },
+    {
+      "artifact_sha256": "ecd4aedd9adb31b5f95bb8ca67acfdc3ebf231323ab3e0ef382519040854033b",
+      "content": "evaluation:\n  command: python -I -S -B .patchbench-eval/runner.py\n  frozen_unittest:\n    test_files:\n    - test_contract.py\n    version: 1\n  timeout_seconds: 30\nid: semantic-27\nmetadata:\n  language: python\nrepository:\n  base_commit: 7dfdbc230b2f34d57a87007b6a8769dd23048641\n  path: repository\n  type: local\nschema_version: 1\ntask:\n  prompt: Normalize surrounding whitespace and case consistently in supported contexts.\n",
+      "end_line": 17,
+      "evidence_id": "E004",
+      "kind": "task_contract",
+      "owner": "benchmark",
+      "path": null,
+      "source_state": null,
+      "start_line": 1
+    },
+    {
+      "artifact_sha256": "b8616ae70b4f2a2124a598a80acf11714f13f5204024a424ae4d47b1a221ebaf",
+      "content": "diff --git a/src/names.py b/src/names.py\nindex e88c63f..00e7868 100644\n--- a/src/names.py\n+++ b/src/names.py\n@@ -1,4 +1,4 @@\n from execution_context import active\n def normalize(value):\n- core=value.strip()\n- return core.lower() if active() else core.lower()\n+ core=value.rstrip()\n+ return core.upper() if active() else core.upper()\n",
+      "end_line": 11,
+      "evidence_id": "E005",
+      "kind": "canonical_patch",
+      "owner": "subject",
+      "path": "patch.diff",
+      "source_state": null,
+      "start_line": 1
+    },
+    {
+      "artifact_sha256": "9188b442eaac7fc8f16d2b746962bcb9a3f9818deed459fe35216cff6730ca93",
+      "content": "Command: python -I -S -B .patchbench-eval/runner.py\nExit code: 1\nDuration seconds: 0.000000\n\nSTDOUT:\n\nSTDERR:\ntest_name (_patchbench_frozen_0.Contract.test_name) ... FAIL\n\n======================================================================\nFAIL: test_name (_patchbench_frozen_0.Contract.test_name)\n----------------------------------------------------------------------\nTraceback (most recent call last):\n  File \"/tmp/patchbench-diagnosis-v1-candidate-stage/semantic-27/workspaces/evaluation-subject-observation/test_contract.py\", line 6, in test_name\n    def test_name(self): self.assertEqual(normalize(' Ada '),'ada')\n                         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\nAssertionError: ' ADA' != 'ada'\n-  ADA\n+ ada\n\n\n----------------------------------------------------------------------\nRan 1 test in 0.000s\n\nFAILED (failures=1)",
+      "end_line": 25,
+      "evidence_id": "E006",
+      "kind": "evaluation_output",
+      "owner": "subject",
+      "path": "test.log",
+      "source_state": null,
+      "start_line": 1
+    },
+    {
+      "artifact_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "content": "",
+      "end_line": null,
+      "evidence_id": "E007",
+      "kind": "production_source",
+      "owner": "subject",
+      "path": "src/__init__.py",
+      "source_state": "candidate",
+      "start_line": null
+    },
+    {
+      "artifact_sha256": "e0149b601e2c0f015cbbebbd792a752b1cbfeb847a9a094570c78d14a1b8ffe3",
+      "content": "from execution_context import active\ndef normalize(value):\n core=value.rstrip()\n return core.upper() if active() else core.upper()\n",
+      "end_line": 4,
+      "evidence_id": "E008",
+      "kind": "production_source",
+      "owner": "subject",
+      "path": "src/names.py",
+      "source_state": "candidate",
+      "start_line": 1
+    }
+  ],
+  "mode": "blind",
+  "official_evaluation_passed": false,
+  "peer_run_id": null,
+  "provenance": {
+    "peer": null,
+    "subject": {
+      "base_source_snapshot_sha256": "5dd2df45fb7afe4df710872d7f66ce26e8a6633544fbdcb2510dd7c9e42875bd",
+      "benchmark_definition_sha256": "1a41cf55d659f564e50b4ccb617c2c9283c399e221c04f6a14cb874d3c5c8f58",
+      "candidate_source_snapshot_sha256": "0d2744d5540db68575d75e8d7032ef01d713f536aa03eb17a9b20f65ed9bcd42",
+      "canonical_patch_sha256": "b8616ae70b4f2a2124a598a80acf11714f13f5204024a424ae4d47b1a221ebaf",
+      "evaluation_log_sha256": "9188b442eaac7fc8f16d2b746962bcb9a3f9818deed459fe35216cff6730ca93",
+      "frozen_tests_snapshot_sha256": "4364a23274cb593eeb536be40c7ed868f8308b8a5905a3dff9c9e7201d994cf3",
+      "task_contract_sha256": "ecd4aedd9adb31b5f95bb8ca67acfdc3ebf231323ab3e0ef382519040854033b"
+    }
+  },
+  "schema_version": 1,
+  "source_snapshot_policy": "full_bounded_production_v1:5872fe6c90dcbe418f35d9548e49b7e473794cb388faa8e9374f7a283f7ac77b",
+  "subject_run_id": "semantic-27-subject",
+  "task_fingerprint_sha256": "b6318cdc38c6b9ac916c95a2269f5db7aa46476360e56b18c088d1f8f488839d",
+  "task_id": "semantic-27"
+}

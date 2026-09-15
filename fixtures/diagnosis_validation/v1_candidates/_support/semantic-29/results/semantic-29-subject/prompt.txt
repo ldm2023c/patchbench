@@ -1,0 +1,1 @@
+Accept the documented token form in every supported execution context.

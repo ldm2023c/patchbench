@@ -4,7 +4,7 @@ This offline controlled-fixture utility never invokes a coding or Diagnosis
 provider.  Semantic answers intentionally do not exist in its output.
 """
 
-from contextlib import contextmanager
+from contextlib import contextmanager, nullcontext
 import argparse
 import hashlib
 import json
@@ -42,7 +42,8 @@ from patchbench.storage.filesystem import FilesystemArtifactStore
 SCHEMA_VERSION = 1
 LEGACY_SEMANTIC_IDS = tuple(f"semantic-{index:02d}" for index in range(1, 16))
 TOPUP_SEMANTIC_IDS = tuple(f"semantic-{index:02d}" for index in range(16, 22))
-SEMANTIC_IDS = LEGACY_SEMANTIC_IDS + TOPUP_SEMANTIC_IDS
+TOPUP2_SEMANTIC_IDS = tuple(f"semantic-{index:02d}" for index in range(22, 30))
+SEMANTIC_IDS = LEGACY_SEMANTIC_IDS + TOPUP_SEMANTIC_IDS + TOPUP2_SEMANTIC_IDS
 OPERATIONAL_IDS = ("operational-01", "operational-02")
 ALL_IDS = SEMANTIC_IDS + OPERATIONAL_IDS
 BENCHMARK_POLICY = "diagnosis-validation-v1-controlled-candidate"
@@ -71,6 +72,31 @@ def _without_inherited_git_environment():
         yield
     finally:
         os.environ.update(inherited)
+
+
+@contextmanager
+def _controlled_execution_context(module_source: str):
+    previous_path = os.environ.get("PATH")
+    with TemporaryDirectory(prefix="patchbench-diagnosis-runtime-") as temporary:
+        wrapper = Path(temporary, "python")
+        wrapper.write_text(
+            "#!/bin/sh\n"
+            "trap 'rm -f execution_context.py' EXIT\n"
+            "cat > execution_context.py <<'PATCHBENCH_RUNTIME'\n"
+            f"{module_source}"
+            "PATCHBENCH_RUNTIME\n"
+            f"'{Path(sys.executable).as_posix()}' \"$@\"\n",
+            encoding="utf-8",
+        )
+        wrapper.chmod(0o700)
+        os.environ["PATH"] = temporary + os.pathsep + (previous_path or "")
+        try:
+            yield
+        finally:
+            if previous_path is None:
+                os.environ.pop("PATH", None)
+            else:
+                os.environ["PATH"] = previous_path
 
 
 def _json_bytes(value) -> bytes:
@@ -230,6 +256,54 @@ def _semantic_specs():
         "src/persistence.py":"def accepted(value): return value>=3\n"},
        "Keep validation decisions consistent for supported values.",
        "from src.checks import aligned\nimport unittest\nclass Contract(unittest.TestCase):\n def test_alignment(self):\n  for value in (0,1,2,3): self.assertTrue(aligned(value))\n"),
+      ({"src/service.py":"from execution_context import active\nfrom .backend import current\ndef status():\n return 'legacy' if active() else current()\n",
+        "src/backend.py":"def current(): return 'legacy'\n"},
+       {"src/service.py":"from execution_context import active\nfrom .backend import current\ndef status():\n return ('leg'+'acy') if active() else current()\n"},
+       {"src/service.py":"from execution_context import active\nfrom .backend import current\ndef status():\n return 'current' if active() else current()\n",
+        "src/backend.py":"def current(): return 'current'\n"},
+       "Return the current service status in supported execution contexts.",
+       "from src.service import status\nimport unittest\nclass Contract(unittest.TestCase):\n def test_status(self): self.assertEqual(status(),'current')\n"),
+      ({"src/window.py":"from execution_context import active\ndef take(values,size):\n start=1 if active() else 1\n return values[start:start+size]\n"},
+       {"src/window.py":"from execution_context import active\ndef take(values,size):\n start=1 if active() else 1\n return values[start:start+size+1]\n"},
+       {"src/window.py":"from execution_context import active\ndef take(values,size):\n start=0 if active() else 0\n return values[start:start+size]\n"},
+       "Return the first requested number of values for every supported execution context.",
+       "from src.window import take\nimport unittest\nclass Contract(unittest.TestCase):\n def test_take(self): self.assertEqual(take(['a','b','c'],2),['a','b'])\n"),
+      ({"src/session.py":"from execution_context import active\nCACHE={'value':'missing'}\ndef resolve(value):\n return CACHE['value'] if active() else ('missing' if value is None else value)\n"},
+       {"src/session.py":"from execution_context import active\nCACHE={'value':'unavailable'}\ndef resolve(value):\n return CACHE['value'] if active() else ('unavailable' if value is None else value)\n"},
+       {"src/session.py":"from execution_context import active\nCACHE={'value':'default'}\ndef resolve(value):\n return CACHE['value'] if active() else ('default' if value is None else value)\n"},
+       "Resolve absent session values to the documented default in supported contexts.",
+       "from src.session import resolve\nimport unittest\nclass Contract(unittest.TestCase):\n def test_default(self): self.assertEqual(resolve(None),'default')\n"),
+      ({"src/rates.py":"TABLE={5:5}\n",
+        "src/quote.py":"from execution_context import active\nfrom .rates import TABLE\ndef quote(value): return value if active() else TABLE[value]\n"},
+       {"src/rates.py":"TABLE={5:4}\n",
+        "src/quote.py":"from execution_context import active\nfrom .rates import TABLE\ndef quote(value): return max(value-1,0) if active() else TABLE[value]\n"},
+       {"src/rates.py":"TABLE={5:5}\n",
+        "src/quote.py":"from execution_context import active\nfrom .rates import TABLE\ndef quote(value): return value if active() else TABLE[value]\n"},
+       "Preserve quoted values in every supported execution context.",
+       "from src.quote import quote\nimport unittest\nclass Contract(unittest.TestCase):\n def test_quote(self): self.assertEqual(quote(5),5)\n"),
+      ({"src/handlers.py":"def invalid(value): return 'unknown'\n",
+        "src/convert.py":"from execution_context import active\nfrom .handlers import invalid\ndef convert(value):\n return invalid(value) if active() else invalid(value)\n"},
+       {"src/handlers.py":"def invalid(value): return 'in'+'complete'\n"},
+       {"src/handlers.py":"def invalid(value): return 'invalid'\n"},
+       "Return the documented invalid marker for unsupported values in all execution contexts.",
+       "from src.convert import convert\nimport unittest\nclass Contract(unittest.TestCase):\n def test_invalid(self): self.assertEqual(convert(None),'invalid')\n"),
+      ({"src/names.py":"from execution_context import active\ndef normalize(value):\n core=value.strip()\n return core.lower() if active() else core.lower()\n"},
+       {"src/names.py":"from execution_context import active\ndef normalize(value):\n core=value.rstrip()\n return core.upper() if active() else core.upper()\n"},
+       {"src/names.py":"from execution_context import active\ndef normalize(value):\n core=value.strip()\n return core.lower() if active() else core.lower()\n"},
+       "Normalize surrounding whitespace and case consistently in supported contexts.",
+       "from src.names import normalize\nimport unittest\nclass Contract(unittest.TestCase):\n def test_name(self): self.assertEqual(normalize(' Ada '),'ada')\n"),
+      ({"src/values.py":"def accepted(value): return False\n",
+        "src/bag.py":"from execution_context import active\nfrom .values import accepted\nclass Bag:\n def __init__(self): self.items=[]; self.count=0\n def add(self,value):\n  return len(self.items)==self.count+1 if active() else accepted(value)\n"},
+       {"src/bag.py":"from execution_context import active\nfrom .values import accepted\nclass Bag:\n def __init__(self): self.items=[]; self.count=0\n def add(self,value):\n  if active(): self.items.append(value)\n  return len(self.items)==self.count if active() else accepted(value)\n"},
+       {"src/values.py":"def accepted(value): return bool(value)\n",
+        "src/bag.py":"from execution_context import active\nfrom .values import accepted\nclass Bag:\n def __init__(self): self.items=[]; self.count=0\n def add(self,value):\n  if active(): self.items.append(value); self.count+=1\n  return len(self.items)==self.count if active() else accepted(value)\n"},
+       "Accept supported values while keeping collection state consistent in all contexts.",
+       "from src.bag import Bag\nimport unittest\nclass Contract(unittest.TestCase):\n def test_add(self): self.assertTrue(Bag().add('x'))\n"),
+      ({"src/tokens.py":"from execution_context import active\nLIMIT=3\ndef valid(value):\n return len(value)>LIMIT if active() else value.startswith('ok:')\n"},
+       {"src/tokens.py":"from execution_context import active\nLIMIT=4\ndef valid(value):\n return len(value)>LIMIT if active() else value.startswith('yes:')\n"},
+       {"src/tokens.py":"from execution_context import active\nLIMIT=3\ndef valid(value):\n return len(value)>=LIMIT if active() else value.startswith('ok:')\n"},
+       "Accept the documented token form in every supported execution context.",
+       "from src.tokens import valid\nimport unittest\nclass Contract(unittest.TestCase):\n def test_token(self): self.assertTrue(valid('ok:'))\n"),
     ]
 
 
@@ -259,6 +333,47 @@ _HIDDEN_DUAL_REPAIRS = {
          "src/persistence.py":"def accepted(value): return value>=2\n"},
         {"src/intake.py":"def accepted(value): return value>=1\n",
          "src/persistence.py":"def accepted(value): return value>=1\n"}),
+}
+
+
+_HIDDEN_RUNTIME_SELECTORS = (True, False)
+
+_HIDDEN_AMBIGUITY_PATHS = {
+    "semantic-22": (
+        ("local replacement preserves obsolete result", "incorrect_local_logic"),
+        ("delegated production component remains stale", "incomplete_cross_file_repair"),
+    ),
+    "semantic-24": (
+        ("cached state retains the invalid sentinel", "state_consistency_violation"),
+        ("absent input handling returns the wrong default", "partial_contract_handling"),
+    ),
+    "semantic-25": (
+        ("new arithmetic path regresses a correct value", "regression_introduced"),
+        ("revised lookup data regresses a correct mapping", "incorrect_local_logic"),
+    ),
+    "semantic-28": (
+        ("one-sided mutation leaves collection state incomplete", "state_consistency_violation"),
+        ("the alternate path rejects a supported value", "partial_contract_handling"),
+    ),
+    "semantic-29": (
+        ("boundary handling rejects the minimum valid length", "partial_contract_handling"),
+        ("prefix handling regresses the accepted token form", "regression_introduced"),
+    ),
+}
+
+_HIDDEN_CONTROL_PATHS = {
+    "semantic-23": (
+        ("the shared window calculation is defective", "incorrect_local_logic"),
+        ("the shared window calculation is defective", "incorrect_local_logic"),
+    ),
+    "semantic-26": (
+        ("the shared conversion helper returns the wrong marker", "incorrect_local_logic"),
+        ("the shared conversion helper returns the wrong marker", "incorrect_local_logic"),
+    ),
+    "semantic-27": (
+        ("the shared normalization logic violates the contract", "partial_contract_handling"),
+        ("the shared normalization logic violates the contract", "partial_contract_handling"),
+    ),
 }
 
 
@@ -316,12 +431,17 @@ def _persist_run(case_root: Path, *, run_id: str, task, commit: str, patch: str,
     return record
 
 
-def _patch_and_evaluate(manager, task, run_id: str, changes: dict[str, str]):
-    with manager.workspace(task.repository, run_id) as workspace:
+def _patch_and_evaluate(
+    manager, task, run_id: str, changes: dict[str, str], *, runtime_module: str | None = None,
+):
+    runtime = (_controlled_execution_context(runtime_module)
+               if runtime_module is not None else nullcontext())
+    with runtime, manager.workspace(task.repository, run_id) as workspace:
         _write_files(workspace.path, changes)
         patch = manager.capture_diff(workspace)
         old_path = os.environ.get("PATH")
-        os.environ["PATH"] = str(Path(sys.executable).parent) + os.pathsep + (old_path or "")
+        if runtime_module is None:
+            os.environ["PATH"] = str(Path(sys.executable).parent) + os.pathsep + (old_path or "")
         old_uuid4 = evaluation_module.uuid4
         old_perf_counter = command_evaluator_module.perf_counter
         evaluation_module.uuid4 = lambda: SimpleNamespace(hex=run_id)
@@ -336,6 +456,121 @@ def _patch_and_evaluate(manager, task, run_id: str, changes: dict[str, str]):
             else:
                 os.environ["PATH"] = old_path
     return patch, evaluation
+
+
+def _runtime_module(selector: bool, marker: Path) -> str:
+    return (
+        "def active():\n"
+        f" with open({str(marker)!r}, 'w', encoding='utf-8') as marker: "
+        f"marker.write({str(selector)!r})\n"
+        f" return {selector!r}\n"
+    )
+
+
+def _evaluate_runtime_observations(manager, task, changes, label: str, marker_root: Path):
+    observations = []
+    observed_selectors = []
+    for index, selector in enumerate(_HIDDEN_RUNTIME_SELECTORS, 1):
+        marker = marker_root / f"{label}-{index}"
+        observations.append(_patch_and_evaluate(
+            manager, task, f"{label}-observation", changes,
+            runtime_module=_runtime_module(selector, marker)))
+        try:
+            observed_selectors.append(marker.read_text(encoding="utf-8"))
+        except OSError as error:
+            raise CandidateVerificationError(
+                f"{task.id} controlled runtime path was not exercised") from error
+    if observed_selectors != [str(value) for value in _HIDDEN_RUNTIME_SELECTORS]:
+        raise CandidateVerificationError(f"{task.id} controlled runtime selector differs")
+    return observations
+
+
+def _compile_isolated_world_bundle(
+    case_root: Path, case_id: str, commit: str, patch: str, evaluation: EvaluationResult,
+) -> DiagnosisEvidenceBundle:
+    with TemporaryDirectory(prefix="patchbench-diagnosis-world-") as temporary:
+        world_root = Path(temporary) / case_id
+        world_root.mkdir()
+        shutil.copytree(case_root / "base", world_root / "base")
+        shutil.copy2(case_root / "task.yaml", world_root / "task.yaml")
+        _restore_repository(world_root)
+        manager = GitRepositoryManager(world_root / "workspaces")
+        with _without_inherited_git_environment(), _working_directory(world_root):
+            task_path = Path("task.yaml")
+            task = load_task(task_path)
+            _persist_run(world_root, run_id=f"{case_id}-subject", task=task, commit=commit,
+                         patch=patch, evaluation=evaluation)
+            return compile_diagnosis_evidence(
+                task_path, f"{case_id}-subject",
+                benchmark_definition_sha256=hashlib.sha256(canonical_json_bytes(
+                    {"candidate_id": case_id, "policy": BENCHMARK_POLICY})).hexdigest(),
+                expected_task_contract_sha256=hashlib.sha256(task_path.read_bytes()).hexdigest(),
+                source_policy=DiagnosisSourcePolicy(production_roots=["src"]),
+                max_bundle_json_bytes=1_000_000,
+                artifact_store=FilesystemArtifactStore(world_root / "results"),
+                repository_manager=manager,
+            )
+
+
+def _verify_two_world_evidence(
+    case_root: Path, case_id: str, task, commit: str,
+    subject_observations, peer_observations,
+) -> None:
+    subject_patches = [item[0] for item in subject_observations]
+    peer_patches = [item[0] for item in peer_observations]
+    subject_results = [item[1] for item in subject_observations]
+    peer_results = [item[1] for item in peer_observations]
+    if (len(set(subject_patches)) != 1 or len(set(peer_patches)) != 1
+            or any(result.passed for result in subject_results)
+            or not all(result.passed for result in peer_results)):
+        raise CandidateVerificationError(f"{case_id} hidden worlds differ in patch or outcome")
+    subject_logs = [render_evaluation_log(result, task.evaluation.command).encode("utf-8")
+                    for result in subject_results]
+    if len(set(subject_logs)) != 1:
+        raise CandidateVerificationError(f"{case_id} hidden worlds expose different evaluation logs")
+    bundles = [_compile_isolated_world_bundle(
+        case_root, case_id, commit, subject_patches[0], result)
+        for result in subject_results]
+    if (len({_json_bytes(bundle) for bundle in bundles}) != 1
+            or len({bundle.bundle_sha256 for bundle in bundles}) != 1
+            or len({_subject_sha(bundle) for bundle in bundles}) != 1):
+        raise CandidateVerificationError(f"{case_id} hidden worlds expose different Blind evidence")
+
+
+def _verify_observational_equivalence(
+    case_root: Path, case_id: str, task, commit: str,
+    subject_observations, peer_observations,
+) -> None:
+    paths = _HIDDEN_AMBIGUITY_PATHS[case_id]
+    if (_HIDDEN_RUNTIME_SELECTORS[0] == _HIDDEN_RUNTIME_SELECTORS[1]
+            or paths[0][0] == paths[1][0] or paths[0][1] == paths[1][1]):
+        raise CandidateVerificationError(f"{case_id} hidden causal worlds are not distinct")
+    _verify_two_world_evidence(
+        case_root, case_id, task, commit, subject_observations, peer_observations)
+
+
+def _verify_identifiable_control(
+    case_root: Path, case_id: str, task, commit: str,
+    subject_observations, peer_observations,
+) -> None:
+    paths = _HIDDEN_CONTROL_PATHS[case_id]
+    if not paths[0][0] or paths[0] != paths[1]:
+        raise CandidateVerificationError(f"{case_id} control causal path is not stable")
+    _verify_two_world_evidence(
+        case_root, case_id, task, commit, subject_observations, peer_observations)
+
+
+def _verify_topup2_private_contract() -> None:
+    ambiguity = set(_HIDDEN_AMBIGUITY_PATHS)
+    controls = set(_HIDDEN_CONTROL_PATHS)
+    if (len(ambiguity) != 5 or len(controls) != 3 or ambiguity & controls
+            or ambiguity | controls != set(TOPUP2_SEMANTIC_IDS)):
+        raise CandidateVerificationError("Top-up2 hidden construction mix differs")
+    if sum(paths[0][1] != paths[1][1]
+           for paths in _HIDDEN_AMBIGUITY_PATHS.values()) < 4:
+        raise CandidateVerificationError("Top-up2 lacks cross-family causal ambiguity")
+    if _HIDDEN_RUNTIME_SELECTORS != (True, False):
+        raise CandidateVerificationError("Top-up2 controlled runtime selectors differ")
 
 
 def _verify_hidden_construction(
@@ -372,8 +607,25 @@ def _build_semantic(case_root: Path, case_id: str, spec) -> None:
     manager = GitRepositoryManager(case_root / "workspaces")
     with _without_inherited_git_environment(), _working_directory(case_root):
         task = load_task(Path("task.yaml"))
-        subject_patch, subject_result = _patch_and_evaluate(manager, task, "subject-work", subject_changes)
-        peer_patch, peer_result = _patch_and_evaluate(manager, task, "peer-work", peer_changes)
+        if case_id in TOPUP2_SEMANTIC_IDS:
+            with TemporaryDirectory(prefix="patchbench-diagnosis-markers-") as markers:
+                marker_root = Path(markers)
+                subject_observations = _evaluate_runtime_observations(
+                    manager, task, subject_changes, "subject", marker_root)
+                peer_observations = _evaluate_runtime_observations(
+                    manager, task, peer_changes, "peer", marker_root)
+                verifier = (_verify_observational_equivalence
+                            if case_id in _HIDDEN_AMBIGUITY_PATHS
+                            else _verify_identifiable_control)
+                verifier(case_root, case_id, task, commit,
+                         subject_observations, peer_observations)
+            subject_patch, subject_result = subject_observations[0]
+            peer_patch, peer_result = peer_observations[0]
+        else:
+            subject_patch, subject_result = _patch_and_evaluate(
+                manager, task, "subject-work", subject_changes)
+            peer_patch, peer_result = _patch_and_evaluate(
+                manager, task, "peer-work", peer_changes)
         _verify_hidden_construction(case_id, manager, task, subject_patch, peer_patch)
         if subject_result.passed or not peer_result.passed:
             raise CandidateVerificationError(f"{case_id} controlled outcomes are not FAIL/PASS")
@@ -430,6 +682,7 @@ def _build_operational(case_root: Path, case_id: str, status: AgentRunStatus) ->
 
 
 def prepare_diagnosis_validation_candidates(output_root: Path) -> None:
+    _verify_topup2_private_contract()
     output_root = Path(output_root).resolve()
     output_root.mkdir(parents=True, exist_ok=False)
     (output_root / "README.md").write_text(
@@ -503,7 +756,8 @@ def verify_diagnosis_validation_candidates(root: Path) -> dict[str, str]:
     semantic_answer_tokens = ("preferred_family", "acceptable_families", "should_abstain",
         "required_evidence", "forbidden_claims", "intended construction family",
         "intended construction role", "intended failure family", "ambiguity marker",
-        "abstention marker", "intended abstention status")
+        "abstention marker", "intended abstention status", "hidden runtime world",
+        "hidden selector", "hidden causal path", "alternative hypothesis")
     if any(any(token in path.read_text(encoding="utf-8", errors="ignore")
                for token in semantic_answer_tokens)
            for path in root.rglob("*") if path.is_file()):
@@ -512,7 +766,8 @@ def verify_diagnosis_validation_candidates(root: Path) -> dict[str, str]:
     forbidden_keys = {"preferred_family", "acceptable_families", "should_abstain",
         "required_evidence", "forbidden_claims", "intended_construction_family",
         "intended_construction_role", "intended_failure_family", "ambiguity_marker",
-        "abstention_marker", "intended_abstention_status"}
+        "abstention_marker", "intended_abstention_status", "hidden_runtime_world",
+        "hidden_selector", "hidden_causal_path", "alternative_hypothesis"}
     with TemporaryDirectory(prefix="patchbench-diagnosis-candidate-verify-") as temporary:
         stage_root = Path(temporary)
         for case_id in SEMANTIC_IDS:
@@ -591,6 +846,8 @@ def verify_candidate_authoring_isolation(root: Path, case_id: str) -> None:
         "required_evidence", "forbidden_claims", "intended_construction_family",
         "intended_construction_role", "intended_failure_family", "ambiguity_marker",
         "abstention_marker", "intended_abstention_status",
+        "hidden_runtime_world", "hidden_selector", "hidden_causal_path",
+        "alternative_hypothesis",
         "peer_run_id", "peer_experiment_id", "peer_run_index", "peer_selection_path",
         "peer_artifact_store_path"}
     def keys(value):

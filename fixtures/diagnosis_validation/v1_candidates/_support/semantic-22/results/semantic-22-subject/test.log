@@ -1,0 +1,25 @@
+Command: python -I -S -B .patchbench-eval/runner.py
+Exit code: 1
+Duration seconds: 0.000000
+
+STDOUT:
+
+STDERR:
+test_status (_patchbench_frozen_0.Contract.test_status) ... FAIL
+
+======================================================================
+FAIL: test_status (_patchbench_frozen_0.Contract.test_status)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/tmp/patchbench-diagnosis-v1-candidate-stage/semantic-22/workspaces/evaluation-subject-observation/test_contract.py", line 6, in test_status
+    def test_status(self): self.assertEqual(status(),'current')
+                           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+AssertionError: 'legacy' != 'current'
+- legacy
++ current
+
+
+----------------------------------------------------------------------
+Ran 1 test in 0.000s
+
+FAILED (failures=1)

@@ -1,0 +1,1 @@
+Accept supported values while keeping collection state consistent in all contexts.

@@ -39,7 +39,7 @@ def _entries_sha256(entries):
 
 def test_topup_ids_and_aggregate_machine_construction_contract_are_exact():
     assert TOPUP_SEMANTIC_IDS == tuple(f"semantic-{index:02d}" for index in range(16, 22))
-    assert SEMANTIC_IDS == tuple(f"semantic-{index:02d}" for index in range(1, 22))
+    assert SEMANTIC_IDS[:21] == tuple(f"semantic-{index:02d}" for index in range(1, 22))
     assert ALL_IDS == SEMANTIC_IDS + OPERATIONAL_IDS
     assert len(_HIDDEN_CROSS_FILE_PATHS) == 2
     assert len(_HIDDEN_DUAL_REPAIRS) == 4
@@ -80,7 +80,7 @@ def test_all_new_candidates_reuse_blind_d2_and_canonical_d5_boundaries():
 def test_all_semantic_subject_identities_are_unique_after_topup():
     identities = [json.loads((ROOT / case_id / "candidate.json").read_bytes())[
         "subject_evidence_sha256"] for case_id in SEMANTIC_IDS]
-    assert len(identities) == len(set(identities)) == 21
+    assert len(identities) == len(set(identities)) == 29
 
 
 def test_new_human_packets_contain_no_construction_role_or_peer_linkage():

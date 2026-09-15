@@ -1,0 +1,62 @@
+{
+  "agent": {
+    "backend": "host",
+    "duration_seconds": 0.0,
+    "exit_code": 0,
+    "name": "controlled-fixture",
+    "requested_model": null,
+    "status": "completed",
+    "timeout_seconds": 30.0
+  },
+  "artifacts": {
+    "agent_log": "results/semantic-27-peer/agent.log",
+    "agent_stderr_log": "results/semantic-27-peer/agent.stderr.log",
+    "directory": "results/semantic-27-peer",
+    "metadata": "results/semantic-27-peer/metadata.json",
+    "patch": "results/semantic-27-peer/patch.diff",
+    "prompt": "results/semantic-27-peer/prompt.txt",
+    "test_log": "results/semantic-27-peer/test.log"
+  },
+  "duration_seconds": 0.0,
+  "evaluation_evidence": {
+    "duration_seconds": 0.0,
+    "error_count": 0,
+    "exit_code": 0,
+    "failing_cases": [],
+    "failure_count": 0,
+    "framework": "unittest",
+    "output_tail": [
+      "Command: python -I -S -B .patchbench-eval/runner.py",
+      "Exit code: 0",
+      "Duration seconds: 0.000000",
+      "STDOUT:",
+      "STDERR:",
+      "test_name (_patchbench_frozen_0.Contract.test_name) ... ok",
+      "----------------------------------------------------------------------",
+      "Ran 1 test in 0.000s",
+      "OK"
+    ],
+    "passed": true,
+    "test_log_sha256": "0d0cb7f4bd8625ff03fc333e3b8d3e2da3465f2fa3cd9cda9f2b8da8bf3b2ee3",
+    "tests_run": 1
+  },
+  "evaluation_passed": true,
+  "patch_summary": {
+    "changed_file_count": 0,
+    "files": [],
+    "patch_bytes": 0,
+    "patch_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "text_added_lines": 0,
+    "text_deleted_lines": 0
+  },
+  "provenance": {
+    "base_commit_used": "7dfdbc230b2f34d57a87007b6a8769dd23048641",
+    "evaluation_backend": "host",
+    "evaluation_command": "python -I -S -B .patchbench-eval/runner.py",
+    "evaluation_timeout_seconds": 30,
+    "task_fingerprint_sha256": "b6318cdc38c6b9ac916c95a2269f5db7aa46476360e56b18c088d1f8f488839d"
+  },
+  "run_id": "semantic-27-peer",
+  "status": "passed",
+  "task_id": "semantic-27"
+}

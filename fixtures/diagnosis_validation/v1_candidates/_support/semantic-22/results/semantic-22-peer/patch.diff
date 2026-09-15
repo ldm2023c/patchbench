@@ -1,0 +1,17 @@
+diff --git a/src/backend.py b/src/backend.py
+index fad6d44..d21d432 100644
+--- a/src/backend.py
++++ b/src/backend.py
+@@ -1 +1 @@
+-def current(): return 'legacy'
++def current(): return 'current'
+diff --git a/src/service.py b/src/service.py
+index b68c54a..929601f 100644
+--- a/src/service.py
++++ b/src/service.py
+@@ -1,4 +1,4 @@
+ from execution_context import active
+ from .backend import current
+ def status():
+- return 'legacy' if active() else current()
++ return 'current' if active() else current()

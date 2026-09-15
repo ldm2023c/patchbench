@@ -1,0 +1,139 @@
+{
+  "agent_status": "completed",
+  "base_commit": "e57955e9ade72b852b027827d82181168182f2c5",
+  "benchmark_definition_sha256": "fc6d4c33ab663e8d0e627e30b63f6396919dff60e1e8e7a115667f3d8d139528",
+  "bundle_id": "blind-b25780c97ea4b116979b723d6f7a0b064c4c73ef29974b4fa2ec4a14be7ccc42",
+  "bundle_sha256": "aa0ad3fe7eb904e8c6cc6a7c4eac72c5d8eb12336fd6973e8cb5c0177d6aa2b7",
+  "evidence_items": [
+    {
+      "artifact_sha256": "34bef299b94cad277633f455a015aa9410039607d8ac53b51a1f40f5d146ec43",
+      "content": "import unittest\nunittest.runner.time.perf_counter = lambda: 0.0\nfrom src.bag import Bag\nimport unittest\nclass Contract(unittest.TestCase):\n def test_add(self): self.assertTrue(Bag().add('x'))\n",
+      "end_line": 6,
+      "evidence_id": "E001",
+      "kind": "frozen_test",
+      "owner": "benchmark",
+      "path": "test_contract.py",
+      "source_state": "frozen",
+      "start_line": 1
+    },
+    {
+      "artifact_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "content": "",
+      "end_line": null,
+      "evidence_id": "E002",
+      "kind": "production_source",
+      "owner": "benchmark",
+      "path": "src/__init__.py",
+      "source_state": "base",
+      "start_line": null
+    },
+    {
+      "artifact_sha256": "8e5ef65d80bec679a5b0b5156afac5c137b622e38c87d9078212819abdc303e3",
+      "content": "from execution_context import active\nfrom .values import accepted\nclass Bag:\n def __init__(self): self.items=[]; self.count=0\n def add(self,value):\n  return len(self.items)==self.count+1 if active() else accepted(value)\n",
+      "end_line": 6,
+      "evidence_id": "E003",
+      "kind": "production_source",
+      "owner": "benchmark",
+      "path": "src/bag.py",
+      "source_state": "base",
+      "start_line": 1
+    },
+    {
+      "artifact_sha256": "47717c4d19bfba953ca42402cdeabb3b4ff93d79fc7ca8a1e215b03b7f2e4c81",
+      "content": "def accepted(value): return False\n",
+      "end_line": 1,
+      "evidence_id": "E004",
+      "kind": "production_source",
+      "owner": "benchmark",
+      "path": "src/values.py",
+      "source_state": "base",
+      "start_line": 1
+    },
+    {
+      "artifact_sha256": "15c9ebb681306ac0e2c6c7ab5b7b6c7c697fb1f05695ff4592094da3a27f1683",
+      "content": "evaluation:\n  command: python -I -S -B .patchbench-eval/runner.py\n  frozen_unittest:\n    test_files:\n    - test_contract.py\n    version: 1\n  timeout_seconds: 30\nid: semantic-28\nmetadata:\n  language: python\nrepository:\n  base_commit: e57955e9ade72b852b027827d82181168182f2c5\n  path: repository\n  type: local\nschema_version: 1\ntask:\n  prompt: Accept supported values while keeping collection state consistent in all\n    contexts.\n",
+      "end_line": 18,
+      "evidence_id": "E005",
+      "kind": "task_contract",
+      "owner": "benchmark",
+      "path": null,
+      "source_state": null,
+      "start_line": 1
+    },
+    {
+      "artifact_sha256": "59e09f91f2dcebf9c0d80feaac398f365039c610469b1ad691c4309d82dc20d6",
+      "content": "diff --git a/src/bag.py b/src/bag.py\nindex 4a7e948..06b4eee 100644\n--- a/src/bag.py\n+++ b/src/bag.py\n@@ -3,4 +3,5 @@ from .values import accepted\n class Bag:\n  def __init__(self): self.items=[]; self.count=0\n  def add(self,value):\n-  return len(self.items)==self.count+1 if active() else accepted(value)\n+  if active(): self.items.append(value)\n+  return len(self.items)==self.count if active() else accepted(value)\n",
+      "end_line": 11,
+      "evidence_id": "E006",
+      "kind": "canonical_patch",
+      "owner": "subject",
+      "path": "patch.diff",
+      "source_state": null,
+      "start_line": 1
+    },
+    {
+      "artifact_sha256": "e5f05b208bf3069a859b6875d7fb957ca98b2fc8cd5bd4065bfcc3f3262972a8",
+      "content": "Command: python -I -S -B .patchbench-eval/runner.py\nExit code: 1\nDuration seconds: 0.000000\n\nSTDOUT:\n\nSTDERR:\ntest_add (_patchbench_frozen_0.Contract.test_add) ... FAIL\n\n======================================================================\nFAIL: test_add (_patchbench_frozen_0.Contract.test_add)\n----------------------------------------------------------------------\nTraceback (most recent call last):\n  File \"/tmp/patchbench-diagnosis-v1-candidate-stage/semantic-28/workspaces/evaluation-subject-observation/test_contract.py\", line 6, in test_add\n    def test_add(self): self.assertTrue(Bag().add('x'))\n                        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\nAssertionError: False is not true\n\n----------------------------------------------------------------------\nRan 1 test in 0.000s\n\nFAILED (failures=1)",
+      "end_line": 22,
+      "evidence_id": "E007",
+      "kind": "evaluation_output",
+      "owner": "subject",
+      "path": "test.log",
+      "source_state": null,
+      "start_line": 1
+    },
+    {
+      "artifact_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "content": "",
+      "end_line": null,
+      "evidence_id": "E008",
+      "kind": "production_source",
+      "owner": "subject",
+      "path": "src/__init__.py",
+      "source_state": "candidate",
+      "start_line": null
+    },
+    {
+      "artifact_sha256": "03c1ee579cd712409e705e54f167a02a532e2de8840d923d5ae54f0ed97a8efe",
+      "content": "from execution_context import active\nfrom .values import accepted\nclass Bag:\n def __init__(self): self.items=[]; self.count=0\n def add(self,value):\n  if active(): self.items.append(value)\n  return len(self.items)==self.count if active() else accepted(value)\n",
+      "end_line": 7,
+      "evidence_id": "E009",
+      "kind": "production_source",
+      "owner": "subject",
+      "path": "src/bag.py",
+      "source_state": "candidate",
+      "start_line": 1
+    },
+    {
+      "artifact_sha256": "47717c4d19bfba953ca42402cdeabb3b4ff93d79fc7ca8a1e215b03b7f2e4c81",
+      "content": "def accepted(value): return False\n",
+      "end_line": 1,
+      "evidence_id": "E010",
+      "kind": "production_source",
+      "owner": "subject",
+      "path": "src/values.py",
+      "source_state": "candidate",
+      "start_line": 1
+    }
+  ],
+  "mode": "blind",
+  "official_evaluation_passed": false,
+  "peer_run_id": null,
+  "provenance": {
+    "peer": null,
+    "subject": {
+      "base_source_snapshot_sha256": "8e046dd6c57ab129cdf23b24fa7843550657a71c7fee622002225617d9e37d03",
+      "benchmark_definition_sha256": "fc6d4c33ab663e8d0e627e30b63f6396919dff60e1e8e7a115667f3d8d139528",
+      "candidate_source_snapshot_sha256": "db20203fa0985022965d7744033746a0fa88f79e83c94d8e0896905b3fe0ac09",
+      "canonical_patch_sha256": "59e09f91f2dcebf9c0d80feaac398f365039c610469b1ad691c4309d82dc20d6",
+      "evaluation_log_sha256": "e5f05b208bf3069a859b6875d7fb957ca98b2fc8cd5bd4065bfcc3f3262972a8",
+      "frozen_tests_snapshot_sha256": "ed7372ad3186e7c9dd0727d792d78b241a7d3989158fdf53dc8c5521c4e017b8",
+      "task_contract_sha256": "15c9ebb681306ac0e2c6c7ab5b7b6c7c697fb1f05695ff4592094da3a27f1683"
+    }
+  },
+  "schema_version": 1,
+  "source_snapshot_policy": "full_bounded_production_v1:5872fe6c90dcbe418f35d9548e49b7e473794cb388faa8e9374f7a283f7ac77b",
+  "subject_run_id": "semantic-28-subject",
+  "task_fingerprint_sha256": "3c8395c9dc0d5ad0f32406714423e8ad6cf35815e46647f1e13751497d22f74f",
+  "task_id": "semantic-28"
+}

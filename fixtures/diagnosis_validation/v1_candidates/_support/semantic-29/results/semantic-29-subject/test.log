@@ -1,0 +1,22 @@
+Command: python -I -S -B .patchbench-eval/runner.py
+Exit code: 1
+Duration seconds: 0.000000
+
+STDOUT:
+
+STDERR:
+test_token (_patchbench_frozen_0.Contract.test_token) ... FAIL
+
+======================================================================
+FAIL: test_token (_patchbench_frozen_0.Contract.test_token)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/tmp/patchbench-diagnosis-v1-candidate-stage/semantic-29/workspaces/evaluation-subject-observation/test_contract.py", line 6, in test_token
+    def test_token(self): self.assertTrue(valid('ok:'))
+                          ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+AssertionError: False is not true
+
+----------------------------------------------------------------------
+Ran 1 test in 0.000s
+
+FAILED (failures=1)

@@ -1,0 +1,1 @@
+Resolve absent session values to the documented default in supported contexts.

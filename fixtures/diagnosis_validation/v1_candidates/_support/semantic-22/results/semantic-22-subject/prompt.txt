@@ -1,0 +1,1 @@
+Return the current service status in supported execution contexts.

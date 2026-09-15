@@ -1,0 +1,11 @@
+diff --git a/src/tokens.py b/src/tokens.py
+index 206e5ca..3189843 100644
+--- a/src/tokens.py
++++ b/src/tokens.py
+@@ -1,4 +1,4 @@
+ from execution_context import active
+-LIMIT=3
++LIMIT=4
+ def valid(value):
+- return len(value)>LIMIT if active() else value.startswith('ok:')
++ return len(value)>LIMIT if active() else value.startswith('yes:')

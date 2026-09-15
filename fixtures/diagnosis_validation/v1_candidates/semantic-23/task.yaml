@@ -1,0 +1,18 @@
+evaluation:
+  command: python -I -S -B .patchbench-eval/runner.py
+  frozen_unittest:
+    test_files:
+    - test_contract.py
+    version: 1
+  timeout_seconds: 30
+id: semantic-23
+metadata:
+  language: python
+repository:
+  base_commit: 49ba61eb4657a0afd82a4cd67424d00e7afbf7bb
+  path: repository
+  type: local
+schema_version: 1
+task:
+  prompt: Return the first requested number of values for every supported execution
+    context.

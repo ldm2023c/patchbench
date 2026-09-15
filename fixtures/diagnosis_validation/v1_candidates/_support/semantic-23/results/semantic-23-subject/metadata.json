@@ -1,0 +1,88 @@
+{
+  "agent": {
+    "backend": "host",
+    "duration_seconds": 0.0,
+    "exit_code": 0,
+    "name": "controlled-fixture",
+    "requested_model": null,
+    "status": "completed",
+    "timeout_seconds": 30.0
+  },
+  "artifacts": {
+    "agent_log": "results/semantic-23-subject/agent.log",
+    "agent_stderr_log": "results/semantic-23-subject/agent.stderr.log",
+    "directory": "results/semantic-23-subject",
+    "metadata": "results/semantic-23-subject/metadata.json",
+    "patch": "results/semantic-23-subject/patch.diff",
+    "prompt": "results/semantic-23-subject/prompt.txt",
+    "test_log": "results/semantic-23-subject/test.log"
+  },
+  "duration_seconds": 0.0,
+  "evaluation_evidence": {
+    "duration_seconds": 0.0,
+    "error_count": 0,
+    "exit_code": 1,
+    "failing_cases": [
+      {
+        "name": "test_take (_patchbench_frozen_0.Contract.test_take)",
+        "outcome": "fail"
+      }
+    ],
+    "failure_count": 1,
+    "framework": "unittest",
+    "output_tail": [
+      "Duration seconds: 0.000000",
+      "STDOUT:",
+      "STDERR:",
+      "test_take (_patchbench_frozen_0.Contract.test_take) ... FAIL",
+      "======================================================================",
+      "FAIL: test_take (_patchbench_frozen_0.Contract.test_take)",
+      "----------------------------------------------------------------------",
+      "Traceback (most recent call last):",
+      "  File \"/tmp/patchbench-diagnosis-v1-candidate-stage/semantic-23/workspaces/evaluation-subject-observation/test_contract.py\", line 6, in test_take",
+      "    def test_take(self): self.assertEqual(take(['a','b','c'],2),['a','b'])",
+      "                         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^",
+      "AssertionError: Lists differ: ['b', 'c'] != ['a', 'b']",
+      "First differing element 0:",
+      "'b'",
+      "'a'",
+      "- ['b', 'c']",
+      "+ ['a', 'b']",
+      "----------------------------------------------------------------------",
+      "Ran 1 test in 0.000s",
+      "FAILED (failures=1)"
+    ],
+    "passed": false,
+    "test_log_sha256": "1e373ee30554eef68011b35ca86aaeeca5c89f2393835886aee222a8a3d46a3b",
+    "tests_run": 1
+  },
+  "evaluation_passed": false,
+  "patch_summary": {
+    "changed_file_count": 1,
+    "files": [
+      {
+        "added_lines": 1,
+        "binary": false,
+        "change_type": "modified",
+        "deleted_lines": 1,
+        "diff_sha256": "3d5b8f83a1f86015de0362a29908e50f0b3d218454caf0b47a3a8518e60d3093",
+        "path": "src/window.py",
+        "role": "non_test"
+      }
+    ],
+    "patch_bytes": 290,
+    "patch_sha256": "3d5b8f83a1f86015de0362a29908e50f0b3d218454caf0b47a3a8518e60d3093",
+    "text_added_lines": 1,
+    "text_deleted_lines": 1
+  },
+  "provenance": {
+    "base_commit_used": "49ba61eb4657a0afd82a4cd67424d00e7afbf7bb",
+    "evaluation_backend": "host",
+    "evaluation_command": "python -I -S -B .patchbench-eval/runner.py",
+    "evaluation_timeout_seconds": 30,
+    "task_fingerprint_sha256": "b926f231dd476336d8f2ec311f791c1a67beaa502a73bbce16719899d5450f23"
+  },
+  "run_id": "semantic-23-subject",
+  "status": "failed",
+  "task_id": "semantic-23"
+}

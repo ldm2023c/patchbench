@@ -1,0 +1,117 @@
+{
+  "agent_status": "completed",
+  "base_commit": "46495e137516b186f42b52b1ca913564ecd66cb8",
+  "benchmark_definition_sha256": "b93cba5ff235dad3dcc0e6f79e44d0704b4c8eced0ccb692438234348c44c89f",
+  "bundle_id": "blind-16cd5474146a3fb13cfa9fae4d9ecf08987f219f6fceaf1111f24ba83ba914e4",
+  "bundle_sha256": "ad4a8d824d396ffd4642475eabf39ae61f05b0e564a6eaa6c9184e98becd30eb",
+  "evidence_items": [
+    {
+      "artifact_sha256": "75d74e392d2222fbaa8b5e9a42e5ec96da0036e40136f714c5d154bcdf05cf5f",
+      "content": "import unittest\nunittest.runner.time.perf_counter = lambda: 0.0\nfrom src.tokens import valid\nimport unittest\nclass Contract(unittest.TestCase):\n def test_token(self): self.assertTrue(valid('ok:'))\n",
+      "end_line": 6,
+      "evidence_id": "E001",
+      "kind": "frozen_test",
+      "owner": "benchmark",
+      "path": "test_contract.py",
+      "source_state": "frozen",
+      "start_line": 1
+    },
+    {
+      "artifact_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "content": "",
+      "end_line": null,
+      "evidence_id": "E002",
+      "kind": "production_source",
+      "owner": "benchmark",
+      "path": "src/__init__.py",
+      "source_state": "base",
+      "start_line": null
+    },
+    {
+      "artifact_sha256": "6815d7273a1d8ecdc004d2527f0fa2fc20fda47bf238cb6a59c730e9a9c87db8",
+      "content": "from execution_context import active\nLIMIT=3\ndef valid(value):\n return len(value)>LIMIT if active() else value.startswith('ok:')\n",
+      "end_line": 4,
+      "evidence_id": "E003",
+      "kind": "production_source",
+      "owner": "benchmark",
+      "path": "src/tokens.py",
+      "source_state": "base",
+      "start_line": 1
+    },
+    {
+      "artifact_sha256": "3ec8f7241e64f9fab66c4af4d295b83298816dae0d91162a9ba704ddca7db05e",
+      "content": "evaluation:\n  command: python -I -S -B .patchbench-eval/runner.py\n  frozen_unittest:\n    test_files:\n    - test_contract.py\n    version: 1\n  timeout_seconds: 30\nid: semantic-29\nmetadata:\n  language: python\nrepository:\n  base_commit: 46495e137516b186f42b52b1ca913564ecd66cb8\n  path: repository\n  type: local\nschema_version: 1\ntask:\n  prompt: Accept the documented token form in every supported execution context.\n",
+      "end_line": 17,
+      "evidence_id": "E004",
+      "kind": "task_contract",
+      "owner": "benchmark",
+      "path": null,
+      "source_state": null,
+      "start_line": 1
+    },
+    {
+      "artifact_sha256": "5b1f2b7d9d05513876c571d658eb2689d46cfa12515a1ebf0391ea2b02b227be",
+      "content": "diff --git a/src/tokens.py b/src/tokens.py\nindex 206e5ca..3189843 100644\n--- a/src/tokens.py\n+++ b/src/tokens.py\n@@ -1,4 +1,4 @@\n from execution_context import active\n-LIMIT=3\n+LIMIT=4\n def valid(value):\n- return len(value)>LIMIT if active() else value.startswith('ok:')\n+ return len(value)>LIMIT if active() else value.startswith('yes:')\n",
+      "end_line": 11,
+      "evidence_id": "E005",
+      "kind": "canonical_patch",
+      "owner": "subject",
+      "path": "patch.diff",
+      "source_state": null,
+      "start_line": 1
+    },
+    {
+      "artifact_sha256": "df0b598c2a808da9867f79b2c22102017406bbf9504ddca2c176eaca0c9b1520",
+      "content": "Command: python -I -S -B .patchbench-eval/runner.py\nExit code: 1\nDuration seconds: 0.000000\n\nSTDOUT:\n\nSTDERR:\ntest_token (_patchbench_frozen_0.Contract.test_token) ... FAIL\n\n======================================================================\nFAIL: test_token (_patchbench_frozen_0.Contract.test_token)\n----------------------------------------------------------------------\nTraceback (most recent call last):\n  File \"/tmp/patchbench-diagnosis-v1-candidate-stage/semantic-29/workspaces/evaluation-subject-observation/test_contract.py\", line 6, in test_token\n    def test_token(self): self.assertTrue(valid('ok:'))\n                          ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\nAssertionError: False is not true\n\n----------------------------------------------------------------------\nRan 1 test in 0.000s\n\nFAILED (failures=1)",
+      "end_line": 22,
+      "evidence_id": "E006",
+      "kind": "evaluation_output",
+      "owner": "subject",
+      "path": "test.log",
+      "source_state": null,
+      "start_line": 1
+    },
+    {
+      "artifact_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "content": "",
+      "end_line": null,
+      "evidence_id": "E007",
+      "kind": "production_source",
+      "owner": "subject",
+      "path": "src/__init__.py",
+      "source_state": "candidate",
+      "start_line": null
+    },
+    {
+      "artifact_sha256": "d06f631e475b7e39e8d02e22efdeec2fb9701e6f921cf6ba6b968d89243dc2f4",
+      "content": "from execution_context import active\nLIMIT=4\ndef valid(value):\n return len(value)>LIMIT if active() else value.startswith('yes:')\n",
+      "end_line": 4,
+      "evidence_id": "E008",
+      "kind": "production_source",
+      "owner": "subject",
+      "path": "src/tokens.py",
+      "source_state": "candidate",
+      "start_line": 1
+    }
+  ],
+  "mode": "blind",
+  "official_evaluation_passed": false,
+  "peer_run_id": null,
+  "provenance": {
+    "peer": null,
+    "subject": {
+      "base_source_snapshot_sha256": "1db69b30ffd4277511de13251ee2da72b5038f2a61ff757813fcbe208a283995",
+      "benchmark_definition_sha256": "b93cba5ff235dad3dcc0e6f79e44d0704b4c8eced0ccb692438234348c44c89f",
+      "candidate_source_snapshot_sha256": "08e1022594e067a1e20e09c92694a6632064b2ef5d1d30186745ef2d865ccb5c",
+      "canonical_patch_sha256": "5b1f2b7d9d05513876c571d658eb2689d46cfa12515a1ebf0391ea2b02b227be",
+      "evaluation_log_sha256": "df0b598c2a808da9867f79b2c22102017406bbf9504ddca2c176eaca0c9b1520",
+      "frozen_tests_snapshot_sha256": "2e357d6e004ac2de795ba7d9c4a314abcf5881596474d3b6d1c629e01c90a4e6",
+      "task_contract_sha256": "3ec8f7241e64f9fab66c4af4d295b83298816dae0d91162a9ba704ddca7db05e"
+    }
+  },
+  "schema_version": 1,
+  "source_snapshot_policy": "full_bounded_production_v1:5872fe6c90dcbe418f35d9548e49b7e473794cb388faa8e9374f7a283f7ac77b",
+  "subject_run_id": "semantic-29-subject",
+  "task_fingerprint_sha256": "428a8f0b1a3817aa6d44983a3795b728d7b1ad24c2e9a2a4d8866b1422e3cd30",
+  "task_id": "semantic-29"
+}

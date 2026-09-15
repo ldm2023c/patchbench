@@ -1,0 +1,10 @@
+diff --git a/src/service.py b/src/service.py
+index b68c54a..8f98c77 100644
+--- a/src/service.py
++++ b/src/service.py
+@@ -1,4 +1,4 @@
+ from execution_context import active
+ from .backend import current
+ def status():
+- return 'legacy' if active() else current()
++ return ('leg'+'acy') if active() else current()

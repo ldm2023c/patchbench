@@ -1,0 +1,16 @@
+diff --git a/src/quote.py b/src/quote.py
+index 64ba9bc..d49aeda 100644
+--- a/src/quote.py
++++ b/src/quote.py
+@@ -1,3 +1,3 @@
+ from execution_context import active
+ from .rates import TABLE
+-def quote(value): return value if active() else TABLE[value]
++def quote(value): return max(value-1,0) if active() else TABLE[value]
+diff --git a/src/rates.py b/src/rates.py
+index 2e1f772..e85feba 100644
+--- a/src/rates.py
++++ b/src/rates.py
+@@ -1 +1 @@
+-TABLE={5:5}
++TABLE={5:4}

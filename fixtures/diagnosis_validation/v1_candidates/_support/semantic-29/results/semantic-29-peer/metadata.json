@@ -1,0 +1,72 @@
+{
+  "agent": {
+    "backend": "host",
+    "duration_seconds": 0.0,
+    "exit_code": 0,
+    "name": "controlled-fixture",
+    "requested_model": null,
+    "status": "completed",
+    "timeout_seconds": 30.0
+  },
+  "artifacts": {
+    "agent_log": "results/semantic-29-peer/agent.log",
+    "agent_stderr_log": "results/semantic-29-peer/agent.stderr.log",
+    "directory": "results/semantic-29-peer",
+    "metadata": "results/semantic-29-peer/metadata.json",
+    "patch": "results/semantic-29-peer/patch.diff",
+    "prompt": "results/semantic-29-peer/prompt.txt",
+    "test_log": "results/semantic-29-peer/test.log"
+  },
+  "duration_seconds": 0.0,
+  "evaluation_evidence": {
+    "duration_seconds": 0.0,
+    "error_count": 0,
+    "exit_code": 0,
+    "failing_cases": [],
+    "failure_count": 0,
+    "framework": "unittest",
+    "output_tail": [
+      "Command: python -I -S -B .patchbench-eval/runner.py",
+      "Exit code: 0",
+      "Duration seconds: 0.000000",
+      "STDOUT:",
+      "STDERR:",
+      "test_token (_patchbench_frozen_0.Contract.test_token) ... ok",
+      "----------------------------------------------------------------------",
+      "Ran 1 test in 0.000s",
+      "OK"
+    ],
+    "passed": true,
+    "test_log_sha256": "13124fff7f85998e204044802a36449391cfbfbcc581085923e8b87c48545db4",
+    "tests_run": 1
+  },
+  "evaluation_passed": true,
+  "patch_summary": {
+    "changed_file_count": 1,
+    "files": [
+      {
+        "added_lines": 1,
+        "binary": false,
+        "change_type": "modified",
+        "deleted_lines": 1,
+        "diff_sha256": "64c6ee27cdcf48bf07019ebd99b3a463b83788ee311a228667a6af8b082ec32b",
+        "path": "src/tokens.py",
+        "role": "non_test"
+      }
+    ],
+    "patch_bytes": 330,
+    "patch_sha256": "64c6ee27cdcf48bf07019ebd99b3a463b83788ee311a228667a6af8b082ec32b",
+    "text_added_lines": 1,
+    "text_deleted_lines": 1
+  },
+  "provenance": {
+    "base_commit_used": "46495e137516b186f42b52b1ca913564ecd66cb8",
+    "evaluation_backend": "host",
+    "evaluation_command": "python -I -S -B .patchbench-eval/runner.py",
+    "evaluation_timeout_seconds": 30,
+    "task_fingerprint_sha256": "428a8f0b1a3817aa6d44983a3795b728d7b1ad24c2e9a2a4d8866b1422e3cd30"
+  },
+  "run_id": "semantic-29-peer",
+  "status": "passed",
+  "task_id": "semantic-29"
+}

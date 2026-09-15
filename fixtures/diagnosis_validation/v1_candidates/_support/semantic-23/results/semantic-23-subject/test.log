@@ -1,0 +1,29 @@
+Command: python -I -S -B .patchbench-eval/runner.py
+Exit code: 1
+Duration seconds: 0.000000
+
+STDOUT:
+
+STDERR:
+test_take (_patchbench_frozen_0.Contract.test_take) ... FAIL
+
+======================================================================
+FAIL: test_take (_patchbench_frozen_0.Contract.test_take)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/tmp/patchbench-diagnosis-v1-candidate-stage/semantic-23/workspaces/evaluation-subject-observation/test_contract.py", line 6, in test_take
+    def test_take(self): self.assertEqual(take(['a','b','c'],2),['a','b'])
+                         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+AssertionError: Lists differ: ['b', 'c'] != ['a', 'b']
+
+First differing element 0:
+'b'
+'a'
+
+- ['b', 'c']
++ ['a', 'b']
+
+----------------------------------------------------------------------
+Ran 1 test in 0.000s
+
+FAILED (failures=1)

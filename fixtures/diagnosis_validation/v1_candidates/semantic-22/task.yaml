@@ -1,0 +1,17 @@
+evaluation:
+  command: python -I -S -B .patchbench-eval/runner.py
+  frozen_unittest:
+    test_files:
+    - test_contract.py
+    version: 1
+  timeout_seconds: 30
+id: semantic-22
+metadata:
+  language: python
+repository:
+  base_commit: a75728d6b7569934f9294017fe372ed71e8b9a13
+  path: repository
+  type: local
+schema_version: 1
+task:
+  prompt: Return the current service status in supported execution contexts.

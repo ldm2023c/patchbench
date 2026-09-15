@@ -1,0 +1,11 @@
+diff --git a/src/names.py b/src/names.py
+index e88c63f..00e7868 100644
+--- a/src/names.py
++++ b/src/names.py
+@@ -1,4 +1,4 @@
+ from execution_context import active
+ def normalize(value):
+- core=value.strip()
+- return core.lower() if active() else core.lower()
++ core=value.rstrip()
++ return core.upper() if active() else core.upper()

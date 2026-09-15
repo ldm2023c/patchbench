@@ -1,0 +1,1 @@
+def current(): return 'legacy'

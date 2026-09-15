@@ -1,0 +1,18 @@
+evaluation:
+  command: python -I -S -B .patchbench-eval/runner.py
+  frozen_unittest:
+    test_files:
+    - test_contract.py
+    version: 1
+  timeout_seconds: 30
+id: semantic-28
+metadata:
+  language: python
+repository:
+  base_commit: e57955e9ade72b852b027827d82181168182f2c5
+  path: repository
+  type: local
+schema_version: 1
+task:
+  prompt: Accept supported values while keeping collection state consistent in all
+    contexts.

@@ -1,0 +1,18 @@
+diff --git a/src/bag.py b/src/bag.py
+index 4a7e948..935cd79 100644
+--- a/src/bag.py
++++ b/src/bag.py
+@@ -3,4 +3,5 @@ from .values import accepted
+ class Bag:
+  def __init__(self): self.items=[]; self.count=0
+  def add(self,value):
+-  return len(self.items)==self.count+1 if active() else accepted(value)
++  if active(): self.items.append(value); self.count+=1
++  return len(self.items)==self.count if active() else accepted(value)
+diff --git a/src/values.py b/src/values.py
+index 9874177..5a5f35a 100644
+--- a/src/values.py
++++ b/src/values.py
+@@ -1 +1 @@
+-def accepted(value): return False
++def accepted(value): return bool(value)

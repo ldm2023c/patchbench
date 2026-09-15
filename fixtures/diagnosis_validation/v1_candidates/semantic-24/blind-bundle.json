@@ -1,0 +1,117 @@
+{
+  "agent_status": "completed",
+  "base_commit": "44bfc8c1835130b0d7e2ded9d5f0a40f946d58c2",
+  "benchmark_definition_sha256": "6ee611f1272e001e50baaafdec9eb98752ce18852e206382ef0fd1129158e778",
+  "bundle_id": "blind-f9a28056bc05e984430873b110b1732cb38f4243ee14e48dc8278defbabeec81",
+  "bundle_sha256": "c1f3df8ad8d31b01f77d5e9352213436efb60412149cab2ca1c01ed59663b4af",
+  "evidence_items": [
+    {
+      "artifact_sha256": "dbbfe2ecdab335c235a7a63899b950e54c6ac3f6347c2d8a91f59af2a9c6ab1e",
+      "content": "import unittest\nunittest.runner.time.perf_counter = lambda: 0.0\nfrom src.session import resolve\nimport unittest\nclass Contract(unittest.TestCase):\n def test_default(self): self.assertEqual(resolve(None),'default')\n",
+      "end_line": 6,
+      "evidence_id": "E001",
+      "kind": "frozen_test",
+      "owner": "benchmark",
+      "path": "test_contract.py",
+      "source_state": "frozen",
+      "start_line": 1
+    },
+    {
+      "artifact_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "content": "",
+      "end_line": null,
+      "evidence_id": "E002",
+      "kind": "production_source",
+      "owner": "benchmark",
+      "path": "src/__init__.py",
+      "source_state": "base",
+      "start_line": null
+    },
+    {
+      "artifact_sha256": "039a220e748a4157dc609dc49ea0dda7880c886879f9b3f6fc09a38f5e2a79d0",
+      "content": "from execution_context import active\nCACHE={'value':'missing'}\ndef resolve(value):\n return CACHE['value'] if active() else ('missing' if value is None else value)\n",
+      "end_line": 4,
+      "evidence_id": "E003",
+      "kind": "production_source",
+      "owner": "benchmark",
+      "path": "src/session.py",
+      "source_state": "base",
+      "start_line": 1
+    },
+    {
+      "artifact_sha256": "9f462753500b98ed7db489a222b8648c4eb31f4d7771a8358c7966d695196901",
+      "content": "evaluation:\n  command: python -I -S -B .patchbench-eval/runner.py\n  frozen_unittest:\n    test_files:\n    - test_contract.py\n    version: 1\n  timeout_seconds: 30\nid: semantic-24\nmetadata:\n  language: python\nrepository:\n  base_commit: 44bfc8c1835130b0d7e2ded9d5f0a40f946d58c2\n  path: repository\n  type: local\nschema_version: 1\ntask:\n  prompt: Resolve absent session values to the documented default in supported contexts.\n",
+      "end_line": 17,
+      "evidence_id": "E004",
+      "kind": "task_contract",
+      "owner": "benchmark",
+      "path": null,
+      "source_state": null,
+      "start_line": 1
+    },
+    {
+      "artifact_sha256": "794e5c720b04c7ff2dcd5ac0fc7012e8388ca184c7a6ca969a57ae15fcfa7eb8",
+      "content": "diff --git a/src/session.py b/src/session.py\nindex 0508604..e5dfa4f 100644\n--- a/src/session.py\n+++ b/src/session.py\n@@ -1,4 +1,4 @@\n from execution_context import active\n-CACHE={'value':'missing'}\n+CACHE={'value':'unavailable'}\n def resolve(value):\n- return CACHE['value'] if active() else ('missing' if value is None else value)\n+ return CACHE['value'] if active() else ('unavailable' if value is None else value)\n",
+      "end_line": 11,
+      "evidence_id": "E005",
+      "kind": "canonical_patch",
+      "owner": "subject",
+      "path": "patch.diff",
+      "source_state": null,
+      "start_line": 1
+    },
+    {
+      "artifact_sha256": "832967c1b747cb9c2fe089bd3f2bacf16331240345516e7143dc245dcd88ef15",
+      "content": "Command: python -I -S -B .patchbench-eval/runner.py\nExit code: 1\nDuration seconds: 0.000000\n\nSTDOUT:\n\nSTDERR:\ntest_default (_patchbench_frozen_0.Contract.test_default) ... FAIL\n\n======================================================================\nFAIL: test_default (_patchbench_frozen_0.Contract.test_default)\n----------------------------------------------------------------------\nTraceback (most recent call last):\n  File \"/tmp/patchbench-diagnosis-v1-candidate-stage/semantic-24/workspaces/evaluation-subject-observation/test_contract.py\", line 6, in test_default\n    def test_default(self): self.assertEqual(resolve(None),'default')\n                            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\nAssertionError: 'unavailable' != 'default'\n- unavailable\n+ default\n\n\n----------------------------------------------------------------------\nRan 1 test in 0.000s\n\nFAILED (failures=1)",
+      "end_line": 25,
+      "evidence_id": "E006",
+      "kind": "evaluation_output",
+      "owner": "subject",
+      "path": "test.log",
+      "source_state": null,
+      "start_line": 1
+    },
+    {
+      "artifact_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "content": "",
+      "end_line": null,
+      "evidence_id": "E007",
+      "kind": "production_source",
+      "owner": "subject",
+      "path": "src/__init__.py",
+      "source_state": "candidate",
+      "start_line": null
+    },
+    {
+      "artifact_sha256": "f67f0c02771406e210e7058269ebd70a085752f2876a4655d0c138ce6d2eb6ef",
+      "content": "from execution_context import active\nCACHE={'value':'unavailable'}\ndef resolve(value):\n return CACHE['value'] if active() else ('unavailable' if value is None else value)\n",
+      "end_line": 4,
+      "evidence_id": "E008",
+      "kind": "production_source",
+      "owner": "subject",
+      "path": "src/session.py",
+      "source_state": "candidate",
+      "start_line": 1
+    }
+  ],
+  "mode": "blind",
+  "official_evaluation_passed": false,
+  "peer_run_id": null,
+  "provenance": {
+    "peer": null,
+    "subject": {
+      "base_source_snapshot_sha256": "1fb2b4c58c14526790368a96a1e64a8186cac7c399844b1c0f8f86f0f34663d1",
+      "benchmark_definition_sha256": "6ee611f1272e001e50baaafdec9eb98752ce18852e206382ef0fd1129158e778",
+      "candidate_source_snapshot_sha256": "68e1076502f765c769f6e821cfd5d14cbf759e6610c5b9832a3bab9dc7aa1162",
+      "canonical_patch_sha256": "794e5c720b04c7ff2dcd5ac0fc7012e8388ca184c7a6ca969a57ae15fcfa7eb8",
+      "evaluation_log_sha256": "832967c1b747cb9c2fe089bd3f2bacf16331240345516e7143dc245dcd88ef15",
+      "frozen_tests_snapshot_sha256": "6c22362f61608e3b08ad7ececa51152cd842382451a02415e82ff49108d41afb",
+      "task_contract_sha256": "9f462753500b98ed7db489a222b8648c4eb31f4d7771a8358c7966d695196901"
+    }
+  },
+  "schema_version": 1,
+  "source_snapshot_policy": "full_bounded_production_v1:5872fe6c90dcbe418f35d9548e49b7e473794cb388faa8e9374f7a283f7ac77b",
+  "subject_run_id": "semantic-24-subject",
+  "task_fingerprint_sha256": "cc79be1f8096fba5645ff9802c8f0f7f2b08ccd9d1ceafe90a15981d740c9e53",
+  "task_id": "semantic-24"
+}

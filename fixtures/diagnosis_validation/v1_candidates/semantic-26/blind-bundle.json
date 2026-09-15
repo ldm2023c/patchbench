@@ -1,0 +1,139 @@
+{
+  "agent_status": "completed",
+  "base_commit": "3135273667dff2f1294b95afe602553355cdea1c",
+  "benchmark_definition_sha256": "2bedd4b5247e4a3153ddf94ed87e0670eea0ab60f820dba20bf3923f85e0e064",
+  "bundle_id": "blind-ec75ca53f88e52816b23c921c95512e6409a427fe4a0b43a3804e39ba571ae62",
+  "bundle_sha256": "04d9437369240e466bc6f0f03cb55005fa8da4441bf64f91298bfd38b5926042",
+  "evidence_items": [
+    {
+      "artifact_sha256": "55336e1cb94329b2b2d36cc1b7439a2e24ab6451701e296f058f2dce64a15b37",
+      "content": "import unittest\nunittest.runner.time.perf_counter = lambda: 0.0\nfrom src.convert import convert\nimport unittest\nclass Contract(unittest.TestCase):\n def test_invalid(self): self.assertEqual(convert(None),'invalid')\n",
+      "end_line": 6,
+      "evidence_id": "E001",
+      "kind": "frozen_test",
+      "owner": "benchmark",
+      "path": "test_contract.py",
+      "source_state": "frozen",
+      "start_line": 1
+    },
+    {
+      "artifact_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "content": "",
+      "end_line": null,
+      "evidence_id": "E002",
+      "kind": "production_source",
+      "owner": "benchmark",
+      "path": "src/__init__.py",
+      "source_state": "base",
+      "start_line": null
+    },
+    {
+      "artifact_sha256": "154deca736db37224ff79531603df6695eac287c0d1632ebae6a9fc4deb8a36f",
+      "content": "from execution_context import active\nfrom .handlers import invalid\ndef convert(value):\n return invalid(value) if active() else invalid(value)\n",
+      "end_line": 4,
+      "evidence_id": "E003",
+      "kind": "production_source",
+      "owner": "benchmark",
+      "path": "src/convert.py",
+      "source_state": "base",
+      "start_line": 1
+    },
+    {
+      "artifact_sha256": "3a9f8b47e7e19f9459df00b682e45a1d98f5a2eda1c77bd65ec86b968c78b094",
+      "content": "def invalid(value): return 'unknown'\n",
+      "end_line": 1,
+      "evidence_id": "E004",
+      "kind": "production_source",
+      "owner": "benchmark",
+      "path": "src/handlers.py",
+      "source_state": "base",
+      "start_line": 1
+    },
+    {
+      "artifact_sha256": "d17ad139b4ce94fd620a9af61a82dfc25c8aab4cd21e9115d09837d1f0b1a285",
+      "content": "evaluation:\n  command: python -I -S -B .patchbench-eval/runner.py\n  frozen_unittest:\n    test_files:\n    - test_contract.py\n    version: 1\n  timeout_seconds: 30\nid: semantic-26\nmetadata:\n  language: python\nrepository:\n  base_commit: 3135273667dff2f1294b95afe602553355cdea1c\n  path: repository\n  type: local\nschema_version: 1\ntask:\n  prompt: Return the documented invalid marker for unsupported values in all execution\n    contexts.\n",
+      "end_line": 18,
+      "evidence_id": "E005",
+      "kind": "task_contract",
+      "owner": "benchmark",
+      "path": null,
+      "source_state": null,
+      "start_line": 1
+    },
+    {
+      "artifact_sha256": "47d7c2898433ac07a72b4c1fe314bfa35cbfb90ff31c2b5b2de0df9e6c9ac5ba",
+      "content": "diff --git a/src/handlers.py b/src/handlers.py\nindex 210e87b..2d716b0 100644\n--- a/src/handlers.py\n+++ b/src/handlers.py\n@@ -1 +1 @@\n-def invalid(value): return 'unknown'\n+def invalid(value): return 'in'+'complete'\n",
+      "end_line": 7,
+      "evidence_id": "E006",
+      "kind": "canonical_patch",
+      "owner": "subject",
+      "path": "patch.diff",
+      "source_state": null,
+      "start_line": 1
+    },
+    {
+      "artifact_sha256": "1d40b76e94fbc06f65e5e3a7d8c11a950755f5d577416060f913fa4d17a7fcd3",
+      "content": "Command: python -I -S -B .patchbench-eval/runner.py\nExit code: 1\nDuration seconds: 0.000000\n\nSTDOUT:\n\nSTDERR:\ntest_invalid (_patchbench_frozen_0.Contract.test_invalid) ... FAIL\n\n======================================================================\nFAIL: test_invalid (_patchbench_frozen_0.Contract.test_invalid)\n----------------------------------------------------------------------\nTraceback (most recent call last):\n  File \"/tmp/patchbench-diagnosis-v1-candidate-stage/semantic-26/workspaces/evaluation-subject-observation/test_contract.py\", line 6, in test_invalid\n    def test_invalid(self): self.assertEqual(convert(None),'invalid')\n                            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\nAssertionError: 'incomplete' != 'invalid'\n- incomplete\n+ invalid\n\n\n----------------------------------------------------------------------\nRan 1 test in 0.000s\n\nFAILED (failures=1)",
+      "end_line": 25,
+      "evidence_id": "E007",
+      "kind": "evaluation_output",
+      "owner": "subject",
+      "path": "test.log",
+      "source_state": null,
+      "start_line": 1
+    },
+    {
+      "artifact_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "content": "",
+      "end_line": null,
+      "evidence_id": "E008",
+      "kind": "production_source",
+      "owner": "subject",
+      "path": "src/__init__.py",
+      "source_state": "candidate",
+      "start_line": null
+    },
+    {
+      "artifact_sha256": "154deca736db37224ff79531603df6695eac287c0d1632ebae6a9fc4deb8a36f",
+      "content": "from execution_context import active\nfrom .handlers import invalid\ndef convert(value):\n return invalid(value) if active() else invalid(value)\n",
+      "end_line": 4,
+      "evidence_id": "E009",
+      "kind": "production_source",
+      "owner": "subject",
+      "path": "src/convert.py",
+      "source_state": "candidate",
+      "start_line": 1
+    },
+    {
+      "artifact_sha256": "989aa8a7bc7d2ed25e741ebe10de1de623a3c75877e1a03d244334e8eb5978de",
+      "content": "def invalid(value): return 'in'+'complete'\n",
+      "end_line": 1,
+      "evidence_id": "E010",
+      "kind": "production_source",
+      "owner": "subject",
+      "path": "src/handlers.py",
+      "source_state": "candidate",
+      "start_line": 1
+    }
+  ],
+  "mode": "blind",
+  "official_evaluation_passed": false,
+  "peer_run_id": null,
+  "provenance": {
+    "peer": null,
+    "subject": {
+      "base_source_snapshot_sha256": "8b63a9e62603627ac8add53eb0a7c8c742d5ecf3ae6d195d73ac1f0d133841a0",
+      "benchmark_definition_sha256": "2bedd4b5247e4a3153ddf94ed87e0670eea0ab60f820dba20bf3923f85e0e064",
+      "candidate_source_snapshot_sha256": "00a7967c95c228ff0ec95975654a58f534cf197a3509949fc5f51a285574ca88",
+      "canonical_patch_sha256": "47d7c2898433ac07a72b4c1fe314bfa35cbfb90ff31c2b5b2de0df9e6c9ac5ba",
+      "evaluation_log_sha256": "1d40b76e94fbc06f65e5e3a7d8c11a950755f5d577416060f913fa4d17a7fcd3",
+      "frozen_tests_snapshot_sha256": "bc53deb05ff9681bec7acffedf88df0508114eab4d6075ebb624dad3d62e947c",
+      "task_contract_sha256": "d17ad139b4ce94fd620a9af61a82dfc25c8aab4cd21e9115d09837d1f0b1a285"
+    }
+  },
+  "schema_version": 1,
+  "source_snapshot_policy": "full_bounded_production_v1:5872fe6c90dcbe418f35d9548e49b7e473794cb388faa8e9374f7a283f7ac77b",
+  "subject_run_id": "semantic-26-subject",
+  "task_fingerprint_sha256": "8f92da627ad10015938e211396e87a93618804c7965cb4c08dfcb926f245ebfc",
+  "task_id": "semantic-26"
+}

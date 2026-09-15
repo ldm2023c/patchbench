@@ -1,0 +1,17 @@
+evaluation:
+  command: python -I -S -B .patchbench-eval/runner.py
+  frozen_unittest:
+    test_files:
+    - test_contract.py
+    version: 1
+  timeout_seconds: 30
+id: semantic-24
+metadata:
+  language: python
+repository:
+  base_commit: 44bfc8c1835130b0d7e2ded9d5f0a40f946d58c2
+  path: repository
+  type: local
+schema_version: 1
+task:
+  prompt: Resolve absent session values to the documented default in supported contexts.
