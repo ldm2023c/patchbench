@@ -10,6 +10,25 @@ Do not relabel, replace cases, or edit Gold in this packet. Record human confirm
 - subject_evidence_sha256: d85357837152a84f6c5757d03665e23b96f7f95599cc9551c805737984c9e4ce
 - blind_bundle_sha256: 303fe9b08afee30d7496344ad22681ec4dd14399714305a9de481452c0208572
 - contrastive_bundle_sha256: b3bd69db4f02713969ac3c3503d2087cb5dddf659572edd42c0d1113ac156464
+
+Locked Human Gold summary:
+
+- should_abstain: False
+- preferred_family: "incorrect_local_logic"
+- acceptable_families: ["incorrect_local_logic"]
+
+Required evidence:
+
+- R1: 证明 task / frozen test 要求访问必须同时满足成年与 active，active=False 时即使成年也应拒绝。
+- R2: 证明 subject patch / candidate source 将条件实现为 age >= 18 or active。
+- R3: 证明 official evaluation 中 allowed(20, False) 因返回 True 而失败。
+
+Forbidden claims:
+
+- F1: 不得将失败根因归因于 src/access.py 之外的其他模块、外部权限系统或运行时账户状态；当前 Blind evidence 未提供支持这些机制的证据。
+
+Canonical peer identity:
+
 - peer: semantic-01-peers[0] -> semantic-01-peer
 - peer_selection_sha256: ffa11c245959f8877e6253b549de97198b96064e72c358e825d09de759bb4440
 - subject evidence identity unchanged: True
@@ -81,6 +100,25 @@ def allowed(age, active):
 - subject_evidence_sha256: 6049bbb3e378b7fde577672a7c180b53dc9b7ee9a036c56cdfb050fa6d6a7e92
 - blind_bundle_sha256: 20eb8d4d5fdd46634ba65d5f3043b3c7d0b39387785bf4b381c2ba386f9f977c
 - contrastive_bundle_sha256: 8618bc020ad872a01fbf01e6922c1946957cc809d43712795272f970afca60b4
+
+Locked Human Gold summary:
+
+- should_abstain: False
+- preferred_family: "incorrect_local_logic"
+- acceptable_families: ["incorrect_local_logic"]
+
+Required evidence:
+
+- R1: 证明 task / frozen test 要求的是上边界 cap 到 80，低于 80 的值应保持原样。
+- R2: 证明 subject patch / candidate source 将上界逻辑误改为 max(value, 80)。
+- R3: 证明 official evaluation 中 cap(20) 因返回 80 而失败。
+
+Forbidden claims:
+
+- F1: 不得声称失败涉及 src/limits.py 之外的其他模块、单位转换、配置加载或外部阈值来源；当前 Blind evidence 只支持单个函数中上下界逻辑写反导致失败。
+
+Canonical peer identity:
+
 - peer: semantic-02-peers[0] -> semantic-02-peer
 - peer_selection_sha256: 1c72badb269bbf9fff9e443fcd875fe4dd391adde9387c0b4af6a656f3ffb4a8
 - subject evidence identity unchanged: True
@@ -152,6 +190,25 @@ def cap(value):
 - subject_evidence_sha256: ad6a0385de1b10bb91ef6316c59b0fa01b7b61bca1c7e7db49a0982722abff6a
 - blind_bundle_sha256: 03ca19d38762427b9d6f232fec35379670694003f17be171ab07b84e734ce6a5
 - contrastive_bundle_sha256: ed3bd6899bf270b1cb706208272036ca57c75453ed7ea2ad69f70a7e2cd6f99c
+
+Locked Human Gold summary:
+
+- should_abstain: False
+- preferred_family: "partial_contract_handling"
+- acceptable_families: ["partial_contract_handling"]
+
+Required evidence:
+
+- R1: 证明 contract / frozen test 要求 explicit null timeout 使用默认值 30，同时字符串 timeout "8" 应解析为 8。
+- R2: 证明 subject 将 timeout 实现为 int(data.get("timeout", 30))。
+- R3: 证明 official evaluation 中 timeout({"timeout": None}) 对 None 调用 int 并抛出 TypeError。
+
+Forbidden claims:
+
+- F1: 不得声称失败来自配置文件、环境变量、外部默认值来源或单位换算；当前 Blind evidence 只支持 data 字典中 explicit None 未被作为默认值处理。
+
+Canonical peer identity:
+
 - peer: semantic-05-peers[0] -> semantic-05-peer
 - peer_selection_sha256: d8a73b8c222ef34f5c2fab5e319e04cbcc9b6423c2a2e585fd7e1b334b7bffeb
 - subject evidence identity unchanged: True
@@ -225,6 +282,25 @@ def timeout(data):
 - subject_evidence_sha256: 7d8fafaba6893ae28f6a6f60bc7809da7e9eaddbf9d06e447186e1b1a5ce2ac1
 - blind_bundle_sha256: 4342758429936c98642c706cd7c39838e06ca77253ccebc14601fc58788616be
 - contrastive_bundle_sha256: e5d50c1ac7ad142d28e111ecaf7e234014a25aecfb94034457e180951653d9f2
+
+Locked Human Gold summary:
+
+- should_abstain: False
+- preferred_family: "partial_contract_handling"
+- acceptable_families: ["partial_contract_handling"]
+
+Required evidence:
+
+- R1: 证明 contract / frozen test 要求 numeric identifier 转成文本，同时 textual identifier 必须保留原文本形式。
+- R2: 证明 subject 只为 int 输入新增特殊处理，非 int 仍执行 str(int(value))。
+- R3: 证明 official evaluation 中 identifier("007") 返回 "7" 而不是 "007"。
+
+Forbidden claims:
+
+- F1: 不得声称失败来自数据库 ID、序列化层、格式化配置或外部 identifier 系统；当前 Blind evidence 只支持 identifier 函数对 textual form 的处理不完整。
+
+Canonical peer identity:
+
 - peer: semantic-06-peers[0] -> semantic-06-peer
 - peer_selection_sha256: 1c541116436711100f81d39af0fc68e96b0368b07ed907742c0a708d5daf1d64
 - subject evidence identity unchanged: True
@@ -296,6 +372,26 @@ def identifier(value):
 - subject_evidence_sha256: 127c58a8ce1fd65a8ad5c8f60ba1f0cb1a2f02bfdcafbca5cf5992522b8fef38
 - blind_bundle_sha256: 0d77196933dac3487840a0ee40bc9bf7c82f08e563dbb49f93e6d23f487383aa
 - contrastive_bundle_sha256: c76864e636be0fd283d0e6bfbad2456b2a1d7bb04583287b7cdc954becc08816
+
+Locked Human Gold summary:
+
+- should_abstain: False
+- preferred_family: "state_consistency_violation"
+- acceptable_families: ["state_consistency_violation"]
+
+Required evidence:
+
+- R1: 证明 task / frozen test 要求 rename 后 Store 的 data 和 names 两个 view 都反映新名称。
+- R2: 证明 Store 同时维护 data 与 names 两种状态表示。
+- R3: 证明 subject rename 只更新 data，未同步更新 names。
+- R4: 证明 official evaluation 中 names 仍包含 old 且缺少 new。
+
+Forbidden claims:
+
+- F1: 不得声称失败来自持久化层、并发 rename、外部索引或隐藏 Store backend；当前 Blind evidence 只显示 Store.data 与 Store.names 未保持一致。
+
+Canonical peer identity:
+
 - peer: semantic-07-peers[0] -> semantic-07-peer
 - peer_selection_sha256: 6e859f38e925df4f71070f4fa168e47659782423eb7abd77c4efe07aaa586aed
 - subject evidence identity unchanged: True
@@ -371,6 +467,26 @@ class Store:
 - subject_evidence_sha256: 57251368f4e18a676c8f5b11b68ed65ddd4d66516be39ea55faaed6b9d183995
 - blind_bundle_sha256: 76cf9c4830301ab36a8c382e0c1d17f0ee75431c70f1b754d18c1fc020bf213a
 - contrastive_bundle_sha256: 5678782f3dbc82aced05c48833b510033aebf23375db2336213222c8ef10432b
+
+Locked Human Gold summary:
+
+- should_abstain: False
+- preferred_family: "state_consistency_violation"
+- acceptable_families: ["state_consistency_violation"]
+
+Required evidence:
+
+- R1: 证明 task / frozen test 要求 Queue.add 同时更新 items、count 和 version。
+- R2: 证明 Queue 对象同时维护 items、count、version 三个 observable 状态。
+- R3: 证明 subject add 只 append items，未更新 count 或 version。
+- R4: 证明 official evaluation 中结果为 (["x"], 0, 0) 而不是 (["x"], 1, 1)。
+
+Forbidden claims:
+
+- F1: 不得声称失败来自外部队列服务、事务系统、并发控制或隐藏 metadata backend；当前 Blind evidence 只显示 Queue.items/count/version 未同步更新。
+
+Canonical peer identity:
+
 - peer: semantic-08-peers[0] -> semantic-08-peer
 - peer_selection_sha256: 6b7d6799215b995cb8d700775f0bc2e3492a6f1ea820171488b818ab5f902f4a
 - subject evidence identity unchanged: True
@@ -444,6 +560,26 @@ class Queue:
 - subject_evidence_sha256: c2ff36bbb9db7de73566f8425c347785bdf46012533f6f916b622d5f75bc16a8
 - blind_bundle_sha256: 7255540ce37c628e5dd8351e97e9d9bf50f04f6d997034f43e39108aa37507a4
 - contrastive_bundle_sha256: 14f15e45a0d8ca54c5fb1e5bd692c7df958341d5908bb549d5472b6c1d405047
+
+Locked Human Gold summary:
+
+- should_abstain: False
+- preferred_family: "regression_introduced"
+- acceptable_families: ["regression_introduced"]
+
+Required evidence:
+
+- R1: 证明 task / frozen test 要求新增 opt-in excited rendering 时保留 legacy default output。
+- R2: 证明 base 默认 render(name) 返回带句号的 Hello 输出。
+- R3: 证明 subject 将 excited 参数默认值设为 True，使默认调用输出感叹号。
+- R4: 证明 official evaluation 中 render("Ada") 返回 Hello Ada! 而不是 Hello Ada.。
+
+Forbidden claims:
+
+- F1: 不得声称失败来自模板引擎、本地化、用户偏好配置或外部消息系统；当前 Blind evidence 只支持 render 默认参数改变破坏 legacy output。
+
+Canonical peer identity:
+
 - peer: semantic-09-peers[0] -> semantic-09-peer
 - peer_selection_sha256: a2a75583543a3c93494b9614504bac2f5b50fbe679792ce54e867d26606f1a37
 - subject evidence identity unchanged: True
@@ -516,6 +652,26 @@ def render(name, excited=False):
 - subject_evidence_sha256: 6572541f3b18eb9d619a902086c342cf156fce2dda266149bf8908604eda8553
 - blind_bundle_sha256: 47158b050d0b2e90c87cf6e1db890e59e8a08683478d263f4c5d68166b9e87fd
 - contrastive_bundle_sha256: 5dfec6a3bb211cc819cf58c643caddd48021ed3bc684fe00d86d90a11a03adc9
+
+Locked Human Gold summary:
+
+- should_abstain: False
+- preferred_family: "regression_introduced"
+- acceptable_families: ["regression_introduced"]
+
+Required evidence:
+
+- R1: 证明 task / frozen test 要求 padded mixed-case input 仍输出 documented lowercase trimmed result。
+- R2: 证明 base pipeline 通过 parse(v).strip() 与 emit(v).lower() 产生该 documented output。
+- R3: 证明 subject 将 parse 改为 strip("!") 且 emit 改为 upper()。
+- R4: 证明 official evaluation 中 process(" Mixed ") 返回 " MIXED " 而不是 "mixed"。
+
+Forbidden claims:
+
+- F1: 不得声称失败来自未出现的 pipeline stage、外部 parser/emitter、编码问题或运行时环境；当前 Blind evidence 只支持 src/pipeline.py 中 parse/emit 行为被改坏。
+
+Canonical peer identity:
+
 - peer: semantic-11-peers[0] -> semantic-11-peer
 - peer_selection_sha256: 3c661c92f51e215ca9596c2a2be42e129b9124e2f48b5573980e9b8e97819c76
 - subject evidence identity unchanged: True
@@ -580,6 +736,25 @@ def process(v): return emit(parse(v))
 - subject_evidence_sha256: 7066db000de8293e623ba11edd4607ee0d18ec1e593240d26f898180845dca9f
 - blind_bundle_sha256: 6fa04c460902b85440d75a68893fddc617f7c7f7dd0b49e28cfc76f69b9fedaa
 - contrastive_bundle_sha256: 5649e0c229b7eaaea7feea9b7f445be2bc3590da6ee0c8b8c91975ad6aa30281
+
+Locked Human Gold summary:
+
+- should_abstain: False
+- preferred_family: "incomplete_cross_file_repair"
+- acceptable_families: ["incomplete_cross_file_repair"]
+
+Required evidence:
+
+- R1: Prove the public command interface must support the archive action.
+- R2: Prove the subject changed engine.archive() output but left the public command routing table without an archive handler.
+- R3: Prove official evaluation fails because execute('archive', ...) cannot find an archive handler.
+
+Forbidden claims:
+
+- F1: Do not claim the failure is caused by engine.archive() returning the wrong archive string; Blind evidence shows the observed failure is missing public command routing for 'archive'.
+
+Canonical peer identity:
+
 - peer: semantic-16-peers[0] -> semantic-16-peer
 - peer_selection_sha256: 956bd168df0fd13648b47bb090a72a9f13b93fd37daa0c5db6d5fad9d0200a2f
 - subject evidence identity unchanged: True
@@ -672,6 +847,26 @@ def archive(name):
 - subject_evidence_sha256: b53ef7150bd8cc42dc1fa08e8f0264625afdd19ef2a9cdb40df335763b19fb47
 - blind_bundle_sha256: 985c01d5006213573ec59a854773072f6d091d842afa32e7dd5711be77ddc9bf
 - contrastive_bundle_sha256: 6dfe20fc1a29f33077742388f2e1c11d9cea9282da375f7d21ac36de17857c56
+
+Locked Human Gold summary:
+
+- should_abstain: False
+- preferred_family: "incomplete_cross_file_repair"
+- acceptable_families: ["incomplete_cross_file_repair"]
+
+Required evidence:
+
+- R1: Prove the contract requires record priority to survive both construction and wire serialization.
+- R2: Prove the subject updated record construction to include the priority field.
+- R3: Prove candidate wire serialization still emits only the record name and omits priority.
+- R4: Prove official evaluation observes serialized output without the required priority segment.
+
+Forbidden claims:
+
+- F1: Do not attribute the failure to record construction dropping priority; Blind evidence shows candidate make() includes the priority field.
+
+Canonical peer identity:
+
 - peer: semantic-17-peers[0] -> semantic-17-peer
 - peer_selection_sha256: 86c1aa929fe9fbc1b2a69c39cb678c9376dd3e6adbf3726703aa380d730837fb
 - subject evidence identity unchanged: True
@@ -758,6 +953,25 @@ def serialize(record): return 'name='+record['name']+';priority='+str(record['pr
 - subject_evidence_sha256: bd2d425ed336a246537569bf5e30c0ae50fa61fea77408120fdf8d0680b1cdf5
 - blind_bundle_sha256: 562635b614b7fcf409bc5f0b025f43f9277c32db48ff7354d2e3154466cd7116
 - contrastive_bundle_sha256: 8ed31199048e2eac864eaa767fafe54f6c9c60dcb9d871db903627fc25993d25
+
+Locked Human Gold summary:
+
+- should_abstain: True
+- preferred_family: null
+- acceptable_families: []
+
+Required evidence:
+
+- []
+
+
+Forbidden claims:
+
+- F1: Do not assert that the active service.status() branch was the executed causal path; Blind evidence does not establish execution_context.active().
+- F2: Do not assert that backend.current() was the executed causal path; Blind evidence does not establish the inactive branch was taken.
+
+Canonical peer identity:
+
 - peer: semantic-22-peers[0] -> semantic-22-peer
 - peer_selection_sha256: ca9fad9aed00f99c9e6ef9978788f04b357d9e7908d67bc265c2f1fcc138d69a
 - subject evidence identity unchanged: True
@@ -850,6 +1064,25 @@ def status():
 - subject_evidence_sha256: 4cc2f1c008cf1e6c14aca4f60facfa8a509edd699422ed136c2016537f4cc4f6
 - blind_bundle_sha256: c1f3df8ad8d31b01f77d5e9352213436efb60412149cab2ca1c01ed59663b4af
 - contrastive_bundle_sha256: 2ba404198fa35081eaaa8b29f362a0c059357431589e4c6b4fdbcbe5460bdae5
+
+Locked Human Gold summary:
+
+- should_abstain: True
+- preferred_family: null
+- acceptable_families: []
+
+Required evidence:
+
+- []
+
+
+Forbidden claims:
+
+- F1: Do not assert that the cache-backed active path caused the observed failure; Blind evidence does not establish that branch was taken.
+- F2: Do not assert that the inactive value-is-None fallback caused the observed failure; Blind evidence does not establish that branch was taken.
+
+Canonical peer identity:
+
 - peer: semantic-24-peers[0] -> semantic-24-peer
 - peer_selection_sha256: 50eb15a7c4c5c452b2084b9291adfa692ddc4c085a9fde68f0d08cff58e64527
 - subject evidence identity unchanged: True
@@ -926,6 +1159,25 @@ def resolve(value):
 - subject_evidence_sha256: c50911bf7efe118c3895d6d0c786fa66456524b4500a927e6dd51ba2655441fe
 - blind_bundle_sha256: 3806cc629b6cb348cd09906042b9424df4de370588729de395cb037f03bc9887
 - contrastive_bundle_sha256: 79f2a20ae21ce7b8d46f784abbcbe02ea62da17e39d8b4d4093cbb7300029dcd
+
+Locked Human Gold summary:
+
+- should_abstain: True
+- preferred_family: null
+- acceptable_families: []
+
+Required evidence:
+
+- []
+
+
+Forbidden claims:
+
+- F1: Do not assert that the active quote() decrement was the executed cause; Blind evidence does not establish the active branch was taken.
+- F2: Do not assert that the rates table was the executed cause; Blind evidence does not establish the inactive branch was taken.
+
+Canonical peer identity:
+
 - peer: semantic-25-peers[0] -> semantic-25-peer
 - peer_selection_sha256: 9abae27c14f8063d61757fd4e7621e1e7a8e0600fcfb9508a2dab17f24835bd0
 - subject evidence identity unchanged: True

@@ -133,6 +133,40 @@ def test_phase_a_determinism_and_preparation_never_auto_confirms(tmp_path):
     assert not (first / "freeze-manifest.json").exists()
 
 
+def test_human_packet_includes_locked_gold_summary_for_non_abstain_and_abstain(prepared_tree):
+    packet = (prepared_tree / "contrastive-fairness-review.md").read_text(encoding="utf-8")
+    non_abstain = DiagnosisGoldCase.model_validate_json(
+        (prepared_tree / "cases/semantic-01/gold.json").read_bytes())
+    abstain = DiagnosisGoldCase.model_validate_json(
+        (prepared_tree / "cases/semantic-22/gold.json").read_bytes())
+
+    assert "Does the canonical PASS peer make the already-locked Human Gold unfair or invalid?" in packet
+    assert "## semantic-01" in packet
+    assert "- should_abstain: False" in packet
+    assert '- preferred_family: "incorrect_local_logic"' in packet
+    assert '- acceptable_families: ["incorrect_local_logic"]' in packet
+    for requirement in non_abstain.semantic_gold.required_evidence:
+        assert f"- {requirement.requirement_id}: {requirement.description}" in packet
+    for claim in non_abstain.semantic_gold.forbidden_claims:
+        assert f"- {claim.claim_id}: {claim.description}" in packet
+
+    assert "## semantic-22" in packet
+    assert "- should_abstain: True" in packet
+    assert "- preferred_family: null" in packet
+    assert "- acceptable_families: []" in packet
+    assert "- []" in packet
+    for claim in abstain.semantic_gold.forbidden_claims:
+        assert f"- {claim.claim_id}: {claim.description}" in packet
+
+
+def test_legacy_fairness_bypass_builder_is_not_application_api():
+    import patchbench.application as application
+    import patchbench.application.diagnosis_suite as suite_module
+
+    assert not hasattr(application, "build_diagnosis_validation_suite")
+    assert not hasattr(suite_module, "_legacy_build_diagnosis_validation_suite")
+
+
 def test_contrastive_bundles_preserve_locked_subject_gold_fairness(prepared_tree):
     review = verify_contrastive_fairness_review(prepared_tree, CANDIDATES)
     for case in review.cases:
