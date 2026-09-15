@@ -1,0 +1,14 @@
+diff --git a/src/backend.py b/src/backend.py
+index 17b0f67..5413228 100644
+--- a/src/backend.py
++++ b/src/backend.py
+@@ -1 +1 @@
+-def implemented(): return {'basic'}
++def implemented(): return {'basic','batch'}
+diff --git a/src/catalog.py b/src/catalog.py
+index d05473f..fb45307 100644
+--- a/src/catalog.py
++++ b/src/catalog.py
+@@ -1 +1 @@
+-def advertised(): return {'basic'}
++def advertised(): return {'basic','batch'}

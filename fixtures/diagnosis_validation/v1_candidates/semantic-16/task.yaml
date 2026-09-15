@@ -1,0 +1,17 @@
+evaluation:
+  command: python -I -S -B .patchbench-eval/runner.py
+  frozen_unittest:
+    test_files:
+    - test_contract.py
+    version: 1
+  timeout_seconds: 30
+id: semantic-16
+metadata:
+  language: python
+repository:
+  base_commit: 253b8703b6434a04665b549aaaa8e45ee27341a5
+  path: repository
+  type: local
+schema_version: 1
+task:
+  prompt: Support the archive action through the public command interface.

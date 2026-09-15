@@ -1,0 +1,8 @@
+{
+  "blind_bundle_sha256": "d35657f2de951cef75e6c790d3bdaffb63b6c78dcb898c052c3a0b068390b292",
+  "candidate_id": "semantic-20",
+  "expected_route": "semantic_diagnosis",
+  "schema_version": 1,
+  "subject_evidence_sha256": "2415845cda556395d0a4d3a8ebcc5506f10bb88c1bf9b9bcc03cd1a6719431fb",
+  "subject_run_id": "semantic-20-subject"
+}

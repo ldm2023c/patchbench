@@ -1,0 +1,8 @@
+diff --git a/src/engine.py b/src/engine.py
+index 0f3872a..f27ff75 100644
+--- a/src/engine.py
++++ b/src/engine.py
+@@ -1,2 +1,2 @@
+ def archive(name):
+- return 'stored:'+name
++ return 'archived:'+name

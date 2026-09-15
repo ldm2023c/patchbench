@@ -1,0 +1,1 @@
+Keep emitted and accepted protocol versions aligned after the revision.

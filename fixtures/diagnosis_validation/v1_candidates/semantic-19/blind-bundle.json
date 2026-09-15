@@ -1,0 +1,161 @@
+{
+  "agent_status": "completed",
+  "base_commit": "4b7c434a22b9963f901ffb9c281623be5d7d08a7",
+  "benchmark_definition_sha256": "e07c44e596fbc2a6803d63579acae7f41daeb6d9cf8cc67b26d0a45e047b323f",
+  "bundle_id": "blind-a64cb82d194cf5735fe450caf6dccf9fabc7b856a88682789bd4af5364374e51",
+  "bundle_sha256": "86a5fdd5d0d4d138791d1756ee7c4c904a9003ed20bee3c9ee7d1d56536131bf",
+  "evidence_items": [
+    {
+      "artifact_sha256": "9eb61ed977e6236fc871c85e4046d1f5312fd1e1d51c1dfe87e79a0e4ebb62f8",
+      "content": "import unittest\nunittest.runner.time.perf_counter = lambda: 0.0\nfrom src.service import aligned\nimport unittest\nclass Contract(unittest.TestCase):\n def test_capabilities(self): self.assertTrue(aligned())\n",
+      "end_line": 6,
+      "evidence_id": "E001",
+      "kind": "frozen_test",
+      "owner": "benchmark",
+      "path": "test_contract.py",
+      "source_state": "frozen",
+      "start_line": 1
+    },
+    {
+      "artifact_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "content": "",
+      "end_line": null,
+      "evidence_id": "E002",
+      "kind": "production_source",
+      "owner": "benchmark",
+      "path": "src/__init__.py",
+      "source_state": "base",
+      "start_line": null
+    },
+    {
+      "artifact_sha256": "a6cb99d21a5f21ea51aaa6428f53547efab5657f9e2013a65b74478930952d01",
+      "content": "def implemented(): return {'basic'}\n",
+      "end_line": 1,
+      "evidence_id": "E003",
+      "kind": "production_source",
+      "owner": "benchmark",
+      "path": "src/backend.py",
+      "source_state": "base",
+      "start_line": 1
+    },
+    {
+      "artifact_sha256": "182775c9a8f1feacd4da55923546ca631aaf86afb8be6393767fd47def9733ff",
+      "content": "def advertised(): return {'basic'}\n",
+      "end_line": 1,
+      "evidence_id": "E004",
+      "kind": "production_source",
+      "owner": "benchmark",
+      "path": "src/catalog.py",
+      "source_state": "base",
+      "start_line": 1
+    },
+    {
+      "artifact_sha256": "f1b1e9e7647d4a551be674b29f7cc8d3ff9dfff347c3d151e9e07a7bd4f1dae4",
+      "content": "from .catalog import advertised\nfrom .backend import implemented\ndef aligned(): return advertised()==implemented()\n",
+      "end_line": 3,
+      "evidence_id": "E005",
+      "kind": "production_source",
+      "owner": "benchmark",
+      "path": "src/service.py",
+      "source_state": "base",
+      "start_line": 1
+    },
+    {
+      "artifact_sha256": "d987ea285404ff93ac65ca6dfcacf690224a8e5d2e26ac93a299ced9ba1c7c4a",
+      "content": "evaluation:\n  command: python -I -S -B .patchbench-eval/runner.py\n  frozen_unittest:\n    test_files:\n    - test_contract.py\n    version: 1\n  timeout_seconds: 30\nid: semantic-19\nmetadata:\n  language: python\nrepository:\n  base_commit: 4b7c434a22b9963f901ffb9c281623be5d7d08a7\n  path: repository\n  type: local\nschema_version: 1\ntask:\n  prompt: Keep advertised and implemented capabilities aligned during extension.\n",
+      "end_line": 17,
+      "evidence_id": "E006",
+      "kind": "task_contract",
+      "owner": "benchmark",
+      "path": null,
+      "source_state": null,
+      "start_line": 1
+    },
+    {
+      "artifact_sha256": "c7f6b246b4f689294f6341d312e1def48747222127d65655a648d5344f8d1d1a",
+      "content": "diff --git a/src/backend.py b/src/backend.py\nindex 17b0f67..e6a9f30 100644\n--- a/src/backend.py\n+++ b/src/backend.py\n@@ -1 +1 @@\n-def implemented(): return {'basic'}\n+def implemented(): return {'basic','safe'}\ndiff --git a/src/catalog.py b/src/catalog.py\nindex d05473f..406ef70 100644\n--- a/src/catalog.py\n+++ b/src/catalog.py\n@@ -1 +1 @@\n-def advertised(): return {'basic'}\n+def advertised(): return {'basic','fast'}\n",
+      "end_line": 14,
+      "evidence_id": "E007",
+      "kind": "canonical_patch",
+      "owner": "subject",
+      "path": "patch.diff",
+      "source_state": null,
+      "start_line": 1
+    },
+    {
+      "artifact_sha256": "a36a1649e4b37485e3b22e0aa5a8f9d0e61f478f4fb3a43b5c1d42078e25e796",
+      "content": "Command: python -I -S -B .patchbench-eval/runner.py\nExit code: 1\nDuration seconds: 0.000000\n\nSTDOUT:\n\nSTDERR:\ntest_capabilities (_patchbench_frozen_0.Contract.test_capabilities) ... FAIL\n\n======================================================================\nFAIL: test_capabilities (_patchbench_frozen_0.Contract.test_capabilities)\n----------------------------------------------------------------------\nTraceback (most recent call last):\n  File \"/tmp/patchbench-diagnosis-v1-candidate-stage/semantic-19/workspaces/evaluation-subject-work/test_contract.py\", line 6, in test_capabilities\n    def test_capabilities(self): self.assertTrue(aligned())\n                                 ^^^^^^^^^^^^^^^^^^^^^^^^^^\nAssertionError: False is not true\n\n----------------------------------------------------------------------\nRan 1 test in 0.000s\n\nFAILED (failures=1)",
+      "end_line": 22,
+      "evidence_id": "E008",
+      "kind": "evaluation_output",
+      "owner": "subject",
+      "path": "test.log",
+      "source_state": null,
+      "start_line": 1
+    },
+    {
+      "artifact_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "content": "",
+      "end_line": null,
+      "evidence_id": "E009",
+      "kind": "production_source",
+      "owner": "subject",
+      "path": "src/__init__.py",
+      "source_state": "candidate",
+      "start_line": null
+    },
+    {
+      "artifact_sha256": "9fd6ca39e9e80eb48addbd054c0e7fd2012e829649c9dc48482ad03f651c11d3",
+      "content": "def implemented(): return {'basic','safe'}\n",
+      "end_line": 1,
+      "evidence_id": "E010",
+      "kind": "production_source",
+      "owner": "subject",
+      "path": "src/backend.py",
+      "source_state": "candidate",
+      "start_line": 1
+    },
+    {
+      "artifact_sha256": "b2b23f828227bec86d507e3f2a8f2afe3600d247c39d94e426f37cac3f98c2b7",
+      "content": "def advertised(): return {'basic','fast'}\n",
+      "end_line": 1,
+      "evidence_id": "E011",
+      "kind": "production_source",
+      "owner": "subject",
+      "path": "src/catalog.py",
+      "source_state": "candidate",
+      "start_line": 1
+    },
+    {
+      "artifact_sha256": "f1b1e9e7647d4a551be674b29f7cc8d3ff9dfff347c3d151e9e07a7bd4f1dae4",
+      "content": "from .catalog import advertised\nfrom .backend import implemented\ndef aligned(): return advertised()==implemented()\n",
+      "end_line": 3,
+      "evidence_id": "E012",
+      "kind": "production_source",
+      "owner": "subject",
+      "path": "src/service.py",
+      "source_state": "candidate",
+      "start_line": 1
+    }
+  ],
+  "mode": "blind",
+  "official_evaluation_passed": false,
+  "peer_run_id": null,
+  "provenance": {
+    "peer": null,
+    "subject": {
+      "base_source_snapshot_sha256": "7ae8ffa2590d50f85006d27a1d02da1541bdd4a9e85ba0aab6efcb1059573e4e",
+      "benchmark_definition_sha256": "e07c44e596fbc2a6803d63579acae7f41daeb6d9cf8cc67b26d0a45e047b323f",
+      "candidate_source_snapshot_sha256": "4c3def997f651f2480afb090571e65c08cefa4797ea823a1fcdd4f9839c52641",
+      "canonical_patch_sha256": "c7f6b246b4f689294f6341d312e1def48747222127d65655a648d5344f8d1d1a",
+      "evaluation_log_sha256": "a36a1649e4b37485e3b22e0aa5a8f9d0e61f478f4fb3a43b5c1d42078e25e796",
+      "frozen_tests_snapshot_sha256": "2e7b213bd18d31d1278f642e8ab309c0d11ca21b497acf52fcfda5a1ab161f64",
+      "task_contract_sha256": "d987ea285404ff93ac65ca6dfcacf690224a8e5d2e26ac93a299ced9ba1c7c4a"
+    }
+  },
+  "schema_version": 1,
+  "source_snapshot_policy": "full_bounded_production_v1:5872fe6c90dcbe418f35d9548e49b7e473794cb388faa8e9374f7a283f7ac77b",
+  "subject_run_id": "semantic-19-subject",
+  "task_fingerprint_sha256": "b9f9fb531699a13b12d8e228d0a01ae777b7614a6662411d2cc12ae4cb262d8a",
+  "task_id": "semantic-19"
+}

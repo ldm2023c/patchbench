@@ -61,6 +61,30 @@
       "expected_route": "semantic_diagnosis"
     },
     {
+      "candidate_id": "semantic-16",
+      "expected_route": "semantic_diagnosis"
+    },
+    {
+      "candidate_id": "semantic-17",
+      "expected_route": "semantic_diagnosis"
+    },
+    {
+      "candidate_id": "semantic-18",
+      "expected_route": "semantic_diagnosis"
+    },
+    {
+      "candidate_id": "semantic-19",
+      "expected_route": "semantic_diagnosis"
+    },
+    {
+      "candidate_id": "semantic-20",
+      "expected_route": "semantic_diagnosis"
+    },
+    {
+      "candidate_id": "semantic-21",
+      "expected_route": "semantic_diagnosis"
+    },
+    {
       "candidate_id": "operational-01",
       "expected_route": "operational_only"
     },

@@ -1,0 +1,22 @@
+Command: python -I -S -B .patchbench-eval/runner.py
+Exit code: 1
+Duration seconds: 0.000000
+
+STDOUT:
+
+STDERR:
+test_capabilities (_patchbench_frozen_0.Contract.test_capabilities) ... FAIL
+
+======================================================================
+FAIL: test_capabilities (_patchbench_frozen_0.Contract.test_capabilities)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/tmp/patchbench-diagnosis-v1-candidate-stage/semantic-19/workspaces/evaluation-subject-work/test_contract.py", line 6, in test_capabilities
+    def test_capabilities(self): self.assertTrue(aligned())
+                                 ^^^^^^^^^^^^^^^^^^^^^^^^^^
+AssertionError: False is not true
+
+----------------------------------------------------------------------
+Ran 1 test in 0.000s
+
+FAILED (failures=1)

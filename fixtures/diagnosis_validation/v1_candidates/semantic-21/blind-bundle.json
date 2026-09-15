@@ -1,0 +1,161 @@
+{
+  "agent_status": "completed",
+  "base_commit": "cf481851b1504d57e5a2408d6cb12553b3a749d3",
+  "benchmark_definition_sha256": "bdb99b5097f62b0807cdfa07f0c229a4bc87cffc1624a3e35ee93a898c6ef488",
+  "bundle_id": "blind-9802a3f89355cd91943ad3451912f09d5784772845c77b12e494d022588548e7",
+  "bundle_sha256": "44abfc9875fe31595faa0d2ba9252085eadf82d32e186b7782ddafd59a2d8863",
+  "evidence_items": [
+    {
+      "artifact_sha256": "f28bed060ec7e170f914a610de97995b0283a795d5069d8a9122e2aa861e5960",
+      "content": "import unittest\nunittest.runner.time.perf_counter = lambda: 0.0\nfrom src.checks import aligned\nimport unittest\nclass Contract(unittest.TestCase):\n def test_alignment(self):\n  for value in (0,1,2,3): self.assertTrue(aligned(value))\n",
+      "end_line": 7,
+      "evidence_id": "E001",
+      "kind": "frozen_test",
+      "owner": "benchmark",
+      "path": "test_contract.py",
+      "source_state": "frozen",
+      "start_line": 1
+    },
+    {
+      "artifact_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "content": "",
+      "end_line": null,
+      "evidence_id": "E002",
+      "kind": "production_source",
+      "owner": "benchmark",
+      "path": "src/__init__.py",
+      "source_state": "base",
+      "start_line": null
+    },
+    {
+      "artifact_sha256": "776128f5d29fd0667dc759828ba91ba1567a41d3d2201ba8fcb98626eb89a91c",
+      "content": "from .intake import accepted as intake\nfrom .persistence import accepted as stored\ndef aligned(value): return intake(value)==stored(value)\n",
+      "end_line": 3,
+      "evidence_id": "E003",
+      "kind": "production_source",
+      "owner": "benchmark",
+      "path": "src/checks.py",
+      "source_state": "base",
+      "start_line": 1
+    },
+    {
+      "artifact_sha256": "d3f02d4854d6e4b4d95c7a1b08bfbd8f6e1d390761728f4602cb579057b59347",
+      "content": "def accepted(value): return value>=0\n",
+      "end_line": 1,
+      "evidence_id": "E004",
+      "kind": "production_source",
+      "owner": "benchmark",
+      "path": "src/intake.py",
+      "source_state": "base",
+      "start_line": 1
+    },
+    {
+      "artifact_sha256": "d3f02d4854d6e4b4d95c7a1b08bfbd8f6e1d390761728f4602cb579057b59347",
+      "content": "def accepted(value): return value>=0\n",
+      "end_line": 1,
+      "evidence_id": "E005",
+      "kind": "production_source",
+      "owner": "benchmark",
+      "path": "src/persistence.py",
+      "source_state": "base",
+      "start_line": 1
+    },
+    {
+      "artifact_sha256": "d7ea0e771668a822ff41980a17d503b832e1f47fa05959a8ac10f0330a03f1f0",
+      "content": "evaluation:\n  command: python -I -S -B .patchbench-eval/runner.py\n  frozen_unittest:\n    test_files:\n    - test_contract.py\n    version: 1\n  timeout_seconds: 30\nid: semantic-21\nmetadata:\n  language: python\nrepository:\n  base_commit: cf481851b1504d57e5a2408d6cb12553b3a749d3\n  path: repository\n  type: local\nschema_version: 1\ntask:\n  prompt: Keep validation decisions consistent for supported values.\n",
+      "end_line": 17,
+      "evidence_id": "E006",
+      "kind": "task_contract",
+      "owner": "benchmark",
+      "path": null,
+      "source_state": null,
+      "start_line": 1
+    },
+    {
+      "artifact_sha256": "6915db4809e6b70b4c2b67712e546f6c3b7cb9b8b49aadf71dafaab09cf366cf",
+      "content": "diff --git a/src/intake.py b/src/intake.py\nindex e3ea96c..3b3ccce 100644\n--- a/src/intake.py\n+++ b/src/intake.py\n@@ -1 +1 @@\n-def accepted(value): return value>=0\n+def accepted(value): return value>=1\ndiff --git a/src/persistence.py b/src/persistence.py\nindex e3ea96c..145f20a 100644\n--- a/src/persistence.py\n+++ b/src/persistence.py\n@@ -1 +1 @@\n-def accepted(value): return value>=0\n+def accepted(value): return value>=2\n",
+      "end_line": 14,
+      "evidence_id": "E007",
+      "kind": "canonical_patch",
+      "owner": "subject",
+      "path": "patch.diff",
+      "source_state": null,
+      "start_line": 1
+    },
+    {
+      "artifact_sha256": "d251d99417a82ba947c5da59b09d6a52db4df2ce03ce0be12057378e1d410e3d",
+      "content": "Command: python -I -S -B .patchbench-eval/runner.py\nExit code: 1\nDuration seconds: 0.000000\n\nSTDOUT:\n\nSTDERR:\ntest_alignment (_patchbench_frozen_0.Contract.test_alignment) ... FAIL\n\n======================================================================\nFAIL: test_alignment (_patchbench_frozen_0.Contract.test_alignment)\n----------------------------------------------------------------------\nTraceback (most recent call last):\n  File \"/tmp/patchbench-diagnosis-v1-candidate-stage/semantic-21/workspaces/evaluation-subject-work/test_contract.py\", line 7, in test_alignment\n    for value in (0,1,2,3): self.assertTrue(aligned(value))\n                            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\nAssertionError: False is not true\n\n----------------------------------------------------------------------\nRan 1 test in 0.000s\n\nFAILED (failures=1)",
+      "end_line": 22,
+      "evidence_id": "E008",
+      "kind": "evaluation_output",
+      "owner": "subject",
+      "path": "test.log",
+      "source_state": null,
+      "start_line": 1
+    },
+    {
+      "artifact_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "content": "",
+      "end_line": null,
+      "evidence_id": "E009",
+      "kind": "production_source",
+      "owner": "subject",
+      "path": "src/__init__.py",
+      "source_state": "candidate",
+      "start_line": null
+    },
+    {
+      "artifact_sha256": "776128f5d29fd0667dc759828ba91ba1567a41d3d2201ba8fcb98626eb89a91c",
+      "content": "from .intake import accepted as intake\nfrom .persistence import accepted as stored\ndef aligned(value): return intake(value)==stored(value)\n",
+      "end_line": 3,
+      "evidence_id": "E010",
+      "kind": "production_source",
+      "owner": "subject",
+      "path": "src/checks.py",
+      "source_state": "candidate",
+      "start_line": 1
+    },
+    {
+      "artifact_sha256": "ca63a305e8fcdc58f91aba0b6f9d942fa0170a12174eff63b52ebf248ef2d975",
+      "content": "def accepted(value): return value>=1\n",
+      "end_line": 1,
+      "evidence_id": "E011",
+      "kind": "production_source",
+      "owner": "subject",
+      "path": "src/intake.py",
+      "source_state": "candidate",
+      "start_line": 1
+    },
+    {
+      "artifact_sha256": "a39b1113257b23a182c16b48289e1f368d08d768c206669c410c13e7b4530fa3",
+      "content": "def accepted(value): return value>=2\n",
+      "end_line": 1,
+      "evidence_id": "E012",
+      "kind": "production_source",
+      "owner": "subject",
+      "path": "src/persistence.py",
+      "source_state": "candidate",
+      "start_line": 1
+    }
+  ],
+  "mode": "blind",
+  "official_evaluation_passed": false,
+  "peer_run_id": null,
+  "provenance": {
+    "peer": null,
+    "subject": {
+      "base_source_snapshot_sha256": "cebaf5a965b3b0b3d168b6edde87c1a96772512005877aca60250ce281bbe9b7",
+      "benchmark_definition_sha256": "bdb99b5097f62b0807cdfa07f0c229a4bc87cffc1624a3e35ee93a898c6ef488",
+      "candidate_source_snapshot_sha256": "7b98f7ee579d5b4823cd2d896a717ebd8090c41f52460d45e970997440ef5da7",
+      "canonical_patch_sha256": "6915db4809e6b70b4c2b67712e546f6c3b7cb9b8b49aadf71dafaab09cf366cf",
+      "evaluation_log_sha256": "d251d99417a82ba947c5da59b09d6a52db4df2ce03ce0be12057378e1d410e3d",
+      "frozen_tests_snapshot_sha256": "5de73a3b5c1d54ea1d38c7f9d307075b92c3238292d9620fd91e69d6aa640ca9",
+      "task_contract_sha256": "d7ea0e771668a822ff41980a17d503b832e1f47fa05959a8ac10f0330a03f1f0"
+    }
+  },
+  "schema_version": 1,
+  "source_snapshot_policy": "full_bounded_production_v1:5872fe6c90dcbe418f35d9548e49b7e473794cb388faa8e9374f7a283f7ac77b",
+  "subject_run_id": "semantic-21-subject",
+  "task_fingerprint_sha256": "4b0ad0f44c76146b2172971e2fe070ee644bf1e2b49aa60aa78d02729ed03910",
+  "task_id": "semantic-21"
+}

@@ -1,0 +1,25 @@
+Command: python -I -S -B .patchbench-eval/runner.py
+Exit code: 1
+Duration seconds: 0.000000
+
+STDOUT:
+
+STDERR:
+test_priority (_patchbench_frozen_0.Contract.test_priority) ... FAIL
+
+======================================================================
+FAIL: test_priority (_patchbench_frozen_0.Contract.test_priority)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/tmp/patchbench-diagnosis-v1-candidate-stage/semantic-17/workspaces/evaluation-subject-work/test_contract.py", line 7, in test_priority
+    def test_priority(self): self.assertEqual(serialize(make('job',3)),'name=job;priority=3')
+                             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+AssertionError: 'name=job' != 'name=job;priority=3'
+- name=job
++ name=job;priority=3
+
+
+----------------------------------------------------------------------
+Ran 1 test in 0.000s
+
+FAILED (failures=1)

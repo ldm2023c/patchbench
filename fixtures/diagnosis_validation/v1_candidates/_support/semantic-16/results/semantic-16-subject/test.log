@@ -1,0 +1,25 @@
+Command: python -I -S -B .patchbench-eval/runner.py
+Exit code: 1
+Duration seconds: 0.000000
+
+STDOUT:
+
+STDERR:
+test_archive (_patchbench_frozen_0.Contract.test_archive) ... ERROR
+
+======================================================================
+ERROR: test_archive (_patchbench_frozen_0.Contract.test_archive)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/tmp/patchbench-diagnosis-v1-candidate-stage/semantic-16/workspaces/evaluation-subject-work/test_contract.py", line 6, in test_archive
+    def test_archive(self): self.assertEqual(execute('archive','report'),'archived:report')
+                                             ^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/tmp/patchbench-diagnosis-v1-candidate-stage/semantic-16/workspaces/evaluation-subject-work/src/commands.py", line 3, in execute
+    def execute(action,name): return HANDLERS[action](name)
+                                     ~~~~~~~~^^^^^^^^
+KeyError: 'archive'
+
+----------------------------------------------------------------------
+Ran 1 test in 0.000s
+
+FAILED (errors=1)

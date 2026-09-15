@@ -1,0 +1,22 @@
+Command: python -I -S -B .patchbench-eval/runner.py
+Exit code: 1
+Duration seconds: 0.000000
+
+STDOUT:
+
+STDERR:
+test_alignment (_patchbench_frozen_0.Contract.test_alignment) ... FAIL
+
+======================================================================
+FAIL: test_alignment (_patchbench_frozen_0.Contract.test_alignment)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/tmp/patchbench-diagnosis-v1-candidate-stage/semantic-21/workspaces/evaluation-subject-work/test_contract.py", line 7, in test_alignment
+    for value in (0,1,2,3): self.assertTrue(aligned(value))
+                            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+AssertionError: False is not true
+
+----------------------------------------------------------------------
+Ran 1 test in 0.000s
+
+FAILED (failures=1)

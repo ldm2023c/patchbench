@@ -1,0 +1,17 @@
+evaluation:
+  command: python -I -S -B .patchbench-eval/runner.py
+  frozen_unittest:
+    test_files:
+    - test_contract.py
+    version: 1
+  timeout_seconds: 30
+id: semantic-17
+metadata:
+  language: python
+repository:
+  base_commit: cd6bf9e442abf727aba2eeb39bcefddb8cae9dd1
+  path: repository
+  type: local
+schema_version: 1
+task:
+  prompt: Carry record priority through construction and wire serialization.

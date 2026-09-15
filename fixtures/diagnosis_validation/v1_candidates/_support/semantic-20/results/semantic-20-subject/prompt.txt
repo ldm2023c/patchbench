@@ -1,0 +1,1 @@
+Preserve round-trip values across the representation revision.

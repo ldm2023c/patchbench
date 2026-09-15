@@ -40,7 +40,9 @@ from patchbench.storage.filesystem import FilesystemArtifactStore
 
 
 SCHEMA_VERSION = 1
-SEMANTIC_IDS = tuple(f"semantic-{index:02d}" for index in range(1, 16))
+LEGACY_SEMANTIC_IDS = tuple(f"semantic-{index:02d}" for index in range(1, 16))
+TOPUP_SEMANTIC_IDS = tuple(f"semantic-{index:02d}" for index in range(16, 22))
+SEMANTIC_IDS = LEGACY_SEMANTIC_IDS + TOPUP_SEMANTIC_IDS
 OPERATIONAL_IDS = ("operational-01", "operational-02")
 ALL_IDS = SEMANTIC_IDS + OPERATIONAL_IDS
 BENCHMARK_POLICY = "diagnosis-validation-v1-controlled-candidate"
@@ -180,7 +182,84 @@ def _semantic_specs():
        {"src/cache.py":"DATA={'x':1}; CACHE={}\ndef put(k,v): DATA[k]=v; CACHE[k]=v\ndef get(k): return CACHE.get(k,DATA.get(k))\n"},
        "Return the latest stored value through the cache-backed interface.",
        "from src.cache import put,get\nimport unittest\nclass Contract(unittest.TestCase):\n def test_latest(self): put('x',2); self.assertEqual(get('x'),2)\n"),
+      ({"src/engine.py":"def archive(name):\n return 'stored:'+name\n",
+        "src/commands.py":"from .engine import archive\nHANDLERS={'store':archive}\ndef execute(action,name): return HANDLERS[action](name)\n"},
+       {"src/engine.py":"def archive(name):\n return 'archived:'+name\n"},
+       {"src/engine.py":"def archive(name):\n return 'archived:'+name\n",
+        "src/commands.py":"from .engine import archive\nHANDLERS={'store':archive,'archive':archive}\ndef execute(action,name): return HANDLERS[action](name)\n"},
+       "Support the archive action through the public command interface.",
+       "from src.commands import execute\nimport unittest\nclass Contract(unittest.TestCase):\n def test_archive(self): self.assertEqual(execute('archive','report'),'archived:report')\n"),
+      ({"src/records.py":"def make(name): return {'name':name}\n",
+        "src/wire.py":"def serialize(record): return 'name='+record['name']\n"},
+       {"src/records.py":"def make(name,priority): return {'name':name,'priority':priority}\n"},
+       {"src/records.py":"def make(name,priority): return {'name':name,'priority':priority}\n",
+        "src/wire.py":"def serialize(record): return 'name='+record['name']+';priority='+str(record['priority'])\n"},
+       "Carry record priority through construction and wire serialization.",
+       "from src.records import make\nfrom src.wire import serialize\nimport unittest\nclass Contract(unittest.TestCase):\n def test_priority(self): self.assertEqual(serialize(make('job',3)),'name=job;priority=3')\n"),
+      ({"src/emitter.py":"def version(): return 'v1'\n",
+        "src/receiver.py":"from .emitter import version\nEXPECTED='v1'\ndef compatible(): return version()==EXPECTED\n"},
+       {"src/emitter.py":"def version(): return 'v2'\n",
+        "src/receiver.py":"from .emitter import version\nEXPECTED='v3'\ndef compatible(): return version()==EXPECTED\n"},
+       {"src/emitter.py":"def version(): return 'v4'\n",
+        "src/receiver.py":"from .emitter import version\nEXPECTED='v4'\ndef compatible(): return version()==EXPECTED\n"},
+       "Keep emitted and accepted protocol versions aligned after the revision.",
+       "from src.receiver import compatible\nimport unittest\nclass Contract(unittest.TestCase):\n def test_compatibility(self): self.assertTrue(compatible())\n"),
+      ({"src/catalog.py":"def advertised(): return {'basic'}\n",
+        "src/backend.py":"def implemented(): return {'basic'}\n",
+        "src/service.py":"from .catalog import advertised\nfrom .backend import implemented\ndef aligned(): return advertised()==implemented()\n"},
+       {"src/catalog.py":"def advertised(): return {'basic','fast'}\n",
+        "src/backend.py":"def implemented(): return {'basic','safe'}\n"},
+       {"src/catalog.py":"def advertised(): return {'basic','batch'}\n",
+        "src/backend.py":"def implemented(): return {'basic','batch'}\n"},
+       "Keep advertised and implemented capabilities aligned during extension.",
+       "from src.service import aligned\nimport unittest\nclass Contract(unittest.TestCase):\n def test_capabilities(self): self.assertTrue(aligned())\n"),
+      ({"src/encoder.py":"def encode(value): return 'A:'+value\n",
+        "src/decoder.py":"def decode(value): return value.removeprefix('A:')\n"},
+       {"src/encoder.py":"def encode(value): return 'B:'+value\n",
+        "src/decoder.py":"def decode(value): return value.removeprefix('C:')\n"},
+       {"src/encoder.py":"def encode(value): return 'D:'+value\n",
+        "src/decoder.py":"def decode(value): return value.removeprefix('D:')\n"},
+       "Preserve round-trip values across the representation revision.",
+       "from src.encoder import encode\nfrom src.decoder import decode\nimport unittest\nclass Contract(unittest.TestCase):\n def test_round_trip(self): self.assertEqual(decode(encode('item')),'item')\n"),
+      ({"src/intake.py":"def accepted(value): return value>=0\n",
+        "src/persistence.py":"def accepted(value): return value>=0\n",
+        "src/checks.py":"from .intake import accepted as intake\nfrom .persistence import accepted as stored\ndef aligned(value): return intake(value)==stored(value)\n"},
+       {"src/intake.py":"def accepted(value): return value>=1\n",
+        "src/persistence.py":"def accepted(value): return value>=2\n"},
+       {"src/intake.py":"def accepted(value): return value>=3\n",
+        "src/persistence.py":"def accepted(value): return value>=3\n"},
+       "Keep validation decisions consistent for supported values.",
+       "from src.checks import aligned\nimport unittest\nclass Contract(unittest.TestCase):\n def test_alignment(self):\n  for value in (0,1,2,3): self.assertTrue(aligned(value))\n"),
     ]
+
+
+_HIDDEN_CROSS_FILE_PATHS = {
+    "semantic-16": {"src/engine.py", "src/commands.py"},
+    "semantic-17": {"src/records.py", "src/wire.py"},
+}
+
+_HIDDEN_DUAL_REPAIRS = {
+    "semantic-18": (
+        {"src/emitter.py":"def version(): return 'v3'\n",
+         "src/receiver.py":"from .emitter import version\nEXPECTED='v3'\ndef compatible(): return version()==EXPECTED\n"},
+        {"src/emitter.py":"def version(): return 'v2'\n",
+         "src/receiver.py":"from .emitter import version\nEXPECTED='v2'\ndef compatible(): return version()==EXPECTED\n"}),
+    "semantic-19": (
+        {"src/catalog.py":"def advertised(): return {'basic','safe'}\n",
+         "src/backend.py":"def implemented(): return {'basic','safe'}\n"},
+        {"src/catalog.py":"def advertised(): return {'basic','fast'}\n",
+         "src/backend.py":"def implemented(): return {'basic','fast'}\n"}),
+    "semantic-20": (
+        {"src/encoder.py":"def encode(value): return 'C:'+value\n",
+         "src/decoder.py":"def decode(value): return value.removeprefix('C:')\n"},
+        {"src/encoder.py":"def encode(value): return 'B:'+value\n",
+         "src/decoder.py":"def decode(value): return value.removeprefix('B:')\n"}),
+    "semantic-21": (
+        {"src/intake.py":"def accepted(value): return value>=2\n",
+         "src/persistence.py":"def accepted(value): return value>=2\n"},
+        {"src/intake.py":"def accepted(value): return value>=1\n",
+         "src/persistence.py":"def accepted(value): return value>=1\n"}),
+}
 
 
 def _init_repository(case_root: Path, base_files: dict[str, str], test_text: str) -> str:
@@ -259,6 +338,30 @@ def _patch_and_evaluate(manager, task, run_id: str, changes: dict[str, str]):
     return patch, evaluation
 
 
+def _verify_hidden_construction(
+    case_id: str, manager, task, subject_patch: str, peer_patch: str,
+) -> None:
+    if case_id in _HIDDEN_CROSS_FILE_PATHS:
+        required = _HIDDEN_CROSS_FILE_PATHS[case_id]
+        subject_paths = {item.path for item in summarize_patch(subject_patch).files}
+        peer_paths = {item.path for item in summarize_patch(peer_patch).files}
+        if (not subject_paths or not subject_paths < required
+                or not required.issubset(peer_paths)):
+            raise CandidateVerificationError(f"{case_id} coordinated repair topology differs")
+    if case_id in _HIDDEN_DUAL_REPAIRS:
+        repairs = []
+        for index, changes in enumerate(_HIDDEN_DUAL_REPAIRS[case_id], 1):
+            patch, result = _patch_and_evaluate(
+                manager, task, f"{case_id}-counterfactual-{index}", changes)
+            if not result.passed:
+                raise CandidateVerificationError(
+                    f"{case_id} alternative evidence-consistent repair does not pass")
+            repairs.append(patch)
+        if repairs[0] == repairs[1] or subject_patch in repairs:
+            raise CandidateVerificationError(
+                f"{case_id} requires two materially distinct alternative repairs")
+
+
 def _build_semantic(case_root: Path, case_id: str, spec) -> None:
     base, subject_changes, peer_changes, prompt, test_text = spec
     stable_test = "import unittest\nunittest.runner.time.perf_counter = lambda: 0.0\n" + test_text
@@ -271,6 +374,7 @@ def _build_semantic(case_root: Path, case_id: str, spec) -> None:
         task = load_task(Path("task.yaml"))
         subject_patch, subject_result = _patch_and_evaluate(manager, task, "subject-work", subject_changes)
         peer_patch, peer_result = _patch_and_evaluate(manager, task, "peer-work", peer_changes)
+        _verify_hidden_construction(case_id, manager, task, subject_patch, peer_patch)
         if subject_result.passed or not peer_result.passed:
             raise CandidateVerificationError(f"{case_id} controlled outcomes are not FAIL/PASS")
         subject_id, peer_id, experiment_id = f"{case_id}-subject", f"{case_id}-peer", f"{case_id}-peers"
@@ -397,14 +501,18 @@ def verify_diagnosis_validation_candidates(root: Path) -> dict[str, str]:
     if any("contrastive" in path.name.lower() for path in root.rglob("*")):
         raise CandidateVerificationError("candidate pool contains a Contrastive asset")
     semantic_answer_tokens = ("preferred_family", "acceptable_families", "should_abstain",
-        "required_evidence", "forbidden_claims", "intended construction family")
+        "required_evidence", "forbidden_claims", "intended construction family",
+        "intended construction role", "intended failure family", "ambiguity marker",
+        "abstention marker", "intended abstention status")
     if any(any(token in path.read_text(encoding="utf-8", errors="ignore")
                for token in semantic_answer_tokens)
            for path in root.rglob("*") if path.is_file()):
         raise CandidateVerificationError("candidate pool contains semantic Human Gold material")
     identities = {}
     forbidden_keys = {"preferred_family", "acceptable_families", "should_abstain",
-        "required_evidence", "forbidden_claims", "intended_construction_family"}
+        "required_evidence", "forbidden_claims", "intended_construction_family",
+        "intended_construction_role", "intended_failure_family", "ambiguity_marker",
+        "abstention_marker", "intended_abstention_status"}
     with TemporaryDirectory(prefix="patchbench-diagnosis-candidate-verify-") as temporary:
         stage_root = Path(temporary)
         for case_id in SEMANTIC_IDS:
@@ -481,6 +589,8 @@ def verify_candidate_authoring_isolation(root: Path, case_id: str) -> None:
         raise CandidateVerificationError(f"{case_id} authoring Bundle is not strictly Blind")
     forbidden_keys = {"preferred_family", "acceptable_families", "should_abstain",
         "required_evidence", "forbidden_claims", "intended_construction_family",
+        "intended_construction_role", "intended_failure_family", "ambiguity_marker",
+        "abstention_marker", "intended_abstention_status",
         "peer_run_id", "peer_experiment_id", "peer_run_index", "peer_selection_path",
         "peer_artifact_store_path"}
     def keys(value):

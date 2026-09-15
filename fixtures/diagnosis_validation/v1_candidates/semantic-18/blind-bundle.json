@@ -1,0 +1,139 @@
+{
+  "agent_status": "completed",
+  "base_commit": "6042ec6d3a7f574da33ce41dc59f4e976cb1e58e",
+  "benchmark_definition_sha256": "bed97b93bd9461ce8cca06fddc667f47cea3c0adca1f54636c0eed5411774fd7",
+  "bundle_id": "blind-c6455361957e316eb548d7d809008ceb3b39d7a1f1e7d2a43755f85cfd998e2d",
+  "bundle_sha256": "96dcfbef83f9c83192a9eeca26206ff95004763fe5212b2a4e15953048b6e2fb",
+  "evidence_items": [
+    {
+      "artifact_sha256": "2a37fd629af6d786cf7568206e41ccc4c9657931a362d2cd208b9c2788093c4c",
+      "content": "import unittest\nunittest.runner.time.perf_counter = lambda: 0.0\nfrom src.receiver import compatible\nimport unittest\nclass Contract(unittest.TestCase):\n def test_compatibility(self): self.assertTrue(compatible())\n",
+      "end_line": 6,
+      "evidence_id": "E001",
+      "kind": "frozen_test",
+      "owner": "benchmark",
+      "path": "test_contract.py",
+      "source_state": "frozen",
+      "start_line": 1
+    },
+    {
+      "artifact_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "content": "",
+      "end_line": null,
+      "evidence_id": "E002",
+      "kind": "production_source",
+      "owner": "benchmark",
+      "path": "src/__init__.py",
+      "source_state": "base",
+      "start_line": null
+    },
+    {
+      "artifact_sha256": "091a8a0fda8e5f060566bb9bdf26f2c2add1e6cd1718167d6a2e389f3abf911f",
+      "content": "def version(): return 'v1'\n",
+      "end_line": 1,
+      "evidence_id": "E003",
+      "kind": "production_source",
+      "owner": "benchmark",
+      "path": "src/emitter.py",
+      "source_state": "base",
+      "start_line": 1
+    },
+    {
+      "artifact_sha256": "c2c7dc529a9a42ecf38b4ed4c8df65e582397ee18510f0b76a3fa450fe219fdb",
+      "content": "from .emitter import version\nEXPECTED='v1'\ndef compatible(): return version()==EXPECTED\n",
+      "end_line": 3,
+      "evidence_id": "E004",
+      "kind": "production_source",
+      "owner": "benchmark",
+      "path": "src/receiver.py",
+      "source_state": "base",
+      "start_line": 1
+    },
+    {
+      "artifact_sha256": "103df521c1c39f6e2e772e479253b34ec3c29ff6f71efa91e8e6f9369142c5dd",
+      "content": "evaluation:\n  command: python -I -S -B .patchbench-eval/runner.py\n  frozen_unittest:\n    test_files:\n    - test_contract.py\n    version: 1\n  timeout_seconds: 30\nid: semantic-18\nmetadata:\n  language: python\nrepository:\n  base_commit: 6042ec6d3a7f574da33ce41dc59f4e976cb1e58e\n  path: repository\n  type: local\nschema_version: 1\ntask:\n  prompt: Keep emitted and accepted protocol versions aligned after the revision.\n",
+      "end_line": 17,
+      "evidence_id": "E005",
+      "kind": "task_contract",
+      "owner": "benchmark",
+      "path": null,
+      "source_state": null,
+      "start_line": 1
+    },
+    {
+      "artifact_sha256": "7748de31000564633a4c5caf08789c946d8b8c673b6c2a4d70fdc3a2bae626ff",
+      "content": "diff --git a/src/emitter.py b/src/emitter.py\nindex 96ce41e..eebb8ca 100644\n--- a/src/emitter.py\n+++ b/src/emitter.py\n@@ -1 +1 @@\n-def version(): return 'v1'\n+def version(): return 'v2'\ndiff --git a/src/receiver.py b/src/receiver.py\nindex fb3880c..ad16535 100644\n--- a/src/receiver.py\n+++ b/src/receiver.py\n@@ -1,3 +1,3 @@\n from .emitter import version\n-EXPECTED='v1'\n+EXPECTED='v3'\n def compatible(): return version()==EXPECTED\n",
+      "end_line": 16,
+      "evidence_id": "E006",
+      "kind": "canonical_patch",
+      "owner": "subject",
+      "path": "patch.diff",
+      "source_state": null,
+      "start_line": 1
+    },
+    {
+      "artifact_sha256": "bcba1f0fa6df9779fe82b041961a4bc5eec465c54e490aa161756b5eda35273a",
+      "content": "Command: python -I -S -B .patchbench-eval/runner.py\nExit code: 1\nDuration seconds: 0.000000\n\nSTDOUT:\n\nSTDERR:\ntest_compatibility (_patchbench_frozen_0.Contract.test_compatibility) ... FAIL\n\n======================================================================\nFAIL: test_compatibility (_patchbench_frozen_0.Contract.test_compatibility)\n----------------------------------------------------------------------\nTraceback (most recent call last):\n  File \"/tmp/patchbench-diagnosis-v1-candidate-stage/semantic-18/workspaces/evaluation-subject-work/test_contract.py\", line 6, in test_compatibility\n    def test_compatibility(self): self.assertTrue(compatible())\n                                  ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\nAssertionError: False is not true\n\n----------------------------------------------------------------------\nRan 1 test in 0.000s\n\nFAILED (failures=1)",
+      "end_line": 22,
+      "evidence_id": "E007",
+      "kind": "evaluation_output",
+      "owner": "subject",
+      "path": "test.log",
+      "source_state": null,
+      "start_line": 1
+    },
+    {
+      "artifact_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "content": "",
+      "end_line": null,
+      "evidence_id": "E008",
+      "kind": "production_source",
+      "owner": "subject",
+      "path": "src/__init__.py",
+      "source_state": "candidate",
+      "start_line": null
+    },
+    {
+      "artifact_sha256": "d71ca325883ff25028b0f2ca2e4f8ecdce59252c536db6f830098cfa3c85483a",
+      "content": "def version(): return 'v2'\n",
+      "end_line": 1,
+      "evidence_id": "E009",
+      "kind": "production_source",
+      "owner": "subject",
+      "path": "src/emitter.py",
+      "source_state": "candidate",
+      "start_line": 1
+    },
+    {
+      "artifact_sha256": "79dfd6a64cc6fb9e222b1431298cdcab3d176ea53751be7bf4c1ebd26d5974db",
+      "content": "from .emitter import version\nEXPECTED='v3'\ndef compatible(): return version()==EXPECTED\n",
+      "end_line": 3,
+      "evidence_id": "E010",
+      "kind": "production_source",
+      "owner": "subject",
+      "path": "src/receiver.py",
+      "source_state": "candidate",
+      "start_line": 1
+    }
+  ],
+  "mode": "blind",
+  "official_evaluation_passed": false,
+  "peer_run_id": null,
+  "provenance": {
+    "peer": null,
+    "subject": {
+      "base_source_snapshot_sha256": "8b32494a862777d9e93b2ab302bc23c026dd084c28046c1f6e01637109b840a4",
+      "benchmark_definition_sha256": "bed97b93bd9461ce8cca06fddc667f47cea3c0adca1f54636c0eed5411774fd7",
+      "candidate_source_snapshot_sha256": "9b6b8cc345687ab4153e3ea2827e39df1a2ee86210baf625d5f46172512f9d30",
+      "canonical_patch_sha256": "7748de31000564633a4c5caf08789c946d8b8c673b6c2a4d70fdc3a2bae626ff",
+      "evaluation_log_sha256": "bcba1f0fa6df9779fe82b041961a4bc5eec465c54e490aa161756b5eda35273a",
+      "frozen_tests_snapshot_sha256": "f10ee952045d27954441044749f5657d8a5899bf2ca65896322336d53490ec99",
+      "task_contract_sha256": "103df521c1c39f6e2e772e479253b34ec3c29ff6f71efa91e8e6f9369142c5dd"
+    }
+  },
+  "schema_version": 1,
+  "source_snapshot_policy": "full_bounded_production_v1:5872fe6c90dcbe418f35d9548e49b7e473794cb388faa8e9374f7a283f7ac77b",
+  "subject_run_id": "semantic-18-subject",
+  "task_fingerprint_sha256": "153169aa7401dbc150cb47c84e4a81f9df59d6cbe245b25f6bf7baab52c5dfc5",
+  "task_id": "semantic-18"
+}

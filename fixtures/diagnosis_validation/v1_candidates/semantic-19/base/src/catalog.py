@@ -1,0 +1,1 @@
+def advertised(): return {'basic'}

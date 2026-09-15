@@ -1,0 +1,17 @@
+evaluation:
+  command: python -I -S -B .patchbench-eval/runner.py
+  frozen_unittest:
+    test_files:
+    - test_contract.py
+    version: 1
+  timeout_seconds: 30
+id: semantic-20
+metadata:
+  language: python
+repository:
+  base_commit: 1dffc360ee98420a0d795fed7388b46526aec57d
+  path: repository
+  type: local
+schema_version: 1
+task:
+  prompt: Preserve round-trip values across the representation revision.

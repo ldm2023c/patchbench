@@ -1,0 +1,88 @@
+{
+  "agent": {
+    "backend": "host",
+    "duration_seconds": 0.0,
+    "exit_code": 0,
+    "name": "controlled-fixture",
+    "requested_model": null,
+    "status": "completed",
+    "timeout_seconds": 30.0
+  },
+  "artifacts": {
+    "agent_log": "results/semantic-16-subject/agent.log",
+    "agent_stderr_log": "results/semantic-16-subject/agent.stderr.log",
+    "directory": "results/semantic-16-subject",
+    "metadata": "results/semantic-16-subject/metadata.json",
+    "patch": "results/semantic-16-subject/patch.diff",
+    "prompt": "results/semantic-16-subject/prompt.txt",
+    "test_log": "results/semantic-16-subject/test.log"
+  },
+  "duration_seconds": 0.0,
+  "evaluation_evidence": {
+    "duration_seconds": 0.0,
+    "error_count": 1,
+    "exit_code": 1,
+    "failing_cases": [
+      {
+        "name": "test_archive (_patchbench_frozen_0.Contract.test_archive)",
+        "outcome": "error"
+      }
+    ],
+    "failure_count": 0,
+    "framework": "unittest",
+    "output_tail": [
+      "Command: python -I -S -B .patchbench-eval/runner.py",
+      "Exit code: 1",
+      "Duration seconds: 0.000000",
+      "STDOUT:",
+      "STDERR:",
+      "test_archive (_patchbench_frozen_0.Contract.test_archive) ... ERROR",
+      "======================================================================",
+      "ERROR: test_archive (_patchbench_frozen_0.Contract.test_archive)",
+      "----------------------------------------------------------------------",
+      "Traceback (most recent call last):",
+      "  File \"/tmp/patchbench-diagnosis-v1-candidate-stage/semantic-16/workspaces/evaluation-subject-work/test_contract.py\", line 6, in test_archive",
+      "    def test_archive(self): self.assertEqual(execute('archive','report'),'archived:report')",
+      "                                             ^^^^^^^^^^^^^^^^^^^^^^^^^^^",
+      "  File \"/tmp/patchbench-diagnosis-v1-candidate-stage/semantic-16/workspaces/evaluation-subject-work/src/commands.py\", line 3, in execute",
+      "    def execute(action,name): return HANDLERS[action](name)",
+      "                                     ~~~~~~~~^^^^^^^^",
+      "KeyError: 'archive'",
+      "----------------------------------------------------------------------",
+      "Ran 1 test in 0.000s",
+      "FAILED (errors=1)"
+    ],
+    "passed": false,
+    "test_log_sha256": "091cc3e623a1c6b02e690b475874bee45475f586ebd0b15bc11ca5d5f634c322",
+    "tests_run": 1
+  },
+  "evaluation_passed": false,
+  "patch_summary": {
+    "changed_file_count": 1,
+    "files": [
+      {
+        "added_lines": 1,
+        "binary": false,
+        "change_type": "modified",
+        "deleted_lines": 1,
+        "diff_sha256": "4648f94ea8fc349f87cff1c43cfb53eb8ce1a3919910edd36446728ce4b587fa",
+        "path": "src/engine.py",
+        "role": "non_test"
+      }
+    ],
+    "patch_bytes": 199,
+    "patch_sha256": "4648f94ea8fc349f87cff1c43cfb53eb8ce1a3919910edd36446728ce4b587fa",
+    "text_added_lines": 1,
+    "text_deleted_lines": 1
+  },
+  "provenance": {
+    "base_commit_used": "253b8703b6434a04665b549aaaa8e45ee27341a5",
+    "evaluation_backend": "host",
+    "evaluation_command": "python -I -S -B .patchbench-eval/runner.py",
+    "evaluation_timeout_seconds": 30,
+    "task_fingerprint_sha256": "74cc877dfea8b59305e774e2ae9b7501ca8a80572dd41a831d9288009e432544"
+  },
+  "run_id": "semantic-16-subject",
+  "status": "failed",
+  "task_id": "semantic-16"
+}

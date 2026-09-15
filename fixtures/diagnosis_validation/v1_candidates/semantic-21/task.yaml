@@ -1,0 +1,17 @@
+evaluation:
+  command: python -I -S -B .patchbench-eval/runner.py
+  frozen_unittest:
+    test_files:
+    - test_contract.py
+    version: 1
+  timeout_seconds: 30
+id: semantic-21
+metadata:
+  language: python
+repository:
+  base_commit: cf481851b1504d57e5a2408d6cb12553b3a749d3
+  path: repository
+  type: local
+schema_version: 1
+task:
+  prompt: Keep validation decisions consistent for supported values.

@@ -1,0 +1,139 @@
+{
+  "agent_status": "completed",
+  "base_commit": "cd6bf9e442abf727aba2eeb39bcefddb8cae9dd1",
+  "benchmark_definition_sha256": "d71342e5962d937a248a972519bce39a614f64f4dfb22f4a75b10b2ec436bc79",
+  "bundle_id": "blind-bf8071cb5d5652d9bfa5ead8091678d4d0eb7688df6a00b372745ce86d6e3a5c",
+  "bundle_sha256": "985c01d5006213573ec59a854773072f6d091d842afa32e7dd5711be77ddc9bf",
+  "evidence_items": [
+    {
+      "artifact_sha256": "b8023d9cd330c0dc5df30ab1013860a88164e28060e75cce5dbb71219d89e3fb",
+      "content": "import unittest\nunittest.runner.time.perf_counter = lambda: 0.0\nfrom src.records import make\nfrom src.wire import serialize\nimport unittest\nclass Contract(unittest.TestCase):\n def test_priority(self): self.assertEqual(serialize(make('job',3)),'name=job;priority=3')\n",
+      "end_line": 7,
+      "evidence_id": "E001",
+      "kind": "frozen_test",
+      "owner": "benchmark",
+      "path": "test_contract.py",
+      "source_state": "frozen",
+      "start_line": 1
+    },
+    {
+      "artifact_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "content": "",
+      "end_line": null,
+      "evidence_id": "E002",
+      "kind": "production_source",
+      "owner": "benchmark",
+      "path": "src/__init__.py",
+      "source_state": "base",
+      "start_line": null
+    },
+    {
+      "artifact_sha256": "c243a2dfcb42925da6633e87c510fae8b806870792fcdd7eb491c534600c78ac",
+      "content": "def make(name): return {'name':name}\n",
+      "end_line": 1,
+      "evidence_id": "E003",
+      "kind": "production_source",
+      "owner": "benchmark",
+      "path": "src/records.py",
+      "source_state": "base",
+      "start_line": 1
+    },
+    {
+      "artifact_sha256": "a2410fc61ad620a00f4de41b4cc82588f92e10936da6848df2fe41094c04c00a",
+      "content": "def serialize(record): return 'name='+record['name']\n",
+      "end_line": 1,
+      "evidence_id": "E004",
+      "kind": "production_source",
+      "owner": "benchmark",
+      "path": "src/wire.py",
+      "source_state": "base",
+      "start_line": 1
+    },
+    {
+      "artifact_sha256": "f2edb1331b18cac8ef77aa9fac8b003365ad00b519534072e776dcacb8989cf1",
+      "content": "evaluation:\n  command: python -I -S -B .patchbench-eval/runner.py\n  frozen_unittest:\n    test_files:\n    - test_contract.py\n    version: 1\n  timeout_seconds: 30\nid: semantic-17\nmetadata:\n  language: python\nrepository:\n  base_commit: cd6bf9e442abf727aba2eeb39bcefddb8cae9dd1\n  path: repository\n  type: local\nschema_version: 1\ntask:\n  prompt: Carry record priority through construction and wire serialization.\n",
+      "end_line": 17,
+      "evidence_id": "E005",
+      "kind": "task_contract",
+      "owner": "benchmark",
+      "path": null,
+      "source_state": null,
+      "start_line": 1
+    },
+    {
+      "artifact_sha256": "e7a225a46cff47b24c26ca9518d23f22fc3cc51f18a254d27b801350df6900cb",
+      "content": "diff --git a/src/records.py b/src/records.py\nindex 02bfb09..54a6c66 100644\n--- a/src/records.py\n+++ b/src/records.py\n@@ -1 +1 @@\n-def make(name): return {'name':name}\n+def make(name,priority): return {'name':name,'priority':priority}\n",
+      "end_line": 7,
+      "evidence_id": "E006",
+      "kind": "canonical_patch",
+      "owner": "subject",
+      "path": "patch.diff",
+      "source_state": null,
+      "start_line": 1
+    },
+    {
+      "artifact_sha256": "42b5c5e2f5f6e4fa72268a0ebc76f587346495008afe9e917ef3d2e932ab8fc4",
+      "content": "Command: python -I -S -B .patchbench-eval/runner.py\nExit code: 1\nDuration seconds: 0.000000\n\nSTDOUT:\n\nSTDERR:\ntest_priority (_patchbench_frozen_0.Contract.test_priority) ... FAIL\n\n======================================================================\nFAIL: test_priority (_patchbench_frozen_0.Contract.test_priority)\n----------------------------------------------------------------------\nTraceback (most recent call last):\n  File \"/tmp/patchbench-diagnosis-v1-candidate-stage/semantic-17/workspaces/evaluation-subject-work/test_contract.py\", line 7, in test_priority\n    def test_priority(self): self.assertEqual(serialize(make('job',3)),'name=job;priority=3')\n                             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\nAssertionError: 'name=job' != 'name=job;priority=3'\n- name=job\n+ name=job;priority=3\n\n\n----------------------------------------------------------------------\nRan 1 test in 0.000s\n\nFAILED (failures=1)",
+      "end_line": 25,
+      "evidence_id": "E007",
+      "kind": "evaluation_output",
+      "owner": "subject",
+      "path": "test.log",
+      "source_state": null,
+      "start_line": 1
+    },
+    {
+      "artifact_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "content": "",
+      "end_line": null,
+      "evidence_id": "E008",
+      "kind": "production_source",
+      "owner": "subject",
+      "path": "src/__init__.py",
+      "source_state": "candidate",
+      "start_line": null
+    },
+    {
+      "artifact_sha256": "a463dd676e38c8b8db837cd52c05be58ea052e04316679099151006655bb2f30",
+      "content": "def make(name,priority): return {'name':name,'priority':priority}\n",
+      "end_line": 1,
+      "evidence_id": "E009",
+      "kind": "production_source",
+      "owner": "subject",
+      "path": "src/records.py",
+      "source_state": "candidate",
+      "start_line": 1
+    },
+    {
+      "artifact_sha256": "a2410fc61ad620a00f4de41b4cc82588f92e10936da6848df2fe41094c04c00a",
+      "content": "def serialize(record): return 'name='+record['name']\n",
+      "end_line": 1,
+      "evidence_id": "E010",
+      "kind": "production_source",
+      "owner": "subject",
+      "path": "src/wire.py",
+      "source_state": "candidate",
+      "start_line": 1
+    }
+  ],
+  "mode": "blind",
+  "official_evaluation_passed": false,
+  "peer_run_id": null,
+  "provenance": {
+    "peer": null,
+    "subject": {
+      "base_source_snapshot_sha256": "bac49dab73f178ba3b8e494e709f912f75582b56403647bc43df38e00d5a378a",
+      "benchmark_definition_sha256": "d71342e5962d937a248a972519bce39a614f64f4dfb22f4a75b10b2ec436bc79",
+      "candidate_source_snapshot_sha256": "4695890749e9dd956bcce7e4ad6d021033711c041b963dfb76b8c9bc4d43a196",
+      "canonical_patch_sha256": "e7a225a46cff47b24c26ca9518d23f22fc3cc51f18a254d27b801350df6900cb",
+      "evaluation_log_sha256": "42b5c5e2f5f6e4fa72268a0ebc76f587346495008afe9e917ef3d2e932ab8fc4",
+      "frozen_tests_snapshot_sha256": "655334c14389f78a9f9302afc2cab03c0142acf578af1b5480bed2f85b34f383",
+      "task_contract_sha256": "f2edb1331b18cac8ef77aa9fac8b003365ad00b519534072e776dcacb8989cf1"
+    }
+  },
+  "schema_version": 1,
+  "source_snapshot_policy": "full_bounded_production_v1:5872fe6c90dcbe418f35d9548e49b7e473794cb388faa8e9374f7a283f7ac77b",
+  "subject_run_id": "semantic-17-subject",
+  "task_fingerprint_sha256": "771c5561e16a5bdb7c816d0eff794ae5331b2c093a5a15ebcf078f62bb7d78f5",
+  "task_id": "semantic-17"
+}

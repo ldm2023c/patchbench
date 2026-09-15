@@ -1,0 +1,22 @@
+Command: python -I -S -B .patchbench-eval/runner.py
+Exit code: 1
+Duration seconds: 0.000000
+
+STDOUT:
+
+STDERR:
+test_compatibility (_patchbench_frozen_0.Contract.test_compatibility) ... FAIL
+
+======================================================================
+FAIL: test_compatibility (_patchbench_frozen_0.Contract.test_compatibility)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/tmp/patchbench-diagnosis-v1-candidate-stage/semantic-18/workspaces/evaluation-subject-work/test_contract.py", line 6, in test_compatibility
+    def test_compatibility(self): self.assertTrue(compatible())
+                                  ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+AssertionError: False is not true
+
+----------------------------------------------------------------------
+Ran 1 test in 0.000s
+
+FAILED (failures=1)

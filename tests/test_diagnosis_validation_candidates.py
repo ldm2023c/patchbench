@@ -28,18 +28,18 @@ def tree_identity(root: Path):
 def test_checked_candidate_pool_is_exact_and_fully_verified():
     identities = verify_diagnosis_validation_candidates(ROOT)
     assert tuple(identities) == ALL_IDS
-    assert len(set(identities[case_id] for case_id in SEMANTIC_IDS)) == 15
+    assert len(set(identities[case_id] for case_id in SEMANTIC_IDS)) == 21
     inventory = json.loads((ROOT / "candidate-inventory.json").read_bytes())
     assert [item["candidate_id"] for item in inventory["candidates"]] == list(ALL_IDS)
     assert sum(item["expected_route"] == "semantic_diagnosis"
-               for item in inventory["candidates"]) == 15
+               for item in inventory["candidates"]) == 21
     assert sum(item["expected_route"] == "operational_only"
                for item in inventory["candidates"]) == 2
     subject_hashes = {
         json.loads((ROOT / case_id / "candidate.json").read_bytes())["subject_evidence_sha256"]
         for case_id in SEMANTIC_IDS
     }
-    assert len(subject_hashes) == 15
+    assert len(subject_hashes) == 21
 
 
 def test_semantic_authoring_assets_are_blind_fail_completed_without_gold_answers():

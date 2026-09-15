@@ -1,0 +1,94 @@
+{
+  "agent": {
+    "backend": "host",
+    "duration_seconds": 0.0,
+    "exit_code": 0,
+    "name": "controlled-fixture",
+    "requested_model": null,
+    "status": "completed",
+    "timeout_seconds": 30.0
+  },
+  "artifacts": {
+    "agent_log": "results/semantic-21-subject/agent.log",
+    "agent_stderr_log": "results/semantic-21-subject/agent.stderr.log",
+    "directory": "results/semantic-21-subject",
+    "metadata": "results/semantic-21-subject/metadata.json",
+    "patch": "results/semantic-21-subject/patch.diff",
+    "prompt": "results/semantic-21-subject/prompt.txt",
+    "test_log": "results/semantic-21-subject/test.log"
+  },
+  "duration_seconds": 0.0,
+  "evaluation_evidence": {
+    "duration_seconds": 0.0,
+    "error_count": 0,
+    "exit_code": 1,
+    "failing_cases": [
+      {
+        "name": "test_alignment (_patchbench_frozen_0.Contract.test_alignment)",
+        "outcome": "fail"
+      }
+    ],
+    "failure_count": 1,
+    "framework": "unittest",
+    "output_tail": [
+      "Command: python -I -S -B .patchbench-eval/runner.py",
+      "Exit code: 1",
+      "Duration seconds: 0.000000",
+      "STDOUT:",
+      "STDERR:",
+      "test_alignment (_patchbench_frozen_0.Contract.test_alignment) ... FAIL",
+      "======================================================================",
+      "FAIL: test_alignment (_patchbench_frozen_0.Contract.test_alignment)",
+      "----------------------------------------------------------------------",
+      "Traceback (most recent call last):",
+      "  File \"/tmp/patchbench-diagnosis-v1-candidate-stage/semantic-21/workspaces/evaluation-subject-work/test_contract.py\", line 7, in test_alignment",
+      "    for value in (0,1,2,3): self.assertTrue(aligned(value))",
+      "                            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^",
+      "AssertionError: False is not true",
+      "----------------------------------------------------------------------",
+      "Ran 1 test in 0.000s",
+      "FAILED (failures=1)"
+    ],
+    "passed": false,
+    "test_log_sha256": "d251d99417a82ba947c5da59b09d6a52db4df2ce03ce0be12057378e1d410e3d",
+    "tests_run": 1
+  },
+  "evaluation_passed": false,
+  "patch_summary": {
+    "changed_file_count": 2,
+    "files": [
+      {
+        "added_lines": 1,
+        "binary": false,
+        "change_type": "modified",
+        "deleted_lines": 1,
+        "diff_sha256": "d4ebf906864d1ccc47940bf7c32043c16160d6e399e2dd010d19cea47aef95ac",
+        "path": "src/intake.py",
+        "role": "non_test"
+      },
+      {
+        "added_lines": 1,
+        "binary": false,
+        "change_type": "modified",
+        "deleted_lines": 1,
+        "diff_sha256": "a594b0a82ded0d429fa2d80730eedb865866fb791ce045a38eb003874e44af5d",
+        "path": "src/persistence.py",
+        "role": "non_test"
+      }
+    ],
+    "patch_bytes": 422,
+    "patch_sha256": "6915db4809e6b70b4c2b67712e546f6c3b7cb9b8b49aadf71dafaab09cf366cf",
+    "text_added_lines": 2,
+    "text_deleted_lines": 2
+  },
+  "provenance": {
+    "base_commit_used": "cf481851b1504d57e5a2408d6cb12553b3a749d3",
+    "evaluation_backend": "host",
+    "evaluation_command": "python -I -S -B .patchbench-eval/runner.py",
+    "evaluation_timeout_seconds": 30,
+    "task_fingerprint_sha256": "4b0ad0f44c76146b2172971e2fe070ee644bf1e2b49aa60aa78d02729ed03910"
+  },
+  "run_id": "semantic-21-subject",
+  "status": "failed",
+  "task_id": "semantic-21"
+}

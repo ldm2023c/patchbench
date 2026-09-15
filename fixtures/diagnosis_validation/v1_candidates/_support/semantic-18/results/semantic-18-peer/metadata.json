@@ -1,0 +1,81 @@
+{
+  "agent": {
+    "backend": "host",
+    "duration_seconds": 0.0,
+    "exit_code": 0,
+    "name": "controlled-fixture",
+    "requested_model": null,
+    "status": "completed",
+    "timeout_seconds": 30.0
+  },
+  "artifacts": {
+    "agent_log": "results/semantic-18-peer/agent.log",
+    "agent_stderr_log": "results/semantic-18-peer/agent.stderr.log",
+    "directory": "results/semantic-18-peer",
+    "metadata": "results/semantic-18-peer/metadata.json",
+    "patch": "results/semantic-18-peer/patch.diff",
+    "prompt": "results/semantic-18-peer/prompt.txt",
+    "test_log": "results/semantic-18-peer/test.log"
+  },
+  "duration_seconds": 0.0,
+  "evaluation_evidence": {
+    "duration_seconds": 0.0,
+    "error_count": 0,
+    "exit_code": 0,
+    "failing_cases": [],
+    "failure_count": 0,
+    "framework": "unittest",
+    "output_tail": [
+      "Command: python -I -S -B .patchbench-eval/runner.py",
+      "Exit code: 0",
+      "Duration seconds: 0.000000",
+      "STDOUT:",
+      "STDERR:",
+      "test_compatibility (_patchbench_frozen_0.Contract.test_compatibility) ... ok",
+      "----------------------------------------------------------------------",
+      "Ran 1 test in 0.000s",
+      "OK"
+    ],
+    "passed": true,
+    "test_log_sha256": "2d025a521db6ecc1e8fd8aba6f8f0ebf4b1fe9c61811237b6d3ddee650f3e5b3",
+    "tests_run": 1
+  },
+  "evaluation_passed": true,
+  "patch_summary": {
+    "changed_file_count": 2,
+    "files": [
+      {
+        "added_lines": 1,
+        "binary": false,
+        "change_type": "modified",
+        "deleted_lines": 1,
+        "diff_sha256": "f44e0eba9e7a939c7d05dd290a7de3eda1baaf5343e0a7b7c42ea353afc5e02f",
+        "path": "src/emitter.py",
+        "role": "non_test"
+      },
+      {
+        "added_lines": 1,
+        "binary": false,
+        "change_type": "modified",
+        "deleted_lines": 1,
+        "diff_sha256": "14c21cd8f158983247ff511b4d04601f4b3287a946f7c512d713df39b0d93d8d",
+        "path": "src/receiver.py",
+        "role": "non_test"
+      }
+    ],
+    "patch_bytes": 428,
+    "patch_sha256": "5f490fab127186ffeb11d504f5b1b0e69a933e3ed6c6d4f301cea30a4fcf608c",
+    "text_added_lines": 2,
+    "text_deleted_lines": 2
+  },
+  "provenance": {
+    "base_commit_used": "6042ec6d3a7f574da33ce41dc59f4e976cb1e58e",
+    "evaluation_backend": "host",
+    "evaluation_command": "python -I -S -B .patchbench-eval/runner.py",
+    "evaluation_timeout_seconds": 30,
+    "task_fingerprint_sha256": "153169aa7401dbc150cb47c84e4a81f9df59d6cbe245b25f6bf7baab52c5dfc5"
+  },
+  "run_id": "semantic-18-peer",
+  "status": "passed",
+  "task_id": "semantic-18"
+}

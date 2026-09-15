@@ -1,0 +1,1 @@
+Carry record priority through construction and wire serialization.

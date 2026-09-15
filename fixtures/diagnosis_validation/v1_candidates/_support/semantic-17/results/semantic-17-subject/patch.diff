@@ -1,0 +1,7 @@
+diff --git a/src/records.py b/src/records.py
+index 02bfb09..54a6c66 100644
+--- a/src/records.py
++++ b/src/records.py
+@@ -1 +1 @@
+-def make(name): return {'name':name}
++def make(name,priority): return {'name':name,'priority':priority}

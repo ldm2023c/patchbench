@@ -1,0 +1,14 @@
+diff --git a/src/intake.py b/src/intake.py
+index e3ea96c..e1178a3 100644
+--- a/src/intake.py
++++ b/src/intake.py
+@@ -1 +1 @@
+-def accepted(value): return value>=0
++def accepted(value): return value>=3
+diff --git a/src/persistence.py b/src/persistence.py
+index e3ea96c..e1178a3 100644
+--- a/src/persistence.py
++++ b/src/persistence.py
+@@ -1 +1 @@
+-def accepted(value): return value>=0
++def accepted(value): return value>=3

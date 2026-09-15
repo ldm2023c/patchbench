@@ -1,0 +1,139 @@
+{
+  "agent_status": "completed",
+  "base_commit": "1dffc360ee98420a0d795fed7388b46526aec57d",
+  "benchmark_definition_sha256": "772b5f73cb610bec65c9c1a5cc14a03412f68294a403b057d259b8d9d2bc03e8",
+  "bundle_id": "blind-773ebd749e09d2a08d5bdd6ae1b9d81efed70f3f6a770a9fc2e8d4b6d74b1538",
+  "bundle_sha256": "d35657f2de951cef75e6c790d3bdaffb63b6c78dcb898c052c3a0b068390b292",
+  "evidence_items": [
+    {
+      "artifact_sha256": "a42c75c748ec53202cb7345dd1b84722aaca3701a92c2e3030bb993c2f519b88",
+      "content": "import unittest\nunittest.runner.time.perf_counter = lambda: 0.0\nfrom src.encoder import encode\nfrom src.decoder import decode\nimport unittest\nclass Contract(unittest.TestCase):\n def test_round_trip(self): self.assertEqual(decode(encode('item')),'item')\n",
+      "end_line": 7,
+      "evidence_id": "E001",
+      "kind": "frozen_test",
+      "owner": "benchmark",
+      "path": "test_contract.py",
+      "source_state": "frozen",
+      "start_line": 1
+    },
+    {
+      "artifact_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "content": "",
+      "end_line": null,
+      "evidence_id": "E002",
+      "kind": "production_source",
+      "owner": "benchmark",
+      "path": "src/__init__.py",
+      "source_state": "base",
+      "start_line": null
+    },
+    {
+      "artifact_sha256": "c7dde9a2642fd48b7c3bfd670bf25194bed5074cb2c8a734a566da31306ca744",
+      "content": "def decode(value): return value.removeprefix('A:')\n",
+      "end_line": 1,
+      "evidence_id": "E003",
+      "kind": "production_source",
+      "owner": "benchmark",
+      "path": "src/decoder.py",
+      "source_state": "base",
+      "start_line": 1
+    },
+    {
+      "artifact_sha256": "fbd94c7817bad477706e3a78cf03e9e4582b26b7bcb83a7815d67459322473ac",
+      "content": "def encode(value): return 'A:'+value\n",
+      "end_line": 1,
+      "evidence_id": "E004",
+      "kind": "production_source",
+      "owner": "benchmark",
+      "path": "src/encoder.py",
+      "source_state": "base",
+      "start_line": 1
+    },
+    {
+      "artifact_sha256": "109d78e494f7686cf6da8a6c0cad97229112beec52dead3cc08a0fb7ffef76ee",
+      "content": "evaluation:\n  command: python -I -S -B .patchbench-eval/runner.py\n  frozen_unittest:\n    test_files:\n    - test_contract.py\n    version: 1\n  timeout_seconds: 30\nid: semantic-20\nmetadata:\n  language: python\nrepository:\n  base_commit: 1dffc360ee98420a0d795fed7388b46526aec57d\n  path: repository\n  type: local\nschema_version: 1\ntask:\n  prompt: Preserve round-trip values across the representation revision.\n",
+      "end_line": 17,
+      "evidence_id": "E005",
+      "kind": "task_contract",
+      "owner": "benchmark",
+      "path": null,
+      "source_state": null,
+      "start_line": 1
+    },
+    {
+      "artifact_sha256": "3d6c7b383b26eec789bd4c0535036202b77a45d7f086817af87660ae6282b185",
+      "content": "diff --git a/src/decoder.py b/src/decoder.py\nindex 2a91ca2..88ec217 100644\n--- a/src/decoder.py\n+++ b/src/decoder.py\n@@ -1 +1 @@\n-def decode(value): return value.removeprefix('A:')\n+def decode(value): return value.removeprefix('C:')\ndiff --git a/src/encoder.py b/src/encoder.py\nindex fae2606..62a10bf 100644\n--- a/src/encoder.py\n+++ b/src/encoder.py\n@@ -1 +1 @@\n-def encode(value): return 'A:'+value\n+def encode(value): return 'B:'+value\n",
+      "end_line": 14,
+      "evidence_id": "E006",
+      "kind": "canonical_patch",
+      "owner": "subject",
+      "path": "patch.diff",
+      "source_state": null,
+      "start_line": 1
+    },
+    {
+      "artifact_sha256": "11ce70c4101c261dd3ea97807bb00bb8fb88914720123528a7b4fdeff055a46f",
+      "content": "Command: python -I -S -B .patchbench-eval/runner.py\nExit code: 1\nDuration seconds: 0.000000\n\nSTDOUT:\n\nSTDERR:\ntest_round_trip (_patchbench_frozen_0.Contract.test_round_trip) ... FAIL\n\n======================================================================\nFAIL: test_round_trip (_patchbench_frozen_0.Contract.test_round_trip)\n----------------------------------------------------------------------\nTraceback (most recent call last):\n  File \"/tmp/patchbench-diagnosis-v1-candidate-stage/semantic-20/workspaces/evaluation-subject-work/test_contract.py\", line 7, in test_round_trip\n    def test_round_trip(self): self.assertEqual(decode(encode('item')),'item')\n                               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\nAssertionError: 'B:item' != 'item'\n- B:item\n? --\n+ item\n\n\n----------------------------------------------------------------------\nRan 1 test in 0.000s\n\nFAILED (failures=1)",
+      "end_line": 26,
+      "evidence_id": "E007",
+      "kind": "evaluation_output",
+      "owner": "subject",
+      "path": "test.log",
+      "source_state": null,
+      "start_line": 1
+    },
+    {
+      "artifact_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "content": "",
+      "end_line": null,
+      "evidence_id": "E008",
+      "kind": "production_source",
+      "owner": "subject",
+      "path": "src/__init__.py",
+      "source_state": "candidate",
+      "start_line": null
+    },
+    {
+      "artifact_sha256": "f57e608d17397942220f78151f478863a65adb9942c650ab574327ebf11e9974",
+      "content": "def decode(value): return value.removeprefix('C:')\n",
+      "end_line": 1,
+      "evidence_id": "E009",
+      "kind": "production_source",
+      "owner": "subject",
+      "path": "src/decoder.py",
+      "source_state": "candidate",
+      "start_line": 1
+    },
+    {
+      "artifact_sha256": "a1e6d773337551e7d45458dc41ef02f03e881d595966a47d6623426c2d9651a0",
+      "content": "def encode(value): return 'B:'+value\n",
+      "end_line": 1,
+      "evidence_id": "E010",
+      "kind": "production_source",
+      "owner": "subject",
+      "path": "src/encoder.py",
+      "source_state": "candidate",
+      "start_line": 1
+    }
+  ],
+  "mode": "blind",
+  "official_evaluation_passed": false,
+  "peer_run_id": null,
+  "provenance": {
+    "peer": null,
+    "subject": {
+      "base_source_snapshot_sha256": "6d3129ca077951336b06dd1fae57e8702493ba6c39d0c63a5da6d3f74f266cd1",
+      "benchmark_definition_sha256": "772b5f73cb610bec65c9c1a5cc14a03412f68294a403b057d259b8d9d2bc03e8",
+      "candidate_source_snapshot_sha256": "8e4e5c9d7905563783b238f867677c9a453c022da57fcb106321448284668657",
+      "canonical_patch_sha256": "3d6c7b383b26eec789bd4c0535036202b77a45d7f086817af87660ae6282b185",
+      "evaluation_log_sha256": "11ce70c4101c261dd3ea97807bb00bb8fb88914720123528a7b4fdeff055a46f",
+      "frozen_tests_snapshot_sha256": "3cd68ba3140dabd255270957d9a1cf3b92cbef636a585d60f73dede2e059f482",
+      "task_contract_sha256": "109d78e494f7686cf6da8a6c0cad97229112beec52dead3cc08a0fb7ffef76ee"
+    }
+  },
+  "schema_version": 1,
+  "source_snapshot_policy": "full_bounded_production_v1:5872fe6c90dcbe418f35d9548e49b7e473794cb388faa8e9374f7a283f7ac77b",
+  "subject_run_id": "semantic-20-subject",
+  "task_fingerprint_sha256": "d58592898a45824d6a30a4e4de5bcbc20405e5da9cff4aaac45a6f6700e9962b",
+  "task_id": "semantic-20"
+}

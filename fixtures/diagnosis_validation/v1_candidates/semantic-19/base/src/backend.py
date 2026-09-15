@@ -1,0 +1,1 @@
+def implemented(): return {'basic'}

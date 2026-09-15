@@ -1,0 +1,16 @@
+diff --git a/src/emitter.py b/src/emitter.py
+index 96ce41e..42c2050 100644
+--- a/src/emitter.py
++++ b/src/emitter.py
+@@ -1 +1 @@
+-def version(): return 'v1'
++def version(): return 'v4'
+diff --git a/src/receiver.py b/src/receiver.py
+index fb3880c..8a7312d 100644
+--- a/src/receiver.py
++++ b/src/receiver.py
+@@ -1,3 +1,3 @@
+ from .emitter import version
+-EXPECTED='v1'
++EXPECTED='v4'
+ def compatible(): return version()==EXPECTED

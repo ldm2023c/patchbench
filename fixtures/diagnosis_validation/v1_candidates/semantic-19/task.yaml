@@ -1,0 +1,17 @@
+evaluation:
+  command: python -I -S -B .patchbench-eval/runner.py
+  frozen_unittest:
+    test_files:
+    - test_contract.py
+    version: 1
+  timeout_seconds: 30
+id: semantic-19
+metadata:
+  language: python
+repository:
+  base_commit: 4b7c434a22b9963f901ffb9c281623be5d7d08a7
+  path: repository
+  type: local
+schema_version: 1
+task:
+  prompt: Keep advertised and implemented capabilities aligned during extension.

@@ -1,0 +1,14 @@
+diff --git a/src/decoder.py b/src/decoder.py
+index 2a91ca2..a76dd37 100644
+--- a/src/decoder.py
++++ b/src/decoder.py
+@@ -1 +1 @@
+-def decode(value): return value.removeprefix('A:')
++def decode(value): return value.removeprefix('D:')
+diff --git a/src/encoder.py b/src/encoder.py
+index fae2606..b639230 100644
+--- a/src/encoder.py
++++ b/src/encoder.py
+@@ -1 +1 @@
+-def encode(value): return 'A:'+value
++def encode(value): return 'D:'+value

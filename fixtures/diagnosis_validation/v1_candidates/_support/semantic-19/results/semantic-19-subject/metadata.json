@@ -1,0 +1,94 @@
+{
+  "agent": {
+    "backend": "host",
+    "duration_seconds": 0.0,
+    "exit_code": 0,
+    "name": "controlled-fixture",
+    "requested_model": null,
+    "status": "completed",
+    "timeout_seconds": 30.0
+  },
+  "artifacts": {
+    "agent_log": "results/semantic-19-subject/agent.log",
+    "agent_stderr_log": "results/semantic-19-subject/agent.stderr.log",
+    "directory": "results/semantic-19-subject",
+    "metadata": "results/semantic-19-subject/metadata.json",
+    "patch": "results/semantic-19-subject/patch.diff",
+    "prompt": "results/semantic-19-subject/prompt.txt",
+    "test_log": "results/semantic-19-subject/test.log"
+  },
+  "duration_seconds": 0.0,
+  "evaluation_evidence": {
+    "duration_seconds": 0.0,
+    "error_count": 0,
+    "exit_code": 1,
+    "failing_cases": [
+      {
+        "name": "test_capabilities (_patchbench_frozen_0.Contract.test_capabilities)",
+        "outcome": "fail"
+      }
+    ],
+    "failure_count": 1,
+    "framework": "unittest",
+    "output_tail": [
+      "Command: python -I -S -B .patchbench-eval/runner.py",
+      "Exit code: 1",
+      "Duration seconds: 0.000000",
+      "STDOUT:",
+      "STDERR:",
+      "test_capabilities (_patchbench_frozen_0.Contract.test_capabilities) ... FAIL",
+      "======================================================================",
+      "FAIL: test_capabilities (_patchbench_frozen_0.Contract.test_capabilities)",
+      "----------------------------------------------------------------------",
+      "Traceback (most recent call last):",
+      "  File \"/tmp/patchbench-diagnosis-v1-candidate-stage/semantic-19/workspaces/evaluation-subject-work/test_contract.py\", line 6, in test_capabilities",
+      "    def test_capabilities(self): self.assertTrue(aligned())",
+      "                                 ^^^^^^^^^^^^^^^^^^^^^^^^^^",
+      "AssertionError: False is not true",
+      "----------------------------------------------------------------------",
+      "Ran 1 test in 0.000s",
+      "FAILED (failures=1)"
+    ],
+    "passed": false,
+    "test_log_sha256": "a36a1649e4b37485e3b22e0aa5a8f9d0e61f478f4fb3a43b5c1d42078e25e796",
+    "tests_run": 1
+  },
+  "evaluation_passed": false,
+  "patch_summary": {
+    "changed_file_count": 2,
+    "files": [
+      {
+        "added_lines": 1,
+        "binary": false,
+        "change_type": "modified",
+        "deleted_lines": 1,
+        "diff_sha256": "07211204fcd4f58f9b6b3258c136c3579a35d3483ea75e021d62cdcba64ae74e",
+        "path": "src/backend.py",
+        "role": "non_test"
+      },
+      {
+        "added_lines": 1,
+        "binary": false,
+        "change_type": "modified",
+        "deleted_lines": 1,
+        "diff_sha256": "d754c44627e48a737c88ae1aba0a8fb63cbe12e4c6b04e644a45d205726c8080",
+        "path": "src/catalog.py",
+        "role": "non_test"
+      }
+    ],
+    "patch_bytes": 418,
+    "patch_sha256": "c7f6b246b4f689294f6341d312e1def48747222127d65655a648d5344f8d1d1a",
+    "text_added_lines": 2,
+    "text_deleted_lines": 2
+  },
+  "provenance": {
+    "base_commit_used": "4b7c434a22b9963f901ffb9c281623be5d7d08a7",
+    "evaluation_backend": "host",
+    "evaluation_command": "python -I -S -B .patchbench-eval/runner.py",
+    "evaluation_timeout_seconds": 30,
+    "task_fingerprint_sha256": "b9f9fb531699a13b12d8e228d0a01ae777b7614a6662411d2cc12ae4cb262d8a"
+  },
+  "run_id": "semantic-19-subject",
+  "status": "failed",
+  "task_id": "semantic-19"
+}
