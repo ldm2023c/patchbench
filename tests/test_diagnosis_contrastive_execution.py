@@ -22,7 +22,7 @@ from patchbench.domain.diagnosis_integrity import compute_bundle_sha256
 def run_contrastive(case, provider=None, bundle=None, *, allowed=True, limit=100000):
     return execute_contrastive_diagnosis(bundle or compile_peer(case), provider=provider or FakeProvider(),
         external_policy=DiagnosisExternalLLMPolicy(external_llm_allowed=allowed, max_provider_input_bytes=limit),
-        artifact_store=case["artifact_store"])
+        peer_artifact_store=case["artifact_store"], output_artifact_store=case["artifact_store"])
 
 
 @pytest.mark.parametrize("wrong_mode", ["blind", "contrastive"])
@@ -71,6 +71,17 @@ def test_peer_citations_pass_or_fail_and_persist_unchanged(peer_world, ref, pass
     assert (peer.peer_experiment_id, peer.peer_run_index, peer.peer_run_id) == ("peers", 1, "z-passA")
     persisted_peer = json.loads((result.artifact_directory / "bundle.json").read_bytes())["provenance"]["peer"]
     assert persisted_peer == peer.model_dump(mode="json")
+
+
+def test_contrastive_execution_separates_peer_read_store_from_output_write_store(tmp_path, peer_world):
+    provider = FakeProvider()
+    result = execute_contrastive_diagnosis(compile_peer(peer_world), provider=provider,
+        external_policy=DiagnosisExternalLLMPolicy(external_llm_allowed=True, max_provider_input_bytes=100000),
+        peer_artifact_store=peer_world["artifact_store"],
+        output_artifact_store=FilesystemArtifactStore(tmp_path / "runtime"))
+    assert len(provider.calls) == 1
+    assert result.artifact_directory.is_relative_to((tmp_path / "runtime").resolve())
+    assert not (peer_world["artifact_store"].results_root / "diagnoses").exists()
 
 
 @pytest.mark.parametrize("payload", list(invalid_payloads()))

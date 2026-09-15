@@ -45,7 +45,7 @@ class OpenAIDiagnosisProvider:
                 started = perf_counter()
                 response = client.responses.create(
                     model=config.requested_model, instructions=request.instructions, input=request.input_text,
-                    background=False, store=False, tools=[], tool_choice="none", truncation="disabled",
+                    store=False, tools=[], tool_choice="none", truncation="disabled",
                     max_output_tokens=config.max_output_tokens, reasoning={"effort": config.reasoning_effort},
                     text={"format": {"type": "json_schema", "name": "blind_diagnosis_v1",
                                      "schema": json.loads(request.output_schema_json), "strict": True}},

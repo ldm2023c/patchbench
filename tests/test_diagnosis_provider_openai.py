@@ -57,7 +57,7 @@ def test_exact_request_and_observations(sdk):
     result = adapter.infer(request())
     factory.assert_called_once_with(max_retries=0, timeout=12.5)
     client.responses.create.assert_called_once_with(model="requested-model", instructions="instructions", input="evidence",
-        background=False, store=False, tools=[], tool_choice="none", truncation="disabled", max_output_tokens=2000,
+        store=False, tools=[], tool_choice="none", truncation="disabled", max_output_tokens=2000,
         reasoning={"effort": "low"}, text={"format": {"type": "json_schema", "name": "blind_diagnosis_v1",
             "schema": blind_diagnosis_output_schema_v1(), "strict": True}}, timeout=12.5, stream=False)
     # Bind outgoing kwargs against the installed official synchronous SDK signature.

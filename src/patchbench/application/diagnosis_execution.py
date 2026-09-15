@@ -77,17 +77,29 @@ def execute_blind_diagnosis(
 
 def execute_contrastive_diagnosis(
     bundle: DiagnosisEvidenceBundle, *, provider: DiagnosisProvider,
-    external_policy: DiagnosisExternalLLMPolicy, artifact_store: FilesystemArtifactStore,
+    external_policy: DiagnosisExternalLLMPolicy,
+    peer_artifact_store: FilesystemArtifactStore | None = None,
+    output_artifact_store: FilesystemArtifactStore | None = None,
+    artifact_store: FilesystemArtifactStore | None = None,
 ) -> DiagnosisExecution:
+    if artifact_store is not None:
+        if peer_artifact_store is not None or output_artifact_store is not None:
+            raise TypeError("pass either artifact_store or explicit peer/output stores")
+        peer_artifact_store = artifact_store
+        output_artifact_store = artifact_store
+    if peer_artifact_store is None or output_artifact_store is None:
+        raise TypeError("Contrastive execution requires peer_artifact_store and output_artifact_store")
     return _execute_diagnosis(bundle, expected_mode=DiagnosisMode.CONTRASTIVE,
         prompt_renderer=render_contrastive_diagnosis_prompt, provider=provider,
-        external_policy=external_policy, artifact_store=artifact_store)
+        external_policy=external_policy, artifact_store=output_artifact_store,
+        peer_artifact_store=peer_artifact_store)
 
 
 def _execute_diagnosis(
     bundle: DiagnosisEvidenceBundle, *, expected_mode: DiagnosisMode,
     prompt_renderer: Callable[[DiagnosisEvidenceBundle], DiagnosisPrompt], provider: DiagnosisProvider,
     external_policy: DiagnosisExternalLLMPolicy, artifact_store: FilesystemArtifactStore,
+    peer_artifact_store: FilesystemArtifactStore | None = None,
 ) -> DiagnosisExecution:
     if bundle.mode is not expected_mode:
         reason = (DiagnosisExecutionReason.NOT_BLIND_BUNDLE if expected_mode is DiagnosisMode.BLIND
@@ -103,7 +115,8 @@ def _execute_diagnosis(
             selection = ContrastivePeerSelection(subject_run_id=bundle.subject_run_id,
                 peer_experiment_id=peer.peer_experiment_id, peer_run_id=peer.peer_run_id,
                 peer_run_index=peer.peer_run_index)
-            verify_contrastive_peer_selection(selection, artifact_store=artifact_store)
+            verify_contrastive_peer_selection(
+                selection, artifact_store=peer_artifact_store or artifact_store)
         except (DiagnosisPeerError, ValidationError):
             raise DiagnosisExecutionError(DiagnosisExecutionReason.CONTRASTIVE_PEER_VERIFICATION_FAILED) from None
     if not external_policy.external_llm_allowed:

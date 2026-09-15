@@ -33,8 +33,14 @@ from patchbench.application.diagnosis_gold_lock import (
     DiagnosisGoldLockError, DiagnosisGoldLockReason,
     build_diagnosis_gold_lock, verify_diagnosis_gold_lock,
 )
+from patchbench.application.diagnosis_validation_run import (
+    DiagnosisValidationRunError, DiagnosisValidationRunReason,
+    build_diagnosis_validation_run_plan, run_frozen_diagnosis_validation,
+)
 
 __all__ = ["ReplayError", "ReplayExecution", "replay_run", "run_task",
+           "DiagnosisValidationRunError", "DiagnosisValidationRunReason",
+           "build_diagnosis_validation_run_plan", "run_frozen_diagnosis_validation",
            "DiagnosisGoldLockError", "DiagnosisGoldLockReason",
            "build_diagnosis_gold_lock", "verify_diagnosis_gold_lock",
            "DiagnosisExecution", "DiagnosisExecutionError", "DiagnosisExecutionReason", "execute_blind_diagnosis",

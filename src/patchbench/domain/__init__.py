@@ -99,8 +99,15 @@ from patchbench.domain.diagnosis_gold_lock import (
     DiagnosisGoldLockCase, DiagnosisGoldLockManifest, DiagnosisGoldLockSuite,
     compute_diagnosis_gold_lock_suite_sha256,
 )
+from patchbench.domain.diagnosis_validation_run import (
+    DiagnosisValidationRunRecord, DiagnosisValidationRunSlot,
+    DiagnosisValidationRunSlotResult,
+)
 
 __all__ = [
+    "DiagnosisValidationRunRecord",
+    "DiagnosisValidationRunSlot",
+    "DiagnosisValidationRunSlotResult",
     "DiagnosisGoldLockCase",
     "DiagnosisGoldLockManifest",
     "DiagnosisGoldLockSuite",
