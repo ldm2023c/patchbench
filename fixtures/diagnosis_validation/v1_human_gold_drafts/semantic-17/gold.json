@@ -1,0 +1,99 @@
+{
+  "case_id": "semantic-17",
+  "expected_route": "semantic_diagnosis",
+  "schema_version": 1,
+  "semantic_gold": {
+    "acceptable_families": [
+      "incomplete_cross_file_repair"
+    ],
+    "forbidden_claims": [
+      {
+        "claim_id": "F1",
+        "description": "Do not attribute the failure to record construction dropping priority; Blind evidence shows candidate make() includes the priority field."
+      }
+    ],
+    "preferred_family": "incomplete_cross_file_repair",
+    "required_evidence": [
+      {
+        "acceptable_locators": [
+          {
+            "artifact_sha256": "f2edb1331b18cac8ef77aa9fac8b003365ad00b519534072e776dcacb8989cf1",
+            "end_line": 17,
+            "kind": "task_contract",
+            "owner": "benchmark",
+            "path": null,
+            "source_state": null,
+            "start_line": 17
+          },
+          {
+            "artifact_sha256": "b8023d9cd330c0dc5df30ab1013860a88164e28060e75cce5dbb71219d89e3fb",
+            "end_line": 7,
+            "kind": "frozen_test",
+            "owner": "benchmark",
+            "path": "test_contract.py",
+            "source_state": "frozen",
+            "start_line": 7
+          }
+        ],
+        "description": "Prove the contract requires record priority to survive both construction and wire serialization.",
+        "requirement_id": "R1"
+      },
+      {
+        "acceptable_locators": [
+          {
+            "artifact_sha256": "e7a225a46cff47b24c26ca9518d23f22fc3cc51f18a254d27b801350df6900cb",
+            "end_line": 7,
+            "kind": "canonical_patch",
+            "owner": "subject",
+            "path": "patch.diff",
+            "source_state": null,
+            "start_line": 1
+          },
+          {
+            "artifact_sha256": "a463dd676e38c8b8db837cd52c05be58ea052e04316679099151006655bb2f30",
+            "end_line": 1,
+            "kind": "production_source",
+            "owner": "subject",
+            "path": "src/records.py",
+            "source_state": "candidate",
+            "start_line": 1
+          }
+        ],
+        "description": "Prove the subject updated record construction to include the priority field.",
+        "requirement_id": "R2"
+      },
+      {
+        "acceptable_locators": [
+          {
+            "artifact_sha256": "a2410fc61ad620a00f4de41b4cc82588f92e10936da6848df2fe41094c04c00a",
+            "end_line": 1,
+            "kind": "production_source",
+            "owner": "subject",
+            "path": "src/wire.py",
+            "source_state": "candidate",
+            "start_line": 1
+          }
+        ],
+        "description": "Prove candidate wire serialization still emits only the record name and omits priority.",
+        "requirement_id": "R3"
+      },
+      {
+        "acceptable_locators": [
+          {
+            "artifact_sha256": "42b5c5e2f5f6e4fa72268a0ebc76f587346495008afe9e917ef3d2e932ab8fc4",
+            "end_line": 17,
+            "kind": "evaluation_output",
+            "owner": "subject",
+            "path": "test.log",
+            "source_state": null,
+            "start_line": 14
+          }
+        ],
+        "description": "Prove official evaluation observes serialized output without the required priority segment.",
+        "requirement_id": "R4"
+      }
+    ],
+    "should_abstain": false
+  },
+  "subject_evidence_sha256": "b53ef7150bd8cc42dc1fa08e8f0264625afdd19ef2a9cdb40df335763b19fb47"
+}

@@ -243,3 +243,23 @@ Confirmation basis: semantic-01 and semantic-02 were individually confirmed by t
 - forbidden_claims:
   - F1: 不得声称失败来自外部缓存服务、并发写入、持久化层或隐藏失效机制；当前 Blind evidence 只支持 DATA 与 CACHE 两个 module-level 状态未保持 latest-value 一致。
 - gold_sha256: d367bca71afc4f7598b7fbc25ddf6dd3842d92d087b83781467dadf958f9f69d
+
+## Top-up Authoring Status
+
+Authoring basis: Blind evidence only. No _support artifacts, PASS peer artifacts, peer patches, experiment metadata, Contrastive evidence, candidate generator, candidate-construction tests, intended-family information, intended-abstention information, or other non human-facing Blind packet evidence was used.
+
+### Confirmed Gold Drafts
+
+| case_id | human confirmation | should_abstain | preferred_family | acceptable_families | gold_sha256 | status |
+|---|---|---:|---|---|---|---|
+| semantic-16 | individually confirmed by human author | false | incomplete_cross_file_repair | incomplete_cross_file_repair | 255656e11e8ceb6da5c3cc36f715872cf741cc237e1d478735b793cca0132a12 | confirmed gold.json drafted |
+| semantic-17 | individually confirmed by human author | false | incomplete_cross_file_repair | incomplete_cross_file_repair | c9c5721f3c8d6b32eb491cc3bd97c462b72ba2c9e0d31853bbe61d58ef07a874 | confirmed gold.json drafted |
+
+### Unconfirmed Top-up Cases
+
+| case_id | provisional finding | status | note |
+|---|---|---|---|
+| semantic-18 | non-abstain diagnosis remains identifiable as state_consistency_violation | unconfirmed / rejected-for-abstention-candidate | Multiple possible passing repairs do not create diagnosis-level non-identifiability under the current Blind evidence. |
+| semantic-19 | non-abstain diagnosis remains identifiable as state_consistency_violation | unconfirmed / rejected-for-abstention-candidate | Multiple possible passing repairs do not create diagnosis-level non-identifiability under the current Blind evidence. |
+| semantic-20 | non-abstain diagnosis remains identifiable as state_consistency_violation | unconfirmed / rejected-for-abstention-candidate | Multiple possible passing repairs do not create diagnosis-level non-identifiability under the current Blind evidence. |
+| semantic-21 | non-abstain diagnosis remains identifiable as state_consistency_violation | unconfirmed / rejected-for-abstention-candidate | Multiple possible passing repairs do not create diagnosis-level non-identifiability under the current Blind evidence. |
