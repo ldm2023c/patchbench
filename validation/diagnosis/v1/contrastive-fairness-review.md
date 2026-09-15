@@ -32,7 +32,7 @@ Canonical peer identity:
 - peer: semantic-01-peers[0] -> semantic-01-peer
 - peer_selection_sha256: ffa11c245959f8877e6253b549de97198b96064e72c358e825d09de759bb4440
 - subject evidence identity unchanged: True
-- human_fairness_status: pending
+- human_fairness_status: confirmed
 
 Peer evidence added by the Contrastive Bundle:
 
@@ -122,7 +122,7 @@ Canonical peer identity:
 - peer: semantic-02-peers[0] -> semantic-02-peer
 - peer_selection_sha256: 1c72badb269bbf9fff9e443fcd875fe4dd391adde9387c0b4af6a656f3ffb4a8
 - subject evidence identity unchanged: True
-- human_fairness_status: pending
+- human_fairness_status: confirmed
 
 Peer evidence added by the Contrastive Bundle:
 
@@ -212,7 +212,7 @@ Canonical peer identity:
 - peer: semantic-05-peers[0] -> semantic-05-peer
 - peer_selection_sha256: d8a73b8c222ef34f5c2fab5e319e04cbcc9b6423c2a2e585fd7e1b334b7bffeb
 - subject evidence identity unchanged: True
-- human_fairness_status: pending
+- human_fairness_status: confirmed
 
 Peer evidence added by the Contrastive Bundle:
 
@@ -304,7 +304,7 @@ Canonical peer identity:
 - peer: semantic-06-peers[0] -> semantic-06-peer
 - peer_selection_sha256: 1c541116436711100f81d39af0fc68e96b0368b07ed907742c0a708d5daf1d64
 - subject evidence identity unchanged: True
-- human_fairness_status: pending
+- human_fairness_status: confirmed
 
 Peer evidence added by the Contrastive Bundle:
 
@@ -395,7 +395,7 @@ Canonical peer identity:
 - peer: semantic-07-peers[0] -> semantic-07-peer
 - peer_selection_sha256: 6e859f38e925df4f71070f4fa168e47659782423eb7abd77c4efe07aaa586aed
 - subject evidence identity unchanged: True
-- human_fairness_status: pending
+- human_fairness_status: confirmed
 
 Peer evidence added by the Contrastive Bundle:
 
@@ -490,7 +490,7 @@ Canonical peer identity:
 - peer: semantic-08-peers[0] -> semantic-08-peer
 - peer_selection_sha256: 6b7d6799215b995cb8d700775f0bc2e3492a6f1ea820171488b818ab5f902f4a
 - subject evidence identity unchanged: True
-- human_fairness_status: pending
+- human_fairness_status: confirmed
 
 Peer evidence added by the Contrastive Bundle:
 
@@ -583,7 +583,7 @@ Canonical peer identity:
 - peer: semantic-09-peers[0] -> semantic-09-peer
 - peer_selection_sha256: a2a75583543a3c93494b9614504bac2f5b50fbe679792ce54e867d26606f1a37
 - subject evidence identity unchanged: True
-- human_fairness_status: pending
+- human_fairness_status: confirmed
 
 Peer evidence added by the Contrastive Bundle:
 
@@ -675,7 +675,7 @@ Canonical peer identity:
 - peer: semantic-11-peers[0] -> semantic-11-peer
 - peer_selection_sha256: 3c661c92f51e215ca9596c2a2be42e129b9124e2f48b5573980e9b8e97819c76
 - subject evidence identity unchanged: True
-- human_fairness_status: pending
+- human_fairness_status: confirmed
 
 Peer evidence added by the Contrastive Bundle:
 
@@ -758,7 +758,7 @@ Canonical peer identity:
 - peer: semantic-16-peers[0] -> semantic-16-peer
 - peer_selection_sha256: 956bd168df0fd13648b47bb090a72a9f13b93fd37daa0c5db6d5fad9d0200a2f
 - subject evidence identity unchanged: True
-- human_fairness_status: pending
+- human_fairness_status: confirmed
 
 Peer evidence added by the Contrastive Bundle:
 
@@ -870,7 +870,7 @@ Canonical peer identity:
 - peer: semantic-17-peers[0] -> semantic-17-peer
 - peer_selection_sha256: 86c1aa929fe9fbc1b2a69c39cb678c9376dd3e6adbf3726703aa380d730837fb
 - subject evidence identity unchanged: True
-- human_fairness_status: pending
+- human_fairness_status: confirmed
 
 Peer evidence added by the Contrastive Bundle:
 
@@ -975,7 +975,7 @@ Canonical peer identity:
 - peer: semantic-22-peers[0] -> semantic-22-peer
 - peer_selection_sha256: ca9fad9aed00f99c9e6ef9978788f04b357d9e7908d67bc265c2f1fcc138d69a
 - subject evidence identity unchanged: True
-- human_fairness_status: pending
+- human_fairness_status: confirmed
 
 Peer evidence added by the Contrastive Bundle:
 
@@ -1086,7 +1086,7 @@ Canonical peer identity:
 - peer: semantic-24-peers[0] -> semantic-24-peer
 - peer_selection_sha256: 50eb15a7c4c5c452b2084b9291adfa692ddc4c085a9fde68f0d08cff58e64527
 - subject evidence identity unchanged: True
-- human_fairness_status: pending
+- human_fairness_status: confirmed
 
 Peer evidence added by the Contrastive Bundle:
 
@@ -1181,7 +1181,7 @@ Canonical peer identity:
 - peer: semantic-25-peers[0] -> semantic-25-peer
 - peer_selection_sha256: 9abae27c14f8063d61757fd4e7621e1e7a8e0600fcfb9508a2dab17f24835bd0
 - subject evidence identity unchanged: True
-- human_fairness_status: pending
+- human_fairness_status: confirmed
 
 Peer evidence added by the Contrastive Bundle:
 

@@ -92,14 +92,26 @@ def protected_head_identity() -> dict[str, str]:
     return result
 
 
-def test_checked_phase_a_tree_has_pending_review_and_no_freeze_manifest():
-    review = verify_contrastive_fairness_review(PHASE_A, CANDIDATES)
+def test_checked_final_tree_has_confirmed_review_and_freeze_manifest():
+    verify_diagnosis_validation_freeze(PHASE_A, CANDIDATES)
+    review = verify_contrastive_fairness_review(
+        PHASE_A, CANDIDATES, allow_freeze_manifest=True)
     assert [case.case_id for case in review.cases] == list(SEMANTIC_CASE_IDS)
-    assert {case.human_fairness_status for case in review.cases} == {"pending"}
+    assert {case.human_fairness_status for case in review.cases} == {"confirmed"}
     assert all(case.machine_integrity_passed for case in review.cases)
     assert len(list(PHASE_A.glob("cases/semantic-*/contrastive-bundle.json"))) == 13
     assert (PHASE_A / "contrastive-fairness-review.md").exists()
-    assert not (PHASE_A / "freeze-manifest.json").exists()
+    assert (PHASE_A / "freeze-manifest.json").exists()
+
+
+def test_phase_a_fixture_has_pending_review_and_no_freeze_manifest(prepared_tree):
+    review = verify_contrastive_fairness_review(prepared_tree, CANDIDATES)
+    assert [case.case_id for case in review.cases] == list(SEMANTIC_CASE_IDS)
+    assert {case.human_fairness_status for case in review.cases} == {"pending"}
+    assert all(case.machine_integrity_passed for case in review.cases)
+    assert len(list(prepared_tree.glob("cases/semantic-*/contrastive-bundle.json"))) == 13
+    assert (prepared_tree / "contrastive-fairness-review.md").exists()
+    assert not (prepared_tree / "freeze-manifest.json").exists()
 
 
 def test_phase_a_contains_no_raw_copied_support_or_final_case_records():

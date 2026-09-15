@@ -1,0 +1,242 @@
+{
+  "files": [
+    {
+      "byte_length": 157,
+      "path": "cases/operational-01/route-gold.json",
+      "sha256": "5abf4b141a9ca64edf5f29edcc96f8762852182fea226d5f2e8df95daa18b10e"
+    },
+    {
+      "byte_length": 858,
+      "path": "cases/operational-01/run-record.json",
+      "sha256": "2294aebc3b86c03f64e168cc112b28bef56016b36f57f9e3f92ed60929af8907"
+    },
+    {
+      "byte_length": 157,
+      "path": "cases/operational-02/route-gold.json",
+      "sha256": "ab013e204830497a2f756642a61c9916de5f4de14eec62c4e52315ff8bcf6555"
+    },
+    {
+      "byte_length": 856,
+      "path": "cases/operational-02/run-record.json",
+      "sha256": "f763c5e93d1df9ac56cc733ccaf7566aa93c5c624ab1c9e14e0693671d02c624"
+    },
+    {
+      "byte_length": 6088,
+      "path": "cases/semantic-01/blind-bundle.json",
+      "sha256": "d8059a6b0fd690b1caf2b29ffc2866774f5b848298c21260aaf5bb55d07a3b36"
+    },
+    {
+      "byte_length": 8358,
+      "path": "cases/semantic-01/contrastive-bundle.json",
+      "sha256": "966eb62c4803978c93e70102e18d13ecb5aa3284831ab47664580af4382240a7"
+    },
+    {
+      "byte_length": 2907,
+      "path": "cases/semantic-01/gold.json",
+      "sha256": "28975953e1df2f54ddea0995cae36ca791fcf8d17863790b9d81a61f6b623b0d"
+    },
+    {
+      "byte_length": 5885,
+      "path": "cases/semantic-02/blind-bundle.json",
+      "sha256": "25c2a0ac819cb5e43fa1f10f71e9c6bdf262ac928be8e1810e14a9516e6eb30c"
+    },
+    {
+      "byte_length": 8123,
+      "path": "cases/semantic-02/contrastive-bundle.json",
+      "sha256": "53e34ff1933ea396976bf079aab1652341119e49cec81a6c5531e6cf16fbfa50"
+    },
+    {
+      "byte_length": 2893,
+      "path": "cases/semantic-02/gold.json",
+      "sha256": "b52f7c8cc260bd6fce4fd3145b41b42bde4905148bbe65c3245bb448c634208a"
+    },
+    {
+      "byte_length": 6375,
+      "path": "cases/semantic-05/blind-bundle.json",
+      "sha256": "9758f84e0491421082877368eca2c8a866d95c6cc9da580b3ba974349f4c7b15"
+    },
+    {
+      "byte_length": 8724,
+      "path": "cases/semantic-05/contrastive-bundle.json",
+      "sha256": "e31add2a29cabc27a7e265b6f40b626f71d3561f92e24ae4b3b2d82daa869627"
+    },
+    {
+      "byte_length": 2947,
+      "path": "cases/semantic-05/gold.json",
+      "sha256": "5ebdf4440bcf5fe2af61ceb123054eaba2d4f6255e4572cad7883b2800a4a3d3"
+    },
+    {
+      "byte_length": 6167,
+      "path": "cases/semantic-06/blind-bundle.json",
+      "sha256": "86b827481101a8aecc0573ae1871375a966201cd97e7d9414c311a20fbef29d2"
+    },
+    {
+      "byte_length": 8416,
+      "path": "cases/semantic-06/contrastive-bundle.json",
+      "sha256": "fe4454ef202b8220612bfbff1bb8bc44afbeab6dfe398b0af941c9662253d6e1"
+    },
+    {
+      "byte_length": 2952,
+      "path": "cases/semantic-06/gold.json",
+      "sha256": "26446c11ca9cad6ac0257abfc5881274db45deed5c495275ae29977645182643"
+    },
+    {
+      "byte_length": 6421,
+      "path": "cases/semantic-07/blind-bundle.json",
+      "sha256": "d15b12a210b58dc514c43d5e21da7034177f98eec717506d4d4c67ad19bc7bde"
+    },
+    {
+      "byte_length": 8952,
+      "path": "cases/semantic-07/contrastive-bundle.json",
+      "sha256": "56067c1cf3c34cbcc1c20225f4e25885fea835b28e4ee416c01af7c9311a6b26"
+    },
+    {
+      "byte_length": 3704,
+      "path": "cases/semantic-07/gold.json",
+      "sha256": "10fd65480180e0836ee04b770356ee25a2dd533a2a5f9bbbcb3ba7e992c60f87"
+    },
+    {
+      "byte_length": 6356,
+      "path": "cases/semantic-08/blind-bundle.json",
+      "sha256": "05d0a4baf764cf33bf115adf37b132b5fc1cb73eff4ee3072d7ef6fac2a76093"
+    },
+    {
+      "byte_length": 8817,
+      "path": "cases/semantic-08/contrastive-bundle.json",
+      "sha256": "b955cfae7a3e71b8e25c3e003f0897266f8f07b1a13da677d47cf86c67755b97"
+    },
+    {
+      "byte_length": 3736,
+      "path": "cases/semantic-08/gold.json",
+      "sha256": "15d0d2886da8cd709408f157cfa4d3d3c46c5e751480e1b75942a817f96fff09"
+    },
+    {
+      "byte_length": 6244,
+      "path": "cases/semantic-09/blind-bundle.json",
+      "sha256": "15641502d51d93177e356b9090bdda300166bee10a6c1cc3b20f12f031eec376"
+    },
+    {
+      "byte_length": 8594,
+      "path": "cases/semantic-09/contrastive-bundle.json",
+      "sha256": "24998e0c0a35c091757d7fcf36487e305f5d5d06735a3ad8cfb0eebb749adcaf"
+    },
+    {
+      "byte_length": 3417,
+      "path": "cases/semantic-09/gold.json",
+      "sha256": "6d7e11cecd35e4022521eaac15688853e037c40a4c66729bd476cfc7c632e7bc"
+    },
+    {
+      "byte_length": 6232,
+      "path": "cases/semantic-11/blind-bundle.json",
+      "sha256": "b04509fe06df606f4d6506f22af95f542f4bcdedefe5e8f6a24137d3f9715feb"
+    },
+    {
+      "byte_length": 8335,
+      "path": "cases/semantic-11/contrastive-bundle.json",
+      "sha256": "e66d81888410ede07469f7018ec300e7822cc8963aaf464b64c630e75dbcd9e5"
+    },
+    {
+      "byte_length": 3462,
+      "path": "cases/semantic-11/gold.json",
+      "sha256": "a3bb7c81d47ac4a9a4bb883fa0cb54122d95a3fe8e451caf9150e5ab76045e14"
+    },
+    {
+      "byte_length": 7134,
+      "path": "cases/semantic-16/blind-bundle.json",
+      "sha256": "bba52fe27aa0d8a803c9649ec82ce1607710a71984cb71a01094da0066c8e0a7"
+    },
+    {
+      "byte_length": 10138,
+      "path": "cases/semantic-16/contrastive-bundle.json",
+      "sha256": "6bbca258dd336dc5e4cf0d22cd61547c25a990774f2a49da1775c623fc67781e"
+    },
+    {
+      "byte_length": 2934,
+      "path": "cases/semantic-16/gold.json",
+      "sha256": "376f3eda81d4089f22a565f244a42779e164cda87433a8f9b6dc5f2362974c03"
+    },
+    {
+      "byte_length": 6930,
+      "path": "cases/semantic-17/blind-bundle.json",
+      "sha256": "c8fbb66861678082e418c2da769c508a3f895ac390856140ba20f97de2d624d5"
+    },
+    {
+      "byte_length": 9910,
+      "path": "cases/semantic-17/contrastive-bundle.json",
+      "sha256": "6848c5df45537258f42d91820f6bedb7b6ebab368cb11ba6be1016de232dac73"
+    },
+    {
+      "byte_length": 3404,
+      "path": "cases/semantic-17/gold.json",
+      "sha256": "1425df654a566d058a69e48be0e24a416718ab649dc26c1dedc5a9d120c70eeb"
+    },
+    {
+      "byte_length": 6978,
+      "path": "cases/semantic-22/blind-bundle.json",
+      "sha256": "a127c9cfe0cafffc9a390030ee2dc674926792894005a9cf0509adab780cdb84"
+    },
+    {
+      "byte_length": 9969,
+      "path": "cases/semantic-22/contrastive-bundle.json",
+      "sha256": "2e4162f427d46ff2797d0d0fbf95ec43301b15d8bcd5fab78430112432a8ff55"
+    },
+    {
+      "byte_length": 782,
+      "path": "cases/semantic-22/gold.json",
+      "sha256": "72d998779eb4ca5d3a4a5f1147a27e3f163247e1dcdb25f3ddfd5807a42ecb2b"
+    },
+    {
+      "byte_length": 6496,
+      "path": "cases/semantic-24/blind-bundle.json",
+      "sha256": "8b6c54cb83b5415c1f20749115837376537d058932f512e021e0e33a1bc47110"
+    },
+    {
+      "byte_length": 9077,
+      "path": "cases/semantic-24/contrastive-bundle.json",
+      "sha256": "6e5593adc066b049c8d2bb7b32e2fa83f17b421948667ff71d365229951b2c47"
+    },
+    {
+      "byte_length": 779,
+      "path": "cases/semantic-24/gold.json",
+      "sha256": "339ce18e73839b767e5049d6127362eb29bafc0eca0ca078af1ffaaf9c27b3e7"
+    },
+    {
+      "byte_length": 7017,
+      "path": "cases/semantic-25/blind-bundle.json",
+      "sha256": "714cbc9337f704e552f8c16237a11b87f6327a5f4332e59a89e5049f198b0ca7"
+    },
+    {
+      "byte_length": 9466,
+      "path": "cases/semantic-25/contrastive-bundle.json",
+      "sha256": "cb6654697a17381fdcf7d20862ea45ff26ba4808e16e073b1c0d49989e80f732"
+    },
+    {
+      "byte_length": 763,
+      "path": "cases/semantic-25/gold.json",
+      "sha256": "2d300db797dd56f9cab260f981caf7be5ac5c6078e5714e9f12081c156335892"
+    },
+    {
+      "byte_length": 10110,
+      "path": "contrastive-fairness-review.json",
+      "sha256": "fbbd6ad1ab11fe69d504fda9a2c8ae87dc8f7b34ad4fab854654d7072edf4008"
+    },
+    {
+      "byte_length": 34908,
+      "path": "contrastive-fairness-review.md",
+      "sha256": "a2bd3819acdb10dc97b56ff1a7062441770d9d344763bba716d4945ef6d89040"
+    },
+    {
+      "byte_length": 5850,
+      "path": "gold-lock-manifest.json",
+      "sha256": "aed6755dd82cc6e64fc616057bade108e6b9776b2dcea294622f6221d5c7a7be"
+    },
+    {
+      "byte_length": 10361,
+      "path": "suite.json",
+      "sha256": "af308e06a753696f21f2127d8c0145761bc52b68633a16a1f84b52afa173a2e5"
+    }
+  ],
+  "schema_version": 1,
+  "suite_path": "suite.json",
+  "suite_sha256": "ee724d3825c97f583bbbe13addd3aa0cd61b6ba3265680153486e7274c08643a"
+}
