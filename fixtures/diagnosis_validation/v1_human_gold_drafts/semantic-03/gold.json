@@ -1,0 +1,109 @@
+{
+  "case_id": "semantic-03",
+  "expected_route": "semantic_diagnosis",
+  "schema_version": 1,
+  "semantic_gold": {
+    "acceptable_families": [
+      "incomplete_cross_file_repair",
+      "incorrect_local_logic"
+    ],
+    "forbidden_claims": [
+      {
+        "claim_id": "F1",
+        "description": "不得将失败根因归因于 src/api.py 和 src/parser.py 之外的模块、外部 normalization 服务或开发者意图；当前 Blind evidence 只支持 public API 与 parser 转换组合导致的结果。"
+      }
+    ],
+    "preferred_family": "incomplete_cross_file_repair",
+    "required_evidence": [
+      {
+        "acceptable_locators": [
+          {
+            "artifact_sha256": "017ac2fa540e0f84338b40193d056ff19e6a292c396fe7f4b5f1122a76048a57",
+            "end_line": 17,
+            "kind": "task_contract",
+            "owner": "benchmark",
+            "path": null,
+            "source_state": null,
+            "start_line": 17
+          },
+          {
+            "artifact_sha256": "db9912710f2a8cf72f2c107570c8fc6329e85539d8512a90e22650631bbe5ea9",
+            "end_line": 6,
+            "kind": "frozen_test",
+            "owner": "benchmark",
+            "path": "test_contract.py",
+            "source_state": "frozen",
+            "start_line": 6
+          }
+        ],
+        "description": "证明 public submit API 的 contract / frozen test 要求对混合大小写输入返回 lowercase normalized value。",
+        "requirement_id": "R1"
+      },
+      {
+        "acceptable_locators": [
+          {
+            "artifact_sha256": "e4e922cf9393ee85b863b11b42f6f7ecb6ce8331216ae031537053d16b4d0b09",
+            "end_line": 17,
+            "kind": "canonical_patch",
+            "owner": "subject",
+            "path": "patch.diff",
+            "source_state": null,
+            "start_line": 14
+          },
+          {
+            "artifact_sha256": "c8f23d9d2d6671f816e6ade532371c0a19b343cab5f5bee4add83b0e5255c3ec",
+            "end_line": 2,
+            "kind": "production_source",
+            "owner": "subject",
+            "path": "src/parser.py",
+            "source_state": "candidate",
+            "start_line": 1
+          }
+        ],
+        "description": "证明 subject 在 parser.normalize 中实现了 lowercase normalization。",
+        "requirement_id": "R2"
+      },
+      {
+        "acceptable_locators": [
+          {
+            "artifact_sha256": "e4e922cf9393ee85b863b11b42f6f7ecb6ce8331216ae031537053d16b4d0b09",
+            "end_line": 9,
+            "kind": "canonical_patch",
+            "owner": "subject",
+            "path": "patch.diff",
+            "source_state": null,
+            "start_line": 5
+          },
+          {
+            "artifact_sha256": "9c442aabe5ec0318a4aa002fc6e42f231624719ef12214708adab511197edb00",
+            "end_line": 3,
+            "kind": "production_source",
+            "owner": "subject",
+            "path": "src/api.py",
+            "source_state": "candidate",
+            "start_line": 1
+          }
+        ],
+        "description": "证明 subject 同时在 public API submit 中对 normalize(value) 的结果追加 upper 转换。",
+        "requirement_id": "R3"
+      },
+      {
+        "acceptable_locators": [
+          {
+            "artifact_sha256": "331466603fdb27596ccffe8dee5c7eaade4d425f71d400fd3e691859fbeae5e2",
+            "end_line": 17,
+            "kind": "evaluation_output",
+            "owner": "subject",
+            "path": "test.log",
+            "source_state": null,
+            "start_line": 14
+          }
+        ],
+        "description": "证明 official evaluation 中 submit(\"MiXeD\") 实际返回 MIXED 而不是 mixed。",
+        "requirement_id": "R4"
+      }
+    ],
+    "should_abstain": false
+  },
+  "subject_evidence_sha256": "a33ad211bf2ccd483cf9c9af04570e9e8faa8fa04078d6e3d7e19af19aeeb088"
+}

@@ -1,0 +1,84 @@
+{
+  "case_id": "semantic-10",
+  "expected_route": "semantic_diagnosis",
+  "schema_version": 1,
+  "semantic_gold": {
+    "acceptable_families": [
+      "incorrect_local_logic"
+    ],
+    "forbidden_claims": [
+      {
+        "claim_id": "F1",
+        "description": "不得声称失败来自外部阈值配置、数值单位转换或调用方预处理；当前 Blind evidence 只支持 accepted 函数中的边界条件错误。"
+      }
+    ],
+    "preferred_family": "incorrect_local_logic",
+    "required_evidence": [
+      {
+        "acceptable_locators": [
+          {
+            "artifact_sha256": "b9d0cf299af380c4d8a84a00b5bd9605ce8fbd9323569419eb27f92baade8e43",
+            "end_line": 17,
+            "kind": "task_contract",
+            "owner": "benchmark",
+            "path": null,
+            "source_state": null,
+            "start_line": 17
+          },
+          {
+            "artifact_sha256": "bf38653ed3443ad6821492e17ef22cad576333694bf71a09e54f94890fa60dc5",
+            "end_line": 6,
+            "kind": "frozen_test",
+            "owner": "benchmark",
+            "path": "test_contract.py",
+            "source_state": "frozen",
+            "start_line": 6
+          }
+        ],
+        "description": "证明 task / frozen test 要求接受 0 但拒绝负数。",
+        "requirement_id": "R1"
+      },
+      {
+        "acceptable_locators": [
+          {
+            "artifact_sha256": "9792ebc11f3621c21218710951b38ee0766b3e30087e93f56f03daf6fc5f3b66",
+            "end_line": 8,
+            "kind": "canonical_patch",
+            "owner": "subject",
+            "path": "patch.diff",
+            "source_state": null,
+            "start_line": 6
+          },
+          {
+            "artifact_sha256": "8eb6f995e52ee3e25ecdab7f93741962a82d0d67241a4eae7bc5287d9c25814f",
+            "end_line": 2,
+            "kind": "production_source",
+            "owner": "subject",
+            "path": "src/threshold.py",
+            "source_state": "candidate",
+            "start_line": 1
+          }
+        ],
+        "description": "证明 subject 将边界条件实现为 value >= -1。",
+        "requirement_id": "R2"
+      },
+      {
+        "acceptable_locators": [
+          {
+            "artifact_sha256": "abb6c974526a3086e90cf14af1713e9fc58a80093c20d42c1397868be379742f",
+            "end_line": 17,
+            "kind": "evaluation_output",
+            "owner": "subject",
+            "path": "test.log",
+            "source_state": null,
+            "start_line": 14
+          }
+        ],
+        "description": "证明 official evaluation 中 accepted(-1) 错误返回 True。",
+        "requirement_id": "R3"
+      }
+    ],
+    "should_abstain": false
+  },
+  "subject_evidence_sha256": "febdae74b8e6c58b1e9b2392239fda755968f1bf9b89e60cfcf4cfe3396a8cb4"
+}

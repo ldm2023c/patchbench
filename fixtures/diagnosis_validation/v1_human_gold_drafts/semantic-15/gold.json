@@ -1,0 +1,108 @@
+{
+  "case_id": "semantic-15",
+  "expected_route": "semantic_diagnosis",
+  "schema_version": 1,
+  "semantic_gold": {
+    "acceptable_families": [
+      "state_consistency_violation"
+    ],
+    "forbidden_claims": [
+      {
+        "claim_id": "F1",
+        "description": "不得声称失败来自外部缓存服务、并发写入、持久化层或隐藏失效机制；当前 Blind evidence 只支持 DATA 与 CACHE 两个 module-level 状态未保持 latest-value 一致。"
+      }
+    ],
+    "preferred_family": "state_consistency_violation",
+    "required_evidence": [
+      {
+        "acceptable_locators": [
+          {
+            "artifact_sha256": "3fe782728cdee410df5d170c1572c646dbfb7e214aa4a0c668bfbcac7e279b61",
+            "end_line": 17,
+            "kind": "task_contract",
+            "owner": "benchmark",
+            "path": null,
+            "source_state": null,
+            "start_line": 17
+          },
+          {
+            "artifact_sha256": "4aad47f90f3405af452a937fe3bbbd4bfd4dc5311e2c33fc868c9e14f681e294",
+            "end_line": 6,
+            "kind": "frozen_test",
+            "owner": "benchmark",
+            "path": "test_contract.py",
+            "source_state": "frozen",
+            "start_line": 6
+          }
+        ],
+        "description": "证明 task / frozen test 要求 cache-backed interface 在 put 后通过 get 返回 latest stored value。",
+        "requirement_id": "R1"
+      },
+      {
+        "acceptable_locators": [
+          {
+            "artifact_sha256": "2468fb3c5a85cc2ffbd0ca8b2c9e281ed4f115af63e72d016aeb108055d91efd",
+            "end_line": 3,
+            "kind": "production_source",
+            "owner": "benchmark",
+            "path": "src/cache.py",
+            "source_state": "base",
+            "start_line": 1
+          },
+          {
+            "artifact_sha256": "ff0806f4862ff4a4914310ab6c7cae862f6698f4fa0a7c210ab39094edea9e13",
+            "end_line": 3,
+            "kind": "production_source",
+            "owner": "subject",
+            "path": "src/cache.py",
+            "source_state": "candidate",
+            "start_line": 1
+          }
+        ],
+        "description": "证明 cache module 同时维护 DATA 与 CACHE，get 优先读 CACHE 再读 DATA。",
+        "requirement_id": "R2"
+      },
+      {
+        "acceptable_locators": [
+          {
+            "artifact_sha256": "3a3356a4f382d76572366cb3d58a0ceabbfd55411e4e7c5a4dd8273cbc08d329",
+            "end_line": 9,
+            "kind": "canonical_patch",
+            "owner": "subject",
+            "path": "patch.diff",
+            "source_state": null,
+            "start_line": 5
+          },
+          {
+            "artifact_sha256": "ff0806f4862ff4a4914310ab6c7cae862f6698f4fa0a7c210ab39094edea9e13",
+            "end_line": 3,
+            "kind": "production_source",
+            "owner": "subject",
+            "path": "src/cache.py",
+            "source_state": "candidate",
+            "start_line": 1
+          }
+        ],
+        "description": "证明 subject 预填 CACHE={\"x\":1}，但 put 仍只更新 DATA。",
+        "requirement_id": "R3"
+      },
+      {
+        "acceptable_locators": [
+          {
+            "artifact_sha256": "d601fdcafbc7cba6767ec923c0dd662593d6e776607e519c7dfca2d5af2eac47",
+            "end_line": 17,
+            "kind": "evaluation_output",
+            "owner": "subject",
+            "path": "test.log",
+            "source_state": null,
+            "start_line": 14
+          }
+        ],
+        "description": "证明 official evaluation 中 put(\"x\", 2) 后 get(\"x\") 返回 1 而不是 2。",
+        "requirement_id": "R4"
+      }
+    ],
+    "should_abstain": false
+  },
+  "subject_evidence_sha256": "c31e576693552e58f1bb599c78796724314feb40c86cd49460509e268c73fd7f"
+}

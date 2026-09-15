@@ -1,0 +1,99 @@
+{
+  "case_id": "semantic-13",
+  "expected_route": "semantic_diagnosis",
+  "schema_version": 1,
+  "semantic_gold": {
+    "acceptable_families": [
+      "partial_contract_handling"
+    ],
+    "forbidden_claims": [
+      {
+        "claim_id": "F1",
+        "description": "不得声称失败来自外部 whitespace 规则、输入读取层、排序逻辑或隐藏 filtering backend；当前 Blind evidence 只支持 normalize/keep/select 中对 normalized value 的处理不完整。"
+      }
+    ],
+    "preferred_family": "partial_contract_handling",
+    "required_evidence": [
+      {
+        "acceptable_locators": [
+          {
+            "artifact_sha256": "073e47c80c9b94267b9db6e79951d385dc966dd08a7e9391fba19937a97e4622",
+            "end_line": 17,
+            "kind": "task_contract",
+            "owner": "benchmark",
+            "path": null,
+            "source_state": null,
+            "start_line": 17
+          },
+          {
+            "artifact_sha256": "4fbad70eaac41baf569b7e623abfa827b689b41b66fe4bef801689508bd9bfd6",
+            "end_line": 6,
+            "kind": "frozen_test",
+            "owner": "benchmark",
+            "path": "test_contract.py",
+            "source_state": "frozen",
+            "start_line": 6
+          }
+        ],
+        "description": "证明 task / frozen test 要求选择 nonempty normalized values，输入 \" a \" 应输出 \"a\" 且空白值应被过滤。",
+        "requirement_id": "R1"
+      },
+      {
+        "acceptable_locators": [
+          {
+            "artifact_sha256": "d7d063e3d174f7640a8eb6e24659bfd4f52f6c9e198574b689f217c0ba6ea7c4",
+            "end_line": 3,
+            "kind": "production_source",
+            "owner": "benchmark",
+            "path": "src/select.py",
+            "source_state": "base",
+            "start_line": 1
+          }
+        ],
+        "description": "证明 base normalization 使用 strip()，keep 对 normalized value 判空。",
+        "requirement_id": "R2"
+      },
+      {
+        "acceptable_locators": [
+          {
+            "artifact_sha256": "a8774a39a7be0262b93d6d5d94ce89621c2ac7d331fd66425294a279de21a730",
+            "end_line": 10,
+            "kind": "canonical_patch",
+            "owner": "subject",
+            "path": "patch.diff",
+            "source_state": null,
+            "start_line": 5
+          },
+          {
+            "artifact_sha256": "18d3237b0d6acb09c493f14ccc8189417e8db132770b2a5cc44ecc585efc9d59",
+            "end_line": 3,
+            "kind": "production_source",
+            "owner": "subject",
+            "path": "src/select.py",
+            "source_state": "candidate",
+            "start_line": 1
+          }
+        ],
+        "description": "证明 subject 将 normalize 改为 rstrip()，只去除右侧空白。",
+        "requirement_id": "R3"
+      },
+      {
+        "acceptable_locators": [
+          {
+            "artifact_sha256": "4a23c05b41d81535f6ef373a75c11c9953734cd7f28ac72291651933c76ef937",
+            "end_line": 17,
+            "kind": "evaluation_output",
+            "owner": "subject",
+            "path": "test.log",
+            "source_state": null,
+            "start_line": 14
+          }
+        ],
+        "description": "证明 official evaluation 中 select([\" a \", \" \", \"bc\"]) 返回 [\" a\", \"bc\"] 而不是 [\"a\", \"bc\"]。",
+        "requirement_id": "R4"
+      }
+    ],
+    "should_abstain": false
+  },
+  "subject_evidence_sha256": "fff6dbe172f0c6fcf650b55aa6e916d7f452d2b80f6cef4231cd256443e96b8b"
+}

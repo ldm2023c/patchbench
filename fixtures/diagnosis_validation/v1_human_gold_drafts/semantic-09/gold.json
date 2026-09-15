@@ -1,0 +1,99 @@
+{
+  "case_id": "semantic-09",
+  "expected_route": "semantic_diagnosis",
+  "schema_version": 1,
+  "semantic_gold": {
+    "acceptable_families": [
+      "regression_introduced"
+    ],
+    "forbidden_claims": [
+      {
+        "claim_id": "F1",
+        "description": "不得声称失败来自模板引擎、本地化、用户偏好配置或外部消息系统；当前 Blind evidence 只支持 render 默认参数改变破坏 legacy output。"
+      }
+    ],
+    "preferred_family": "regression_introduced",
+    "required_evidence": [
+      {
+        "acceptable_locators": [
+          {
+            "artifact_sha256": "ce8401bb9bf15d72b0e09ef7f301ab733e96db6c74c2beb89c4467d43098acba",
+            "end_line": 17,
+            "kind": "task_contract",
+            "owner": "benchmark",
+            "path": null,
+            "source_state": null,
+            "start_line": 17
+          },
+          {
+            "artifact_sha256": "6e265f0f4d5976e6b9a7301861c6709af28eb4a42aa7876c7f55097d784c9254",
+            "end_line": 6,
+            "kind": "frozen_test",
+            "owner": "benchmark",
+            "path": "test_contract.py",
+            "source_state": "frozen",
+            "start_line": 6
+          }
+        ],
+        "description": "证明 task / frozen test 要求新增 opt-in excited rendering 时保留 legacy default output。",
+        "requirement_id": "R1"
+      },
+      {
+        "acceptable_locators": [
+          {
+            "artifact_sha256": "fcabf113f1b916f96acabc3f7ec272054b2984806fc34d14c15e210a81151148",
+            "end_line": 2,
+            "kind": "production_source",
+            "owner": "benchmark",
+            "path": "src/message.py",
+            "source_state": "base",
+            "start_line": 1
+          }
+        ],
+        "description": "证明 base 默认 render(name) 返回带句号的 Hello 输出。",
+        "requirement_id": "R2"
+      },
+      {
+        "acceptable_locators": [
+          {
+            "artifact_sha256": "de91a976e4f90efb2bee9a9c1974dafc2e4479cd6a131e1e9d19bb8b0b976748",
+            "end_line": 9,
+            "kind": "canonical_patch",
+            "owner": "subject",
+            "path": "patch.diff",
+            "source_state": null,
+            "start_line": 5
+          },
+          {
+            "artifact_sha256": "6c86ed0b3c19cb73ca455343b5a7abc82e41c144bba93cc0cc48766294f35d5b",
+            "end_line": 2,
+            "kind": "production_source",
+            "owner": "subject",
+            "path": "src/message.py",
+            "source_state": "candidate",
+            "start_line": 1
+          }
+        ],
+        "description": "证明 subject 将 excited 参数默认值设为 True，使默认调用输出感叹号。",
+        "requirement_id": "R3"
+      },
+      {
+        "acceptable_locators": [
+          {
+            "artifact_sha256": "faa0bf386c5c0a5805a25738803cef173826cb3be0a79787f9698deb86ab4930",
+            "end_line": 17,
+            "kind": "evaluation_output",
+            "owner": "subject",
+            "path": "test.log",
+            "source_state": null,
+            "start_line": 14
+          }
+        ],
+        "description": "证明 official evaluation 中 render(\"Ada\") 返回 Hello Ada! 而不是 Hello Ada.。",
+        "requirement_id": "R4"
+      }
+    ],
+    "should_abstain": false
+  },
+  "subject_evidence_sha256": "c2ff36bbb9db7de73566f8425c347785bdf46012533f6f916b622d5f75bc16a8"
+}

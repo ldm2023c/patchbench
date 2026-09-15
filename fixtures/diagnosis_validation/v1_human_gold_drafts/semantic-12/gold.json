@@ -1,0 +1,117 @@
+{
+  "case_id": "semantic-12",
+  "expected_route": "semantic_diagnosis",
+  "schema_version": 1,
+  "semantic_gold": {
+    "acceptable_families": [
+      "regression_introduced"
+    ],
+    "forbidden_claims": [
+      {
+        "claim_id": "F1",
+        "description": "不得声称失败来自外部 policy 服务、真实缓存层、部署模式或环境变量；当前 Blind evidence 只支持 src/policy.py 与 src/runner.py 中的 source-level 行为改变。"
+      }
+    ],
+    "preferred_family": "regression_introduced",
+    "required_evidence": [
+      {
+        "acceptable_locators": [
+          {
+            "artifact_sha256": "541a3c42f1dd11ea0bc79178e58b5c05831a60c0f98009fb4531ec01c4a64e7c",
+            "end_line": 17,
+            "kind": "task_contract",
+            "owner": "benchmark",
+            "path": null,
+            "source_state": null,
+            "start_line": 17
+          },
+          {
+            "artifact_sha256": "f32b2c3f27bae51812f89326fa88ff4c5cec2f7c6e6c09fb929e6248989e7525",
+            "end_line": 6,
+            "kind": "frozen_test",
+            "owner": "benchmark",
+            "path": "test_contract.py",
+            "source_state": "frozen",
+            "start_line": 6
+          }
+        ],
+        "description": "证明 task / frozen test 要求 execute() 保持 configured safe mode 输出 safe。",
+        "requirement_id": "R1"
+      },
+      {
+        "acceptable_locators": [
+          {
+            "artifact_sha256": "43d0823fde34ae1b2792519aa7abf85ae4387677fd790f48606bd5d90abd3043",
+            "end_line": 2,
+            "kind": "production_source",
+            "owner": "benchmark",
+            "path": "src/policy.py",
+            "source_state": "base",
+            "start_line": 1
+          },
+          {
+            "artifact_sha256": "babc8447d800beedf9d3d3ad1ab1d79f8fe880438456b8e1f7e4c16080d1137c",
+            "end_line": 2,
+            "kind": "production_source",
+            "owner": "benchmark",
+            "path": "src/runner.py",
+            "source_state": "base",
+            "start_line": 1
+          }
+        ],
+        "description": "证明 base policy MODE 为 safe，runner.execute 返回 mode()。",
+        "requirement_id": "R2"
+      },
+      {
+        "acceptable_locators": [
+          {
+            "artifact_sha256": "89b339d0f898de7842b1c671eb09c01c1b804fa70d1b07a05c1176b37e3acb1d",
+            "end_line": 16,
+            "kind": "canonical_patch",
+            "owner": "subject",
+            "path": "patch.diff",
+            "source_state": null,
+            "start_line": 5
+          },
+          {
+            "artifact_sha256": "5d74d0cacd3e96037b911d23315edc0257fab34809d537a3d07262d88d9a40ae",
+            "end_line": 2,
+            "kind": "production_source",
+            "owner": "subject",
+            "path": "src/policy.py",
+            "source_state": "candidate",
+            "start_line": 1
+          },
+          {
+            "artifact_sha256": "da637ca55e932f6d75278120668952cf87de542043e60d86afd422e153bbc3da",
+            "end_line": 2,
+            "kind": "production_source",
+            "owner": "subject",
+            "path": "src/runner.py",
+            "source_state": "candidate",
+            "start_line": 1
+          }
+        ],
+        "description": "证明 subject 将 MODE 改为 fast，并让 execute 返回 mode()+\"-cached\"。",
+        "requirement_id": "R3"
+      },
+      {
+        "acceptable_locators": [
+          {
+            "artifact_sha256": "bb0d097d11803b2ae97d77987c590611760793282a54c6d951483efe3a6976c7",
+            "end_line": 17,
+            "kind": "evaluation_output",
+            "owner": "subject",
+            "path": "test.log",
+            "source_state": null,
+            "start_line": 14
+          }
+        ],
+        "description": "证明 official evaluation 中 execute() 返回 fast-cached 而不是 safe。",
+        "requirement_id": "R4"
+      }
+    ],
+    "should_abstain": false
+  },
+  "subject_evidence_sha256": "aae8a4c460bfc7e0f10535b407f22891c310b1ed715afafde833d73e10ec43e8"
+}

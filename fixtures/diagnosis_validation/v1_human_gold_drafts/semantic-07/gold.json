@@ -1,0 +1,108 @@
+{
+  "case_id": "semantic-07",
+  "expected_route": "semantic_diagnosis",
+  "schema_version": 1,
+  "semantic_gold": {
+    "acceptable_families": [
+      "state_consistency_violation"
+    ],
+    "forbidden_claims": [
+      {
+        "claim_id": "F1",
+        "description": "不得声称失败来自持久化层、并发 rename、外部索引或隐藏 Store backend；当前 Blind evidence 只显示 Store.data 与 Store.names 未保持一致。"
+      }
+    ],
+    "preferred_family": "state_consistency_violation",
+    "required_evidence": [
+      {
+        "acceptable_locators": [
+          {
+            "artifact_sha256": "6f3877870a17e9e537a228985a0ef25cb796cb59f14c3c0cc6c12dda276ad0b4",
+            "end_line": 17,
+            "kind": "task_contract",
+            "owner": "benchmark",
+            "path": null,
+            "source_state": null,
+            "start_line": 17
+          },
+          {
+            "artifact_sha256": "2c8a24d9ecc05993ad2119b3e3b408cd7b94f2d9a1826cb0e80e6d7907ff90f3",
+            "end_line": 7,
+            "kind": "frozen_test",
+            "owner": "benchmark",
+            "path": "test_contract.py",
+            "source_state": "frozen",
+            "start_line": 6
+          }
+        ],
+        "description": "证明 task / frozen test 要求 rename 后 Store 的 data 和 names 两个 view 都反映新名称。",
+        "requirement_id": "R1"
+      },
+      {
+        "acceptable_locators": [
+          {
+            "artifact_sha256": "6d2b11673f9b388a76a660326a80a9f643087ac4366385617ef36b8474300040",
+            "end_line": 3,
+            "kind": "production_source",
+            "owner": "benchmark",
+            "path": "src/store.py",
+            "source_state": "base",
+            "start_line": 1
+          },
+          {
+            "artifact_sha256": "52463602819f313a7bf9fc9f64542662a402be5d7e89a114d609ddeeef9e2b82",
+            "end_line": 3,
+            "kind": "production_source",
+            "owner": "subject",
+            "path": "src/store.py",
+            "source_state": "candidate",
+            "start_line": 1
+          }
+        ],
+        "description": "证明 Store 同时维护 data 与 names 两种状态表示。",
+        "requirement_id": "R2"
+      },
+      {
+        "acceptable_locators": [
+          {
+            "artifact_sha256": "a5e66f64c427dca39e8cbd755c8c15516d5889cf8ae8fd52968832ec63807b7e",
+            "end_line": 9,
+            "kind": "canonical_patch",
+            "owner": "subject",
+            "path": "patch.diff",
+            "source_state": null,
+            "start_line": 5
+          },
+          {
+            "artifact_sha256": "52463602819f313a7bf9fc9f64542662a402be5d7e89a114d609ddeeef9e2b82",
+            "end_line": 3,
+            "kind": "production_source",
+            "owner": "subject",
+            "path": "src/store.py",
+            "source_state": "candidate",
+            "start_line": 3
+          }
+        ],
+        "description": "证明 subject rename 只更新 data，未同步更新 names。",
+        "requirement_id": "R3"
+      },
+      {
+        "acceptable_locators": [
+          {
+            "artifact_sha256": "15fd00a2dd29954978447f11a03f8389dc9efda676fcca33176bc9ddfd50b8e1",
+            "end_line": 20,
+            "kind": "evaluation_output",
+            "owner": "subject",
+            "path": "test.log",
+            "source_state": null,
+            "start_line": 14
+          }
+        ],
+        "description": "证明 official evaluation 中 names 仍包含 old 且缺少 new。",
+        "requirement_id": "R4"
+      }
+    ],
+    "should_abstain": false
+  },
+  "subject_evidence_sha256": "127c58a8ce1fd65a8ad5c8f60ba1f0cb1a2f02bfdcafbca5cf5992522b8fef38"
+}
