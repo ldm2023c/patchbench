@@ -1,0 +1,168 @@
+{
+  "agent_status": "completed",
+  "base_commit": "112e9710f7a79db407e6e233ce4fd710ddf4bdac",
+  "benchmark_definition_sha256": "79bf267c5b81a99120f2517767f9c3c6a7f51525de3e33ca65012004ef29c038",
+  "bundle_id": "contrastive-12e3a71fbda52dbdae80c7c6b6360063d80ddf56dd8483cb4fbf6c690d5c83af",
+  "bundle_sha256": "e5d50c1ac7ad142d28e111ecaf7e234014a25aecfb94034457e180951653d9f2",
+  "evidence_items": [
+    {
+      "artifact_sha256": "c06200048fae2d818310a5c611ea8e9a633c6a054aa6c0edb6e44e17c35bf224",
+      "content": "import unittest\nunittest.runner.time.perf_counter = lambda: 0.0\nfrom src.identity import identifier\nimport unittest\nclass Contract(unittest.TestCase):\n def test_forms(self): self.assertEqual(identifier(7),'7'); self.assertEqual(identifier('007'),'007')\n",
+      "end_line": 6,
+      "evidence_id": "E001",
+      "kind": "frozen_test",
+      "owner": "benchmark",
+      "path": "test_contract.py",
+      "source_state": "frozen",
+      "start_line": 1
+    },
+    {
+      "artifact_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "content": "",
+      "end_line": null,
+      "evidence_id": "E002",
+      "kind": "production_source",
+      "owner": "benchmark",
+      "path": "src/__init__.py",
+      "source_state": "base",
+      "start_line": null
+    },
+    {
+      "artifact_sha256": "c20329fb64a2eda0b528a0c454e6fef3fd8ef4d2db0d9d94de25acfb0f1d4f89",
+      "content": "def identifier(value):\n return str(int(value))\n",
+      "end_line": 2,
+      "evidence_id": "E003",
+      "kind": "production_source",
+      "owner": "benchmark",
+      "path": "src/identity.py",
+      "source_state": "base",
+      "start_line": 1
+    },
+    {
+      "artifact_sha256": "3ccb3923e864f0e03962098cc6b6b887a9663cdfbbedd5e927341fe0e9c175f2",
+      "content": "evaluation:\n  command: python -I -S -B .patchbench-eval/runner.py\n  frozen_unittest:\n    test_files:\n    - test_contract.py\n    version: 1\n  timeout_seconds: 30\nid: semantic-06\nmetadata:\n  language: python\nrepository:\n  base_commit: 112e9710f7a79db407e6e233ce4fd710ddf4bdac\n  path: repository\n  type: local\nschema_version: 1\ntask:\n  prompt: Accept numeric and textual identifiers while preserving textual form.\n",
+      "end_line": 17,
+      "evidence_id": "E004",
+      "kind": "task_contract",
+      "owner": "benchmark",
+      "path": null,
+      "source_state": null,
+      "start_line": 1
+    },
+    {
+      "artifact_sha256": "0fd8a0fa8a0e2a117ddc7fa37dd5cb6379ec9742e5e6d2c50114d42f038798d0",
+      "content": "diff --git a/src/identity.py b/src/identity.py\nindex cef97e7..354a9ef 100644\n--- a/src/identity.py\n+++ b/src/identity.py\n@@ -1,2 +1,3 @@\n def identifier(value):\n+ if isinstance(value,int): return str(value)\n  return str(int(value))\n",
+      "end_line": 8,
+      "evidence_id": "E005",
+      "kind": "canonical_patch",
+      "owner": "subject",
+      "path": "patch.diff",
+      "source_state": null,
+      "start_line": 1
+    },
+    {
+      "artifact_sha256": "458b072f5190df8089f30fa0b95bada71ec056c96b205e3a0abd26e3cff08546",
+      "content": "Command: python -I -S -B .patchbench-eval/runner.py\nExit code: 1\nDuration seconds: 0.000000\n\nSTDOUT:\n\nSTDERR:\ntest_forms (_patchbench_frozen_0.Contract.test_forms) ... FAIL\n\n======================================================================\nFAIL: test_forms (_patchbench_frozen_0.Contract.test_forms)\n----------------------------------------------------------------------\nTraceback (most recent call last):\n  File \"/tmp/patchbench-diagnosis-v1-candidate-stage/semantic-06/workspaces/evaluation-subject-work/test_contract.py\", line 6, in test_forms\n    def test_forms(self): self.assertEqual(identifier(7),'7'); self.assertEqual(identifier('007'),'007')\n                                                               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\nAssertionError: '7' != '007'\n- 7\n+ 007\n\n\n----------------------------------------------------------------------\nRan 1 test in 0.000s\n\nFAILED (failures=1)",
+      "end_line": 25,
+      "evidence_id": "E006",
+      "kind": "evaluation_output",
+      "owner": "subject",
+      "path": "test.log",
+      "source_state": null,
+      "start_line": 1
+    },
+    {
+      "artifact_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "content": "",
+      "end_line": null,
+      "evidence_id": "E007",
+      "kind": "production_source",
+      "owner": "subject",
+      "path": "src/__init__.py",
+      "source_state": "candidate",
+      "start_line": null
+    },
+    {
+      "artifact_sha256": "80047f9f4475ec2059b8512ddbe01bb13cc0cabdd3d92d49ded3958e1fe2267c",
+      "content": "def identifier(value):\n if isinstance(value,int): return str(value)\n return str(int(value))\n",
+      "end_line": 3,
+      "evidence_id": "E008",
+      "kind": "production_source",
+      "owner": "subject",
+      "path": "src/identity.py",
+      "source_state": "candidate",
+      "start_line": 1
+    },
+    {
+      "artifact_sha256": "8155290fe593150b1bb02fae07ab9976d216c6855506d6eb9ccd5ddd0945c56a",
+      "content": "Command: python -I -S -B .patchbench-eval/runner.py\nExit code: 0\nDuration seconds: 0.000000\n\nSTDOUT:\n\nSTDERR:\ntest_forms (_patchbench_frozen_0.Contract.test_forms) ... ok\n\n----------------------------------------------------------------------\nRan 1 test in 0.000s\n\nOK",
+      "end_line": 13,
+      "evidence_id": "P001",
+      "kind": "peer_evaluation",
+      "owner": "peer",
+      "path": "test.log",
+      "source_state": null,
+      "start_line": 1
+    },
+    {
+      "artifact_sha256": "059ffd818748e3e5b9a5c7f839ace4529bfc9a3675c08a520515284066d67c3f",
+      "content": "diff --git a/src/identity.py b/src/identity.py\nindex cef97e7..6c548aa 100644\n--- a/src/identity.py\n+++ b/src/identity.py\n@@ -1,2 +1,2 @@\n def identifier(value):\n- return str(int(value))\n+ return str(value)\n",
+      "end_line": 8,
+      "evidence_id": "P002",
+      "kind": "peer_patch",
+      "owner": "peer",
+      "path": "patch.diff",
+      "source_state": null,
+      "start_line": 1
+    },
+    {
+      "artifact_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "content": "",
+      "end_line": null,
+      "evidence_id": "P003",
+      "kind": "peer_source",
+      "owner": "peer",
+      "path": "src/__init__.py",
+      "source_state": "candidate",
+      "start_line": null
+    },
+    {
+      "artifact_sha256": "e7a87a20426b75750da1a59fdbfc833773654bd195b845ed1d2b7fc48f8979db",
+      "content": "def identifier(value):\n return str(value)\n",
+      "end_line": 2,
+      "evidence_id": "P004",
+      "kind": "peer_source",
+      "owner": "peer",
+      "path": "src/identity.py",
+      "source_state": "candidate",
+      "start_line": 1
+    }
+  ],
+  "mode": "contrastive",
+  "official_evaluation_passed": false,
+  "peer_run_id": "semantic-06-peer",
+  "provenance": {
+    "peer": {
+      "peer_candidate_snapshot_sha256": "6a0a021487979b14f59578cf6d17044b71f5dd42131d809d9acd8633be050388",
+      "peer_evaluation_log_sha256": "8155290fe593150b1bb02fae07ab9976d216c6855506d6eb9ccd5ddd0945c56a",
+      "peer_experiment_id": "semantic-06-peers",
+      "peer_patch_sha256": "059ffd818748e3e5b9a5c7f839ace4529bfc9a3675c08a520515284066d67c3f",
+      "peer_run_id": "semantic-06-peer",
+      "peer_run_index": 0
+    },
+    "subject": {
+      "base_source_snapshot_sha256": "bd764b87f6fe9fb722f85e0ea52a5f88e22ef4e2004f7abb4e42511541f131fe",
+      "benchmark_definition_sha256": "79bf267c5b81a99120f2517767f9c3c6a7f51525de3e33ca65012004ef29c038",
+      "candidate_source_snapshot_sha256": "35feb9dce7ef42777bf3cdfd3fd2e14144725bc19fac558d2343a32dbd6efa58",
+      "canonical_patch_sha256": "0fd8a0fa8a0e2a117ddc7fa37dd5cb6379ec9742e5e6d2c50114d42f038798d0",
+      "evaluation_log_sha256": "458b072f5190df8089f30fa0b95bada71ec056c96b205e3a0abd26e3cff08546",
+      "frozen_tests_snapshot_sha256": "849fcc448aef2b44b3c9e97294dd482cbb23a15e96edfbc805728bab1a058cb2",
+      "task_contract_sha256": "3ccb3923e864f0e03962098cc6b6b887a9663cdfbbedd5e927341fe0e9c175f2"
+    }
+  },
+  "schema_version": 1,
+  "source_snapshot_policy": "full_bounded_production_v1:5872fe6c90dcbe418f35d9548e49b7e473794cb388faa8e9374f7a283f7ac77b",
+  "subject_run_id": "semantic-06-subject",
+  "task_fingerprint_sha256": "2f2dc70c7791c58ccb23ff72e024daa3837781c6199617f857522d9e5d964fb5",
+  "task_id": "semantic-06"
+}

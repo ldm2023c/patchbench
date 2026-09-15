@@ -142,4 +142,3 @@ def test_candidate_verifier_fails_on_bundle_tampering(tmp_path):
 def test_candidate_area_is_draft_and_has_no_final_freeze_manifest():
     assert "not a frozen validation suite" in (ROOT / "README.md").read_text()
     assert not (ROOT / "freeze-manifest.json").exists()
-    assert not Path("validation/diagnosis/v1/freeze-manifest.json").exists()

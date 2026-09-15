@@ -1,15 +1,29 @@
 """Offline integrity and composition verification for Diagnosis validation suites."""
 
 from collections import Counter
+from contextlib import contextmanager
 from enum import Enum
 import hashlib
 import json
 import os
 from pathlib import Path
+import shutil
 import stat
+import subprocess
+from tempfile import TemporaryDirectory
 
 from pydantic import ValidationError
 
+from patchbench.application.diagnosis_contrastive import (
+    ContrastiveCompilationError,
+    compile_contrastive_diagnosis_evidence,
+)
+from patchbench.application.diagnosis_gold_lock import (
+    OPERATIONAL_CASE_IDS,
+    SELECTED_CASE_IDS,
+    SEMANTIC_CASE_IDS,
+    verify_diagnosis_gold_lock,
+)
 from patchbench.application.diagnosis_validation import (
     DiagnosisValidationError,
     compute_diagnosis_gold_sha256,
@@ -18,27 +32,37 @@ from patchbench.application.diagnosis_validation import (
 )
 from patchbench.application.diagnosis_evidence import _snapshot_hash
 from patchbench.application.diagnosis_peer import (
-    ContrastivePeerSelection, DiagnosisPeerError, verify_contrastive_peer_selection,
+    ContrastivePeerSelection, DiagnosisPeerError, select_contrastive_peer,
+    verify_contrastive_peer_selection,
 )
+from patchbench.config.task_loader import TaskLoadError, load_task
 from patchbench.domain.diagnosis import (
     DiagnosisEvidenceBundle,
     DiagnosisMode,
     DiagnosisRoute,
     DiagnosisRoutingReason,
+    DiagnosisSourcePolicy,
     EvidenceOwner,
     EvidenceKind,
     FailureFamily,
     route_run_diagnosis,
 )
 from patchbench.domain.diagnosis_integrity import canonical_json_bytes, compute_bundle_sha256
+from patchbench.domain.diagnosis_gold_lock import DiagnosisGoldLockCase
 from patchbench.domain.diagnosis_suite import (
+    ContrastiveFairnessReview,
+    ContrastiveFairnessReviewCase,
     DiagnosisValidationFreezeManifest,
     DiagnosisValidationSuite,
     DiagnosisValidationSuiteCase,
+    DiagnosisValidationSuiteCaseFile,
+    FrozenValidationFile,
     compute_diagnosis_validation_suite_sha256,
 )
+from patchbench.domain.diagnosis_gold_lock import DiagnosisGoldLockManifest
 from patchbench.domain.diagnosis_validation import DiagnosisGoldCase
 from patchbench.domain.models import RunRecord, Sha256Hex
+from patchbench.repository.git_repository import GitRepositoryManager, RepositoryError
 from patchbench.storage.filesystem import ArtifactStoreError, FilesystemArtifactStore
 
 
@@ -56,6 +80,9 @@ class DiagnosisSuiteReason(str, Enum):
     CASE_ID_MISMATCH = "case_id_mismatch"
     INVALID_CASE = "invalid_case"
     INVALID_COMPOSITION = "invalid_composition"
+    CONTRASTIVE_FAIRNESS_FAILED = "contrastive_fairness_failed"
+    HUMAN_FAIRNESS_PENDING = "human_fairness_pending"
+    HUMAN_FAIRNESS_REJECTED = "human_fairness_rejected"
 
 
 class DiagnosisSuiteError(ValueError):
@@ -66,6 +93,11 @@ class DiagnosisSuiteError(ValueError):
 
 def _sha256(data: bytes) -> Sha256Hex:
     return hashlib.sha256(data).hexdigest()
+
+
+def _disk_json_bytes(value) -> bytes:
+    raw = value.model_dump(mode="json") if hasattr(value, "model_dump") else value
+    return json.dumps(raw, ensure_ascii=False, sort_keys=True, indent=2).encode("utf-8") + b"\n"
 
 
 def compute_run_record_sha256(run: RunRecord) -> Sha256Hex:
@@ -275,6 +307,712 @@ def _required_file(files: dict[str, bytes], path: str) -> bytes:
         return files[path]
     except KeyError as error:
         raise DiagnosisSuiteError(DiagnosisSuiteReason.MISSING_FILE, path) from error
+
+
+def _verify_embedded_gold_lock(root: Path):
+    """Verify protected D6.3b-1 files while allowing Phase A/B extensions."""
+    files = _read_tree(Path(root))
+    manifest_raw = _required_file(files, "gold-lock-manifest.json")
+    manifest = _parse(DiagnosisGoldLockManifest, manifest_raw, "Gold lock manifest")
+    with TemporaryDirectory(prefix="patchbench-gold-lock-verify-") as temporary:
+        stage = Path(temporary)
+        for item in manifest.files:
+            data = _required_file(files, item.path)
+            if len(data) != item.byte_length:
+                raise DiagnosisSuiteError(
+                    DiagnosisSuiteReason.FILE_LENGTH_MISMATCH, item.path)
+            if _sha256(data) != item.sha256:
+                raise DiagnosisSuiteError(
+                    DiagnosisSuiteReason.FILE_HASH_MISMATCH, item.path)
+            _write_output_file(stage, item.path, data)
+        (stage / "gold-lock-manifest.json").write_bytes(manifest_raw)
+        return verify_diagnosis_gold_lock(stage)
+
+
+@contextmanager
+def _without_inherited_git_environment():
+    saved = {key: os.environ.pop(key) for key in list(os.environ) if key.startswith("GIT_")}
+    try:
+        yield
+    finally:
+        os.environ.update(saved)
+
+
+def _git(repository: Path, *arguments: str) -> str:
+    environment = {key: value for key, value in os.environ.items()
+                   if not key.startswith("GIT_")}
+    environment.update({
+        "GIT_CONFIG_NOSYSTEM": "1",
+        "GIT_CONFIG_GLOBAL": os.devnull,
+        "GIT_AUTHOR_NAME": "PatchBench Fixture",
+        "GIT_AUTHOR_EMAIL": "fixture@patchbench.invalid",
+        "GIT_COMMITTER_NAME": "PatchBench Fixture",
+        "GIT_COMMITTER_EMAIL": "fixture@patchbench.invalid",
+        "GIT_AUTHOR_DATE": "2026-01-01T00:00:00+00:00",
+        "GIT_COMMITTER_DATE": "2026-01-01T00:00:00+00:00",
+    })
+    try:
+        completed = subprocess.run(
+            ["git", "-C", str(repository), *arguments],
+            capture_output=True,
+            text=True,
+            check=True,
+            env=environment,
+        )
+    except (OSError, subprocess.CalledProcessError) as error:
+        detail = getattr(error, "stderr", None) or str(error)
+        raise DiagnosisSuiteError(
+            DiagnosisSuiteReason.INVALID_CASE,
+            f"Git command failed for {repository}: {detail.strip()}",
+        ) from error
+    return completed.stdout.strip()
+
+
+def _restore_candidate_repository(case_root: Path) -> None:
+    repository = case_root / "repository"
+    if repository.exists() or repository.is_symlink():
+        raise DiagnosisSuiteError(
+            DiagnosisSuiteReason.INVALID_CASE,
+            f"{case_root.name}: staged repository already exists",
+        )
+    shutil.copytree(case_root / "base", repository)
+    _git(repository, "init", "-q")
+    _git(repository, "config", "core.autocrlf", "false")
+    _git(repository, "add", "-A")
+    _git(repository, "-c", "user.name=PatchBench Test",
+         "-c", "user.email=test@patchbench.invalid",
+         "-c", "commit.gpgsign=false", "commit", "-qm", "controlled base")
+    try:
+        task = load_task(case_root / "task.yaml")
+    except TaskLoadError as error:
+        raise DiagnosisSuiteError(
+            DiagnosisSuiteReason.INVALID_CASE,
+            f"{case_root.name}: invalid TaskSpec",
+        ) from error
+    commit = _git(repository, "rev-parse", "HEAD")
+    if task.repository.base_commit != commit:
+        raise DiagnosisSuiteError(
+            DiagnosisSuiteReason.INVALID_CASE,
+            f"{case_root.name}: restored base commit differs",
+        )
+
+
+def _write_output_file(root: Path, relative: str, data: bytes) -> None:
+    path = root / relative
+    path.parent.mkdir(parents=True, exist_ok=True)
+    path.write_bytes(data)
+
+
+def _copy_tree_bytes(source_root: Path, output_root: Path, relative_root: str) -> dict[str, bytes]:
+    files = _read_tree(source_root)
+    copied = {}
+    for source_relative, data in files.items():
+        relative = f"{relative_root}/{source_relative}"
+        _write_output_file(output_root, relative, data)
+        copied[relative] = data
+    return copied
+
+
+def _verify_contrastive_fairness(
+    case: DiagnosisValidationSuiteCase,
+    gold: DiagnosisGoldCase,
+    blind: DiagnosisEvidenceBundle,
+    contrastive: DiagnosisEvidenceBundle,
+) -> None:
+    """Peer evidence must not change the already locked subject-Gold contract."""
+    try:
+        if compute_subject_evidence_sha256(contrastive) != compute_subject_evidence_sha256(blind):
+            raise ValueError("Contrastive subject evidence differs from Blind")
+        if compute_diagnosis_gold_sha256(gold) != case.gold_sha256:
+            raise ValueError("locked Gold hash changed")
+        validate_semantic_gold_evidence(blind, gold)
+        validate_semantic_gold_evidence(contrastive, gold)
+        if any(locator.owner is EvidenceOwner.PEER
+               for requirement in gold.semantic_gold.required_evidence
+               for locator in requirement.acceptable_locators):
+            raise ValueError("locked Gold cites peer evidence")
+    except (ValueError, DiagnosisValidationError) as error:
+        raise DiagnosisSuiteError(
+            DiagnosisSuiteReason.CONTRASTIVE_FAIRNESS_FAILED,
+            f"{case.case_id}: {error}",
+        ) from error
+
+
+def _compile_locked_contrastive(
+    case_id: str,
+    blind: DiagnosisEvidenceBundle,
+    *,
+    candidate_root: Path,
+    support_store: FilesystemArtifactStore,
+    max_bundle_json_bytes: int,
+) -> tuple[ContrastivePeerSelection, DiagnosisEvidenceBundle]:
+    case_source = candidate_root / case_id
+    try:
+        selection = select_contrastive_peer(
+            blind.subject_run_id,
+            f"{case_id}-peers",
+            artifact_store=support_store,
+        )
+        verify_contrastive_peer_selection(selection, artifact_store=support_store)
+        with TemporaryDirectory(prefix="patchbench-diagnosis-freeze-") as temporary:
+            stage = Path(temporary) / case_id
+            shutil.copytree(case_source, stage)
+            _restore_candidate_repository(stage)
+            task_path = stage / "task.yaml"
+            task_sha = _sha256(task_path.read_bytes())
+            manager = GitRepositoryManager(stage / "workspaces")
+            with _without_inherited_git_environment():
+                bundle = compile_contrastive_diagnosis_evidence(
+                    blind,
+                    selection,
+                    task_path=task_path,
+                    expected_task_contract_sha256=task_sha,
+                    source_policy=DiagnosisSourcePolicy(production_roots=["src"]),
+                    max_bundle_json_bytes=max_bundle_json_bytes,
+                    artifact_store=support_store,
+                    repository_manager=manager,
+                )
+    except (OSError, DiagnosisPeerError, ContrastiveCompilationError,
+            RepositoryError) as error:
+        raise DiagnosisSuiteError(
+            DiagnosisSuiteReason.INVALID_CASE,
+            f"{case_id}: Contrastive compilation failed",
+        ) from error
+    return selection, bundle
+
+
+def _semantic_case_from_lock(
+    locked_case: DiagnosisGoldLockCase,
+    *,
+    gold_lock_root: Path,
+    candidate_root: Path,
+    max_bundle_json_bytes: int,
+) -> tuple[DiagnosisValidationSuiteCase, dict[str, bytes]]:
+    case_id = locked_case.case_id
+    blind_raw = (gold_lock_root / locked_case.blind_bundle_path).read_bytes()
+    gold_raw = (gold_lock_root / locked_case.gold_path).read_bytes()
+    blind = _parse(DiagnosisEvidenceBundle, blind_raw, f"{case_id} Blind Bundle")
+    gold = _parse(DiagnosisGoldCase, gold_raw, f"{case_id} Human Gold")
+    support_source = candidate_root / "_support" / case_id / "results"
+    support_relative = f"support/{case_id}/results"
+    support_store = FilesystemArtifactStore(support_source)
+    selection, contrastive = _compile_locked_contrastive(
+        case_id,
+        blind,
+        candidate_root=candidate_root,
+        support_store=support_store,
+        max_bundle_json_bytes=max_bundle_json_bytes,
+    )
+    case = DiagnosisValidationSuiteCase(
+        case_id=case_id,
+        expected_route=DiagnosisRoute.SEMANTIC_DIAGNOSIS,
+        gold_path=f"cases/{case_id}/gold.json",
+        gold_sha256=locked_case.gold_sha256,
+        subject_evidence_sha256=locked_case.subject_evidence_sha256,
+        blind_bundle_path=f"cases/{case_id}/blind-bundle.json",
+        blind_bundle_sha256=blind.bundle_sha256,
+        contrastive_bundle_path=f"cases/{case_id}/contrastive-bundle.json",
+        contrastive_bundle_sha256=contrastive.bundle_sha256,
+        peer_selection_path=f"cases/{case_id}/peer-selection.json",
+        peer_selection_sha256=_sha256(_disk_json_bytes(selection)),
+        peer_artifact_store_path=support_relative,
+    )
+    _verify_contrastive_fairness(case, gold, blind, contrastive)
+    verify_semantic_validation_case(
+        case,
+        gold,
+        blind,
+        contrastive,
+        peer_selection=selection,
+        peer_artifact_store=support_store,
+    )
+    artifacts = {
+        case.gold_path: gold_raw,
+        case.blind_bundle_path: blind_raw,
+        case.contrastive_bundle_path: _disk_json_bytes(contrastive),
+        case.peer_selection_path: _disk_json_bytes(selection),
+    }
+    return case, artifacts
+
+
+def _review_case_from_semantic_case(
+    case: DiagnosisValidationSuiteCase,
+    selection: ContrastivePeerSelection,
+) -> ContrastiveFairnessReviewCase:
+    return ContrastiveFairnessReviewCase(
+        case_id=case.case_id,
+        locked_gold_sha256=case.gold_sha256,
+        subject_evidence_sha256=case.subject_evidence_sha256,
+        blind_bundle_sha256=case.blind_bundle_sha256,
+        contrastive_bundle_sha256=case.contrastive_bundle_sha256,
+        peer_run_id=selection.peer_run_id,
+        peer_experiment_id=selection.peer_experiment_id,
+        peer_run_index=selection.peer_run_index,
+        peer_selection_sha256=case.peer_selection_sha256,
+        machine_integrity_passed=True,
+        human_fairness_status="pending",
+    )
+
+
+def _human_review_packet(review: ContrastiveFairnessReview, root: Path) -> bytes:
+    lines = [
+        "# Contrastive Fairness Review",
+        "",
+        "Question: Does the canonical PASS peer make the already-locked Human Gold unfair or invalid?",
+        "",
+        "Do not relabel, replace cases, or edit Gold in this packet. Record human confirmation only in contrastive-fairness-review.json.",
+        "",
+    ]
+    for case in review.cases:
+        bundle = DiagnosisEvidenceBundle.model_validate_json(
+            (root / f"cases/{case.case_id}/contrastive-bundle.json").read_bytes())
+        peer_items = [item for item in bundle.evidence_items if item.owner is EvidenceOwner.PEER]
+        lines.extend([
+            f"## {case.case_id}",
+            "",
+            f"- locked_gold_sha256: {case.locked_gold_sha256}",
+            f"- subject_evidence_sha256: {case.subject_evidence_sha256}",
+            f"- blind_bundle_sha256: {case.blind_bundle_sha256}",
+            f"- contrastive_bundle_sha256: {case.contrastive_bundle_sha256}",
+            f"- peer: {case.peer_experiment_id}[{case.peer_run_index}] -> {case.peer_run_id}",
+            f"- peer_selection_sha256: {case.peer_selection_sha256}",
+            f"- subject evidence identity unchanged: {case.machine_integrity_passed}",
+            f"- human_fairness_status: {case.human_fairness_status}",
+            "",
+            "Peer evidence added by the Contrastive Bundle:",
+            "",
+        ])
+        for item in peer_items:
+            lines.extend([
+                f"### {item.evidence_id} {item.kind.value} {item.path or ''}".rstrip(),
+                "",
+                f"- artifact_sha256: {item.artifact_sha256}",
+                f"- source_state: {item.source_state.value if item.source_state else None}",
+                "",
+                "```text",
+                item.content,
+                "```",
+                "",
+            ])
+    return ("\n".join(lines).rstrip() + "\n").encode("utf-8")
+
+
+def _operational_case_from_lock(
+    locked_case: DiagnosisGoldLockCase,
+    *,
+    gold_lock_root: Path,
+) -> tuple[DiagnosisValidationSuiteCase, dict[str, bytes]]:
+    case_id = locked_case.case_id
+    run_raw = (gold_lock_root / locked_case.run_record_path).read_bytes()
+    gold_raw = (gold_lock_root / locked_case.route_gold_path).read_bytes()
+    run = _parse(RunRecord, run_raw, f"{case_id} RunRecord")
+    gold = _parse(DiagnosisGoldCase, gold_raw, f"{case_id} route Gold")
+    if (compute_run_record_sha256(run) != locked_case.run_record_sha256
+            or compute_diagnosis_gold_sha256(gold) != locked_case.route_gold_sha256):
+        raise DiagnosisSuiteError(
+            DiagnosisSuiteReason.INVALID_CASE,
+            f"{case_id}: pre-Contrastive operational linkage changed",
+        )
+    case = DiagnosisValidationSuiteCase(
+        case_id=case_id,
+        expected_route=DiagnosisRoute.OPERATIONAL_ONLY,
+        gold_path=f"cases/{case_id}/gold.json",
+        gold_sha256=locked_case.route_gold_sha256,
+        expected_routing_reason=locked_case.expected_routing_reason,
+        run_record_path=f"cases/{case_id}/run-record.json",
+        run_record_sha256=locked_case.run_record_sha256,
+    )
+    return case, {case.gold_path: gold_raw, case.run_record_path: run_raw}
+
+
+def prepare_contrastive_fairness_review(
+    gold_lock_root: Path,
+    candidate_root: Path,
+    *,
+    max_bundle_json_bytes: int = 1_000_000,
+) -> ContrastiveFairnessReview:
+    """Phase A: add Contrastive bundles and pending human fairness review only."""
+    if type(max_bundle_json_bytes) is not int or max_bundle_json_bytes <= 0:
+        raise ValueError("max_bundle_json_bytes must be a positive integer")
+    gold_lock_root = Path(gold_lock_root)
+    candidate_root = Path(candidate_root)
+    lock = verify_diagnosis_gold_lock(gold_lock_root)
+    if tuple(case.case_id for case in lock.cases) != SELECTED_CASE_IDS:
+        raise DiagnosisSuiteError(
+            DiagnosisSuiteReason.INVALID_COMPOSITION,
+            "pre-Contrastive lock selection differs",
+        )
+    if (gold_lock_root / "freeze-manifest.json").exists():
+        raise DiagnosisSuiteError(
+            DiagnosisSuiteReason.INVALID_MANIFEST,
+            "Phase A must not start from an already frozen tree",
+        )
+
+    written: list[Path] = []
+    try:
+        review_cases: list[ContrastiveFairnessReviewCase] = []
+        for locked_case in lock.cases:
+            if locked_case.expected_route is DiagnosisRoute.SEMANTIC_DIAGNOSIS:
+                if locked_case.case_id not in SEMANTIC_CASE_IDS:
+                    raise DiagnosisSuiteError(
+                        DiagnosisSuiteReason.INVALID_COMPOSITION,
+                        f"{locked_case.case_id}: unexpected semantic case",
+                    )
+                case_id = locked_case.case_id
+                blind_raw = (gold_lock_root / locked_case.blind_bundle_path).read_bytes()
+                gold_raw = (gold_lock_root / locked_case.gold_path).read_bytes()
+                blind = _parse(DiagnosisEvidenceBundle, blind_raw, f"{case_id} Blind Bundle")
+                gold = _parse(DiagnosisGoldCase, gold_raw, f"{case_id} Human Gold")
+                support_store = FilesystemArtifactStore(
+                    candidate_root / "_support" / case_id / "results")
+                selection, contrastive = _compile_locked_contrastive(
+                    case_id,
+                    blind,
+                    candidate_root=candidate_root,
+                    support_store=support_store,
+                    max_bundle_json_bytes=max_bundle_json_bytes,
+                )
+                selection_raw = _disk_json_bytes(selection)
+                case = DiagnosisValidationSuiteCase(
+                    case_id=case_id,
+                    expected_route=DiagnosisRoute.SEMANTIC_DIAGNOSIS,
+                    gold_path=locked_case.gold_path,
+                    gold_sha256=locked_case.gold_sha256,
+                    subject_evidence_sha256=locked_case.subject_evidence_sha256,
+                    blind_bundle_path=locked_case.blind_bundle_path,
+                    blind_bundle_sha256=locked_case.blind_bundle_sha256,
+                    contrastive_bundle_path=f"cases/{case_id}/contrastive-bundle.json",
+                    contrastive_bundle_sha256=contrastive.bundle_sha256,
+                    peer_selection_path=f"contrastive-fairness-review.json#{case_id}",
+                    peer_selection_sha256=_sha256(selection_raw),
+                    peer_artifact_store_path=(
+                        f"fixtures/diagnosis_validation/v1_candidates/_support/{case_id}/results"
+                    ),
+                )
+                _verify_contrastive_fairness(case, gold, blind, contrastive)
+                verify_semantic_validation_case(
+                    case,
+                    gold,
+                    blind,
+                    contrastive,
+                    peer_selection=selection,
+                    peer_artifact_store=support_store,
+                )
+                path = gold_lock_root / case.contrastive_bundle_path
+                _write_output_file(gold_lock_root, case.contrastive_bundle_path,
+                                   _disk_json_bytes(contrastive))
+                written.append(path)
+                review_cases.append(_review_case_from_semantic_case(case, selection))
+        review = ContrastiveFairnessReview(cases=review_cases)
+        review_path = gold_lock_root / "contrastive-fairness-review.json"
+        packet_path = gold_lock_root / "contrastive-fairness-review.md"
+        review_path.write_bytes(_disk_json_bytes(review))
+        written.append(review_path)
+        packet_path.write_bytes(_human_review_packet(review, gold_lock_root))
+        written.append(packet_path)
+        verify_contrastive_fairness_review(gold_lock_root, candidate_root)
+    except Exception:
+        for path in reversed(written):
+            try:
+                path.unlink()
+            except FileNotFoundError:
+                pass
+        raise
+    return review
+
+
+def build_diagnosis_validation_suite(
+    gold_lock_root: Path,
+    candidate_root: Path,
+    output_root: Path | None = None,
+    *,
+    max_bundle_json_bytes: int = 1_000_000,
+) -> ContrastiveFairnessReview:
+    """Compatibility wrapper for Phase A preparation; it never writes a freeze manifest."""
+    if output_root is not None and Path(output_root) != Path(gold_lock_root):
+        raise DiagnosisSuiteError(
+            DiagnosisSuiteReason.INVALID_ROOT,
+            "Phase A extends the pre-Contrastive lock in place",
+        )
+    return prepare_contrastive_fairness_review(
+        gold_lock_root,
+        candidate_root,
+        max_bundle_json_bytes=max_bundle_json_bytes,
+    )
+
+
+def _review_selection(case: ContrastiveFairnessReviewCase) -> ContrastivePeerSelection:
+    return ContrastivePeerSelection(
+        subject_run_id=f"{case.case_id}-subject",
+        peer_experiment_id=case.peer_experiment_id,
+        peer_run_id=case.peer_run_id,
+        peer_run_index=case.peer_run_index,
+    )
+
+
+def verify_contrastive_fairness_review(
+    root: Path,
+    candidate_root: Path,
+    *,
+    allow_freeze_manifest: bool = False,
+) -> ContrastiveFairnessReview:
+    """Verify Phase A using the immutable Gold lock and canonical source support."""
+    root = Path(root)
+    candidate_root = Path(candidate_root)
+    lock = _verify_embedded_gold_lock(root)
+    if (root / "freeze-manifest.json").exists() and not allow_freeze_manifest:
+        raise DiagnosisSuiteError(
+            DiagnosisSuiteReason.INVALID_MANIFEST,
+            "freeze-manifest.json is not allowed before Phase B finalization",
+        )
+    if any(part == "support" or part == "_support"
+           for path in root.rglob("*") for part in path.relative_to(root).parts):
+        raise DiagnosisSuiteError(
+            DiagnosisSuiteReason.EXTRA_FILE,
+            "validation tree must not contain copied source support",
+        )
+    review_raw = _required_file(_read_tree(root), "contrastive-fairness-review.json")
+    review = _parse(ContrastiveFairnessReview, review_raw, "contrastive fairness review")
+    if [case.case_id for case in review.cases] != list(SEMANTIC_CASE_IDS):
+        raise DiagnosisSuiteError(
+            DiagnosisSuiteReason.INVALID_COMPOSITION,
+            "review cases differ from selected semantic cases",
+        )
+    locked = {case.case_id: case for case in lock.cases}
+    for review_case in review.cases:
+        locked_case = locked[review_case.case_id]
+        blind = _parse(DiagnosisEvidenceBundle,
+                       (root / locked_case.blind_bundle_path).read_bytes(),
+                       f"{review_case.case_id} Blind Bundle")
+        gold = _parse(DiagnosisGoldCase,
+                      (root / locked_case.gold_path).read_bytes(),
+                      f"{review_case.case_id} Human Gold")
+        contrastive_path = root / f"cases/{review_case.case_id}/contrastive-bundle.json"
+        contrastive = _parse(DiagnosisEvidenceBundle, contrastive_path.read_bytes(),
+                             f"{review_case.case_id} Contrastive Bundle")
+        selection = _review_selection(review_case)
+        selection_raw = _disk_json_bytes(selection)
+        if (review_case.locked_gold_sha256 != locked_case.gold_sha256
+                or review_case.subject_evidence_sha256 != locked_case.subject_evidence_sha256
+                or review_case.blind_bundle_sha256 != locked_case.blind_bundle_sha256
+                or review_case.contrastive_bundle_sha256 != contrastive.bundle_sha256
+                or review_case.peer_selection_sha256 != _sha256(selection_raw)
+                or not review_case.machine_integrity_passed):
+            raise DiagnosisSuiteError(
+                DiagnosisSuiteReason.INVALID_CASE,
+                f"{review_case.case_id}: review linkage differs",
+            )
+        case = DiagnosisValidationSuiteCase(
+            case_id=review_case.case_id,
+            expected_route=DiagnosisRoute.SEMANTIC_DIAGNOSIS,
+            gold_path=locked_case.gold_path,
+            gold_sha256=locked_case.gold_sha256,
+            subject_evidence_sha256=locked_case.subject_evidence_sha256,
+            blind_bundle_path=locked_case.blind_bundle_path,
+            blind_bundle_sha256=locked_case.blind_bundle_sha256,
+            contrastive_bundle_path=f"cases/{review_case.case_id}/contrastive-bundle.json",
+            contrastive_bundle_sha256=contrastive.bundle_sha256,
+            peer_selection_path=f"contrastive-fairness-review.json#{review_case.case_id}",
+            peer_selection_sha256=review_case.peer_selection_sha256,
+            peer_artifact_store_path=(
+                f"fixtures/diagnosis_validation/v1_candidates/_support/{review_case.case_id}/results"
+            ),
+        )
+        support_store = FilesystemArtifactStore(
+            candidate_root / "_support" / review_case.case_id / "results")
+        _verify_contrastive_fairness(case, gold, blind, contrastive)
+        verify_semantic_validation_case(
+            case,
+            gold,
+            blind,
+            contrastive,
+            peer_selection=selection,
+            peer_artifact_store=support_store,
+        )
+    return review
+
+
+def finalize_diagnosis_validation_freeze(
+    root: Path,
+    candidate_root: Path,
+) -> DiagnosisValidationFreezeManifest:
+    """Phase B: write freeze-manifest.json only after all human statuses are confirmed."""
+    root = Path(root)
+    review = verify_contrastive_fairness_review(root, candidate_root)
+    for case in review.cases:
+        if case.human_fairness_status == "pending":
+            raise DiagnosisSuiteError(
+                DiagnosisSuiteReason.HUMAN_FAIRNESS_PENDING,
+                f"{case.case_id}: human fairness is still pending",
+            )
+        if case.human_fairness_status == "rejected":
+            raise DiagnosisSuiteError(
+                DiagnosisSuiteReason.HUMAN_FAIRNESS_REJECTED,
+                f"{case.case_id}: human fairness was rejected",
+            )
+    lock = _verify_embedded_gold_lock(root)
+    files = []
+    for path in sorted(item for item in root.rglob("*") if item.is_file()
+                       and item.name != "freeze-manifest.json"):
+        raw = path.read_bytes()
+        files.append(FrozenValidationFile(
+            path=path.relative_to(root).as_posix(),
+            sha256=_sha256(raw),
+            byte_length=len(raw),
+        ))
+    manifest = DiagnosisValidationFreezeManifest(
+        suite_path="suite.json",
+        suite_sha256=hashlib.sha256(canonical_json_bytes(lock.model_dump(mode="json"))).hexdigest(),
+        files=files,
+    )
+    (root / "freeze-manifest.json").write_bytes(_disk_json_bytes(manifest))
+    return manifest
+
+
+def _verify_final_freeze_manifest(
+    root: Path,
+    candidate_root: Path,
+) -> DiagnosisValidationFreezeManifest:
+    files = _read_tree(root)
+    manifest_raw = files.pop("freeze-manifest.json", None)
+    if manifest_raw is None:
+        raise DiagnosisSuiteError(DiagnosisSuiteReason.MISSING_FILE,
+                                  "freeze-manifest.json is missing")
+    manifest = _parse(DiagnosisValidationFreezeManifest, manifest_raw, "freeze manifest")
+    expected, actual = {item.path for item in manifest.files}, set(files)
+    if expected - actual:
+        raise DiagnosisSuiteError(DiagnosisSuiteReason.MISSING_FILE,
+                                  repr(sorted(expected - actual)))
+    if actual - expected:
+        raise DiagnosisSuiteError(DiagnosisSuiteReason.EXTRA_FILE,
+                                  repr(sorted(actual - expected)))
+    for item in manifest.files:
+        data = files[item.path]
+        if len(data) != item.byte_length:
+            raise DiagnosisSuiteError(DiagnosisSuiteReason.FILE_LENGTH_MISMATCH, item.path)
+        if _sha256(data) != item.sha256:
+            raise DiagnosisSuiteError(DiagnosisSuiteReason.FILE_HASH_MISMATCH, item.path)
+    lock = _verify_embedded_gold_lock(root)
+    if manifest.suite_sha256 != hashlib.sha256(
+            canonical_json_bytes(lock.model_dump(mode="json"))).hexdigest():
+        raise DiagnosisSuiteError(DiagnosisSuiteReason.SUITE_HASH_MISMATCH, "suite.json")
+    review = verify_contrastive_fairness_review(
+        root, candidate_root, allow_freeze_manifest=True)
+    if any(case.human_fairness_status != "confirmed" for case in review.cases):
+        raise DiagnosisSuiteError(
+            DiagnosisSuiteReason.HUMAN_FAIRNESS_PENDING,
+            "final freeze requires all human fairness statuses confirmed",
+        )
+    return manifest
+
+
+def verify_diagnosis_validation_freeze(
+    root: Path,
+    candidate_root: Path,
+) -> DiagnosisValidationFreezeManifest:
+    """Verify a Phase B freeze without copied raw support."""
+    return _verify_final_freeze_manifest(root, candidate_root)
+
+
+def _legacy_build_diagnosis_validation_suite(
+    gold_lock_root: Path,
+    candidate_root: Path,
+    output_root: Path,
+    *,
+    max_bundle_json_bytes: int = 1_000_000,
+) -> DiagnosisValidationSuite:
+    """Legacy synthetic builder retained only as a reference in old review diffs."""
+    if type(max_bundle_json_bytes) is not int or max_bundle_json_bytes <= 0:
+        raise ValueError("max_bundle_json_bytes must be a positive integer")
+    gold_lock_root = Path(gold_lock_root)
+    candidate_root = Path(candidate_root)
+    output_root = Path(output_root)
+    lock = verify_diagnosis_gold_lock(gold_lock_root)
+    if tuple(case.case_id for case in lock.cases) != SELECTED_CASE_IDS:
+        raise DiagnosisSuiteError(
+            DiagnosisSuiteReason.INVALID_COMPOSITION,
+            "pre-Contrastive lock selection differs",
+        )
+    if output_root.exists() or output_root.is_symlink():
+        raise DiagnosisSuiteError(
+            DiagnosisSuiteReason.INVALID_ROOT,
+            "output root must not exist",
+        )
+
+    try:
+        output_root.mkdir(parents=True)
+        cases: list[DiagnosisValidationSuiteCase] = []
+        for locked_case in lock.cases:
+            if locked_case.expected_route is DiagnosisRoute.SEMANTIC_DIAGNOSIS:
+                if locked_case.case_id not in SEMANTIC_CASE_IDS:
+                    raise DiagnosisSuiteError(
+                        DiagnosisSuiteReason.INVALID_COMPOSITION,
+                        f"{locked_case.case_id}: unexpected semantic case",
+                    )
+                case, artifacts = _semantic_case_from_lock(
+                    locked_case,
+                    gold_lock_root=gold_lock_root,
+                    candidate_root=candidate_root,
+                    max_bundle_json_bytes=max_bundle_json_bytes,
+                )
+                support_files = _copy_tree_bytes(
+                    candidate_root / "_support" / locked_case.case_id / "results",
+                    output_root,
+                    case.peer_artifact_store_path,
+                )
+                artifacts.update(support_files)
+            elif locked_case.case_id in OPERATIONAL_CASE_IDS:
+                case, artifacts = _operational_case_from_lock(
+                    locked_case,
+                    gold_lock_root=gold_lock_root,
+                )
+            else:
+                raise DiagnosisSuiteError(
+                    DiagnosisSuiteReason.INVALID_COMPOSITION,
+                    f"{locked_case.case_id}: unexpected operational case",
+                )
+            for relative, data in artifacts.items():
+                _write_output_file(output_root, relative, data)
+            case_raw = _disk_json_bytes(case)
+            case_path = f"cases/{case.case_id}/case.json"
+            _write_output_file(output_root, case_path, case_raw)
+            cases.append(case)
+
+        case_files = [
+            DiagnosisValidationSuiteCaseFile(
+                case_id=case.case_id,
+                path=f"cases/{case.case_id}/case.json",
+                sha256=_sha256((output_root / f"cases/{case.case_id}/case.json").read_bytes()),
+            )
+            for case in cases
+        ]
+        suite = DiagnosisValidationSuite(
+            suite_id="diagnosis-validation-v1",
+            case_files=sorted(case_files, key=lambda item: (item.case_id, item.path)),
+        )
+        suite_raw = _disk_json_bytes(suite)
+        _write_output_file(output_root, "suite.json", suite_raw)
+
+        frozen_files = []
+        for path in sorted(item for item in output_root.rglob("*") if item.is_file()
+                           and item.name != "freeze-manifest.json"):
+            raw = path.read_bytes()
+            frozen_files.append(FrozenValidationFile(
+                path=path.relative_to(output_root).as_posix(),
+                sha256=_sha256(raw),
+                byte_length=len(raw),
+            ))
+        manifest = DiagnosisValidationFreezeManifest(
+            suite_path="suite.json",
+            suite_sha256=compute_diagnosis_validation_suite_sha256(suite),
+            files=frozen_files,
+        )
+        _write_output_file(output_root, "freeze-manifest.json", _disk_json_bytes(manifest))
+        verify_diagnosis_validation_suite(output_root)
+    except Exception:
+        shutil.rmtree(output_root, ignore_errors=True)
+        raise
+    return suite
 
 
 def verify_diagnosis_validation_suite(

@@ -1,7 +1,7 @@
 """Typed contracts for a frozen Diagnosis validation suite."""
 
 import hashlib
-from typing import Annotated, Self
+from typing import Annotated, Literal, Self
 
 from pydantic import ConfigDict, Field, StringConstraints, field_validator, model_validator
 
@@ -148,4 +148,37 @@ class DiagnosisValidationFreezeManifest(DomainModel):
             raise ValueError("freeze manifest must not hash itself")
         if self.suite_path not in paths:
             raise ValueError("suite file must be covered by freeze manifest")
+        return self
+
+
+class ContrastiveFairnessReviewCase(DomainModel):
+    model_config = ConfigDict(extra="forbid", frozen=True, str_strip_whitespace=False)
+
+    schema_version: Annotated[int, Field(strict=True, ge=1, le=1)] = 1
+    case_id: ExactString
+    locked_gold_sha256: Sha256Hex
+    subject_evidence_sha256: Sha256Hex
+    blind_bundle_sha256: Sha256Hex
+    contrastive_bundle_sha256: Sha256Hex
+    peer_run_id: ExactString
+    peer_experiment_id: ExactString
+    peer_run_index: Annotated[int, Field(strict=True, ge=0)]
+    peer_selection_sha256: Sha256Hex
+    machine_integrity_passed: bool = Field(strict=True)
+    human_fairness_status: Literal["pending", "confirmed", "rejected"]
+
+
+class ContrastiveFairnessReview(DomainModel):
+    model_config = ConfigDict(extra="forbid", frozen=True, str_strip_whitespace=False)
+
+    schema_version: Annotated[int, Field(strict=True, ge=1, le=1)] = 1
+    suite_id: Literal["diagnosis-validation-v1"] = "diagnosis-validation-v1"
+    review_stage: Literal["contrastive_fairness"] = "contrastive_fairness"
+    cases: list[ContrastiveFairnessReviewCase] = Field(min_length=1)
+
+    @model_validator(mode="after")
+    def validate_cases(self) -> Self:
+        ids = [case.case_id for case in self.cases]
+        if len(ids) != len(set(ids)):
+            raise ValueError("review case IDs must be unique")
         return self

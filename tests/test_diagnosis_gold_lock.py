@@ -29,7 +29,6 @@ from patchbench.domain import (
 CANDIDATES = Path("fixtures/diagnosis_validation/v1_candidates")
 GOLD = Path("fixtures/diagnosis_validation/v1_human_gold_drafts")
 AUTHORING_RECORD = GOLD / "human-gold-authoring-record.md"
-LOCKED = Path("validation/diagnosis/v1")
 SHA = "a" * 64
 GOLD_TREE_SHA256 = "b214dfc8184a92e1de1926e3a6121f48b0d7d56fba2859d57319dacc5b507726"
 
@@ -56,14 +55,21 @@ def rewrite_manifest(root):
                    sort_keys=True, indent=2) + "\n", encoding="utf-8")
 
 
-def test_checked_gold_lock_has_exact_selection_composition_and_identity():
-    suite = verify_diagnosis_gold_lock(LOCKED)
+@pytest.fixture(scope="module")
+def locked_tree(tmp_path_factory):
+    root = tmp_path_factory.mktemp("diagnosis-gold-lock") / "v1"
+    build_diagnosis_gold_lock(CANDIDATES, GOLD, AUTHORING_RECORD, root)
+    return root
+
+
+def test_checked_gold_lock_has_exact_selection_composition_and_identity(locked_tree):
+    suite = verify_diagnosis_gold_lock(locked_tree)
     assert tuple(case.case_id for case in suite.cases) == SELECTED_CASE_IDS
     assert len(SEMANTIC_CASE_IDS) == 13
     assert len(OPERATIONAL_CASE_IDS) == 2
     golds = {
         case.case_id: DiagnosisGoldCase.model_validate_json(
-            (LOCKED / (case.gold_path or case.route_gold_path)).read_bytes())
+            (locked_tree / (case.gold_path or case.route_gold_path)).read_bytes())
         for case in suite.cases
     }
     semantic_gold = [golds[case_id].semantic_gold for case_id in SEMANTIC_CASE_IDS]
@@ -79,13 +85,13 @@ def test_checked_gold_lock_has_exact_selection_composition_and_identity():
     assert len({case.subject_evidence_sha256 for case in suite.cases[:13]}) == 13
 
 
-def test_semantic_sources_are_byte_exact_and_d61_validated():
-    suite = verify_diagnosis_gold_lock(LOCKED)
+def test_semantic_sources_are_byte_exact_and_d61_validated(locked_tree):
+    suite = verify_diagnosis_gold_lock(locked_tree)
     for case in suite.cases[:13]:
         candidate = json.loads((CANDIDATES / case.case_id / "candidate.json").read_bytes())
-        locked_bundle = LOCKED / case.blind_bundle_path
+        locked_bundle = locked_tree / case.blind_bundle_path
         source_bundle = CANDIDATES / case.case_id / "blind-bundle.json"
-        locked_gold = LOCKED / case.gold_path
+        locked_gold = locked_tree / case.gold_path
         source_gold = GOLD / case.case_id / "gold.json"
         assert locked_bundle.read_bytes() == source_bundle.read_bytes()
         assert locked_gold.read_bytes() == source_gold.read_bytes()
@@ -105,33 +111,33 @@ def test_semantic_sources_are_byte_exact_and_d61_validated():
             assert gold.semantic_gold.required_evidence == []
 
 
-def test_operational_sources_are_byte_exact_and_routes_are_locked():
-    suite = verify_diagnosis_gold_lock(LOCKED)
+def test_operational_sources_are_byte_exact_and_routes_are_locked(locked_tree):
+    suite = verify_diagnosis_gold_lock(locked_tree)
     operational = suite.cases[13:]
     assert {case.expected_routing_reason.value for case in operational} == {
         "agent_command_failed", "agent_timed_out"}
     for case in operational:
-        assert (LOCKED / case.run_record_path).read_bytes() == (
+        assert (locked_tree / case.run_record_path).read_bytes() == (
             CANDIDATES / case.case_id / "run-record.json").read_bytes()
-        assert (LOCKED / case.route_gold_path).read_bytes() == (
+        assert (locked_tree / case.route_gold_path).read_bytes() == (
             CANDIDATES / case.case_id / "route-gold.json").read_bytes()
 
 
-def test_lock_tree_has_no_unselected_case_or_contrastive_metadata():
-    suite_raw = (LOCKED / "suite.json").read_text(encoding="utf-8")
-    manifest_raw = (LOCKED / "gold-lock-manifest.json").read_text(encoding="utf-8")
+def test_lock_tree_has_no_unselected_case_or_contrastive_metadata(locked_tree):
+    suite_raw = (locked_tree / "suite.json").read_text(encoding="utf-8")
+    manifest_raw = (locked_tree / "gold-lock-manifest.json").read_text(encoding="utf-8")
     suite = json.loads(suite_raw)
     manifest = json.loads(manifest_raw)
     suite_keys = {key for case in suite["cases"] for key in case}
-    assert {path.name for path in (LOCKED / "cases").iterdir()} == set(SELECTED_CASE_IDS)
+    assert {path.name for path in (locked_tree / "cases").iterdir()} == set(SELECTED_CASE_IDS)
     assert not {f"semantic-{index:02d}" for index in range(18, 22)}.intersection(
-        path.name for path in (LOCKED / "cases").iterdir())
+        path.name for path in (locked_tree / "cases").iterdir())
     assert not any("contrastive" in key or key.startswith("peer_") for key in suite_keys)
     assert "_support" not in suite_raw
     assert not any("contrastive" in item["path"] or "peer_" in item["path"]
                    for item in manifest["files"])
     assert "_support" not in manifest_raw
-    assert not (LOCKED / "freeze-manifest.json").exists()
+    assert not (locked_tree / "freeze-manifest.json").exists()
 
 
 def test_gold_tree_remains_byte_exact():
@@ -153,19 +159,19 @@ def test_candidate_pool_has_no_worktree_mutation():
     assert untracked.stdout == ""
 
 
-def test_two_clean_builds_equal_each_other_and_checked_tree(tmp_path):
+def test_two_clean_builds_equal_each_other(tmp_path):
     first, second = tmp_path / "first", tmp_path / "second"
     build_diagnosis_gold_lock(CANDIDATES, GOLD, AUTHORING_RECORD, first)
     build_diagnosis_gold_lock(CANDIDATES, GOLD, AUTHORING_RECORD, second)
-    assert tree_identity(first) == tree_identity(second) == tree_identity(LOCKED)
+    assert tree_identity(first) == tree_identity(second)
 
 
 @pytest.mark.parametrize(
     "mutation", ["missing", "extra", "extra_directory", "tampered", "symlink"],
 )
-def test_tree_tampering_and_unsafe_entries_are_rejected(tmp_path, mutation):
+def test_tree_tampering_and_unsafe_entries_are_rejected(tmp_path, locked_tree, mutation):
     copied = tmp_path / "lock"
-    shutil.copytree(LOCKED, copied)
+    shutil.copytree(locked_tree, copied)
     target = copied / "cases/semantic-01/gold.json"
     if mutation == "missing":
         target.unlink()
@@ -183,9 +189,9 @@ def test_tree_tampering_and_unsafe_entries_are_rejected(tmp_path, mutation):
         verify_diagnosis_gold_lock(copied)
 
 
-def test_coherently_relinked_missing_case_file_is_rejected(tmp_path):
+def test_coherently_relinked_missing_case_file_is_rejected(tmp_path, locked_tree):
     copied = tmp_path / "lock"
-    shutil.copytree(LOCKED, copied)
+    shutil.copytree(locked_tree, copied)
     suite_path = copied / "suite.json"
     raw = json.loads(suite_path.read_bytes())
     raw["cases"][0]["gold_path"] = "cases/semantic-01/missing.json"
@@ -195,9 +201,9 @@ def test_coherently_relinked_missing_case_file_is_rejected(tmp_path):
         verify_diagnosis_gold_lock(copied)
 
 
-def test_nonregular_file_is_rejected(tmp_path):
+def test_nonregular_file_is_rejected(tmp_path, locked_tree):
     copied = tmp_path / "lock"
-    shutil.copytree(LOCKED, copied)
+    shutil.copytree(locked_tree, copied)
     os.mkfifo(copied / "fifo")
     with pytest.raises(DiagnosisGoldLockError, match="non-regular"):
         verify_diagnosis_gold_lock(copied)
@@ -221,9 +227,9 @@ def test_manifest_rejects_duplicate_paths_and_self_reference():
                 path="gold-lock-manifest.json", sha256=SHA, byte_length=1)])
 
 
-def test_relinked_suite_tampering_is_rejected_by_case_validation(tmp_path):
+def test_relinked_suite_tampering_is_rejected_by_case_validation(tmp_path, locked_tree):
     copied = tmp_path / "lock"
-    shutil.copytree(LOCKED, copied)
+    shutil.copytree(locked_tree, copied)
     suite_path = copied / "suite.json"
     raw = json.loads(suite_path.read_bytes())
     raw["cases"][0]["subject_evidence_sha256"] = "f" * 64

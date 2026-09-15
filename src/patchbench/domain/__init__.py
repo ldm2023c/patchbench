@@ -90,6 +90,7 @@ from patchbench.domain.diagnosis_metrics import (
     RequiredEvidenceTransitionSummary, SemanticDiagnosisAggregate,
 )
 from patchbench.domain.diagnosis_suite import (
+    ContrastiveFairnessReview, ContrastiveFairnessReviewCase,
     DiagnosisValidationFreezeManifest, DiagnosisValidationSuite,
     DiagnosisValidationSuiteCase, DiagnosisValidationSuiteCaseFile,
     FrozenValidationFile, compute_diagnosis_validation_suite_sha256,
@@ -104,6 +105,8 @@ __all__ = [
     "DiagnosisGoldLockManifest",
     "DiagnosisGoldLockSuite",
     "compute_diagnosis_gold_lock_suite_sha256",
+    "ContrastiveFairnessReview",
+    "ContrastiveFairnessReviewCase",
     "DiagnosisValidationFreezeManifest",
     "DiagnosisValidationSuite",
     "DiagnosisValidationSuiteCase",

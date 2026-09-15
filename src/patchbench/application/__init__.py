@@ -19,6 +19,9 @@ from patchbench.application.diagnosis_validation import (
 )
 from patchbench.application.diagnosis_suite import (
     DiagnosisSuiteError, DiagnosisSuiteReason, compute_run_record_sha256,
+    build_diagnosis_validation_suite, finalize_diagnosis_validation_freeze,
+    prepare_contrastive_fairness_review, verify_contrastive_fairness_review,
+    verify_diagnosis_validation_freeze,
     verify_diagnosis_validation_suite, verify_diagnosis_validation_v1_composition,
     verify_semantic_validation_case,
 )
@@ -43,6 +46,11 @@ __all__ = ["ReplayError", "ReplayExecution", "replay_run", "run_task",
            "score_diagnosis_route", "score_semantic_diagnosis",
            "validate_semantic_gold_evidence", "DiagnosisSuiteError",
            "DiagnosisSuiteReason", "compute_run_record_sha256",
+           "build_diagnosis_validation_suite",
+           "prepare_contrastive_fairness_review",
+           "verify_contrastive_fairness_review",
+           "finalize_diagnosis_validation_freeze",
+           "verify_diagnosis_validation_freeze",
            "verify_diagnosis_validation_suite",
            "verify_diagnosis_validation_v1_composition",
            "verify_semantic_validation_case",

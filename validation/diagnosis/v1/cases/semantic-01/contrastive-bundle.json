@@ -1,0 +1,168 @@
+{
+  "agent_status": "completed",
+  "base_commit": "ea7f0bab695eaf6d3f44da0fecbcffeb2c3b55e1",
+  "benchmark_definition_sha256": "28fe10122cb258a2a64fec54de406a7d7bf55a05d406b5a10e71f4925b660226",
+  "bundle_id": "contrastive-98e7b3cd1eedc98cc9d5444e4caa697ceb6e3630f50a86bc27bcf51919c4618c",
+  "bundle_sha256": "b3bd69db4f02713969ac3c3503d2087cb5dddf659572edd42c0d1113ac156464",
+  "evidence_items": [
+    {
+      "artifact_sha256": "8d63c1ffe824e873c90d81528169b4dc41ff9d3a8928734ca4bf71564c522c5d",
+      "content": "import unittest\nunittest.runner.time.perf_counter = lambda: 0.0\nfrom src.access import allowed\nimport unittest\nclass Contract(unittest.TestCase):\n def test_access(self):\n  self.assertTrue(allowed(20, True)); self.assertFalse(allowed(20, False)); self.assertFalse(allowed(16, True))\n",
+      "end_line": 7,
+      "evidence_id": "E001",
+      "kind": "frozen_test",
+      "owner": "benchmark",
+      "path": "test_contract.py",
+      "source_state": "frozen",
+      "start_line": 1
+    },
+    {
+      "artifact_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "content": "",
+      "end_line": null,
+      "evidence_id": "E002",
+      "kind": "production_source",
+      "owner": "benchmark",
+      "path": "src/__init__.py",
+      "source_state": "base",
+      "start_line": null
+    },
+    {
+      "artifact_sha256": "dae40c9242e8a1ac5a20dcc9e7dc31fbc281133a83359807db1ea10fe05c8219",
+      "content": "def allowed(age, active):\n    return age >= 18\n",
+      "end_line": 2,
+      "evidence_id": "E003",
+      "kind": "production_source",
+      "owner": "benchmark",
+      "path": "src/access.py",
+      "source_state": "base",
+      "start_line": 1
+    },
+    {
+      "artifact_sha256": "5744c5f2c83a4686018a78a02ad4761a190568e4997f79f0cd07082fffcca2ba",
+      "content": "evaluation:\n  command: python -I -S -B .patchbench-eval/runner.py\n  frozen_unittest:\n    test_files:\n    - test_contract.py\n    version: 1\n  timeout_seconds: 30\nid: semantic-01\nmetadata:\n  language: python\nrepository:\n  base_commit: ea7f0bab695eaf6d3f44da0fecbcffeb2c3b55e1\n  path: repository\n  type: local\nschema_version: 1\ntask:\n  prompt: Require both adult age and an active account.\n",
+      "end_line": 17,
+      "evidence_id": "E004",
+      "kind": "task_contract",
+      "owner": "benchmark",
+      "path": null,
+      "source_state": null,
+      "start_line": 1
+    },
+    {
+      "artifact_sha256": "8275316e43330c872979d6d295840ae03c6f99a062983f3669980eea684362d4",
+      "content": "diff --git a/src/access.py b/src/access.py\nindex 6f96bd2..52558ac 100644\n--- a/src/access.py\n+++ b/src/access.py\n@@ -1,2 +1,2 @@\n def allowed(age, active):\n-    return age >= 18\n+    return age >= 18 or active\n",
+      "end_line": 8,
+      "evidence_id": "E005",
+      "kind": "canonical_patch",
+      "owner": "subject",
+      "path": "patch.diff",
+      "source_state": null,
+      "start_line": 1
+    },
+    {
+      "artifact_sha256": "235f7e32bac120078f84c4bc6c6d53903ea20166d09c299b3428d7e7e4a56a03",
+      "content": "Command: python -I -S -B .patchbench-eval/runner.py\nExit code: 1\nDuration seconds: 0.000000\n\nSTDOUT:\n\nSTDERR:\ntest_access (_patchbench_frozen_0.Contract.test_access) ... FAIL\n\n======================================================================\nFAIL: test_access (_patchbench_frozen_0.Contract.test_access)\n----------------------------------------------------------------------\nTraceback (most recent call last):\n  File \"/tmp/patchbench-diagnosis-v1-candidate-stage/semantic-01/workspaces/evaluation-subject-work/test_contract.py\", line 7, in test_access\n    self.assertTrue(allowed(20, True)); self.assertFalse(allowed(20, False)); self.assertFalse(allowed(16, True))\n                                        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\nAssertionError: True is not false\n\n----------------------------------------------------------------------\nRan 1 test in 0.000s\n\nFAILED (failures=1)",
+      "end_line": 22,
+      "evidence_id": "E006",
+      "kind": "evaluation_output",
+      "owner": "subject",
+      "path": "test.log",
+      "source_state": null,
+      "start_line": 1
+    },
+    {
+      "artifact_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "content": "",
+      "end_line": null,
+      "evidence_id": "E007",
+      "kind": "production_source",
+      "owner": "subject",
+      "path": "src/__init__.py",
+      "source_state": "candidate",
+      "start_line": null
+    },
+    {
+      "artifact_sha256": "ca8b7741b66d2ec09932faef6827a043e67755809db89b1f05fb184d3adebab9",
+      "content": "def allowed(age, active):\n    return age >= 18 or active\n",
+      "end_line": 2,
+      "evidence_id": "E008",
+      "kind": "production_source",
+      "owner": "subject",
+      "path": "src/access.py",
+      "source_state": "candidate",
+      "start_line": 1
+    },
+    {
+      "artifact_sha256": "0361459ad359e57d88131ff9464195e160b9058f5fad3b0e1b4d2ba7dd1b5ac7",
+      "content": "Command: python -I -S -B .patchbench-eval/runner.py\nExit code: 0\nDuration seconds: 0.000000\n\nSTDOUT:\n\nSTDERR:\ntest_access (_patchbench_frozen_0.Contract.test_access) ... ok\n\n----------------------------------------------------------------------\nRan 1 test in 0.000s\n\nOK",
+      "end_line": 13,
+      "evidence_id": "P001",
+      "kind": "peer_evaluation",
+      "owner": "peer",
+      "path": "test.log",
+      "source_state": null,
+      "start_line": 1
+    },
+    {
+      "artifact_sha256": "4fb6f7b9e1e18eb8bd9a96c6587e1a5905e9c45ce20600d00dfe82bd89928938",
+      "content": "diff --git a/src/access.py b/src/access.py\nindex 6f96bd2..91523ab 100644\n--- a/src/access.py\n+++ b/src/access.py\n@@ -1,2 +1,2 @@\n def allowed(age, active):\n-    return age >= 18\n+    return age >= 18 and active\n",
+      "end_line": 8,
+      "evidence_id": "P002",
+      "kind": "peer_patch",
+      "owner": "peer",
+      "path": "patch.diff",
+      "source_state": null,
+      "start_line": 1
+    },
+    {
+      "artifact_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "content": "",
+      "end_line": null,
+      "evidence_id": "P003",
+      "kind": "peer_source",
+      "owner": "peer",
+      "path": "src/__init__.py",
+      "source_state": "candidate",
+      "start_line": null
+    },
+    {
+      "artifact_sha256": "c3e55530373593d43ff9488869999d64016545bfe4fca3199b863948bbf1aa09",
+      "content": "def allowed(age, active):\n    return age >= 18 and active\n",
+      "end_line": 2,
+      "evidence_id": "P004",
+      "kind": "peer_source",
+      "owner": "peer",
+      "path": "src/access.py",
+      "source_state": "candidate",
+      "start_line": 1
+    }
+  ],
+  "mode": "contrastive",
+  "official_evaluation_passed": false,
+  "peer_run_id": "semantic-01-peer",
+  "provenance": {
+    "peer": {
+      "peer_candidate_snapshot_sha256": "88bec945064f4d09009d93407fb0c47dcbc83fa9b35f4a2ff5766a8c50e1b466",
+      "peer_evaluation_log_sha256": "0361459ad359e57d88131ff9464195e160b9058f5fad3b0e1b4d2ba7dd1b5ac7",
+      "peer_experiment_id": "semantic-01-peers",
+      "peer_patch_sha256": "4fb6f7b9e1e18eb8bd9a96c6587e1a5905e9c45ce20600d00dfe82bd89928938",
+      "peer_run_id": "semantic-01-peer",
+      "peer_run_index": 0
+    },
+    "subject": {
+      "base_source_snapshot_sha256": "dbc7b98dbfb1f28cb8797b8a54f982c5b793f1a17c44264288f74a16ce696aa4",
+      "benchmark_definition_sha256": "28fe10122cb258a2a64fec54de406a7d7bf55a05d406b5a10e71f4925b660226",
+      "candidate_source_snapshot_sha256": "e69de3674fde9a2fd0e295f9e6d2d6b99d7475782ef996e76ea603de0ca8bb35",
+      "canonical_patch_sha256": "8275316e43330c872979d6d295840ae03c6f99a062983f3669980eea684362d4",
+      "evaluation_log_sha256": "235f7e32bac120078f84c4bc6c6d53903ea20166d09c299b3428d7e7e4a56a03",
+      "frozen_tests_snapshot_sha256": "85ad6b1a02cb0baacb6dda6bd545696a3336297d4b461cf36fb5f0e693a997df",
+      "task_contract_sha256": "5744c5f2c83a4686018a78a02ad4761a190568e4997f79f0cd07082fffcca2ba"
+    }
+  },
+  "schema_version": 1,
+  "source_snapshot_policy": "full_bounded_production_v1:5872fe6c90dcbe418f35d9548e49b7e473794cb388faa8e9374f7a283f7ac77b",
+  "subject_run_id": "semantic-01-subject",
+  "task_fingerprint_sha256": "10bdc129a4d06690b119a390a5a3901ac1b1e1658cc0dc98c9b550453d4eb59c",
+  "task_id": "semantic-01"
+}

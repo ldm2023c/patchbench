@@ -1,0 +1,201 @@
+{
+  "agent_status": "completed",
+  "base_commit": "253b8703b6434a04665b549aaaa8e45ee27341a5",
+  "benchmark_definition_sha256": "286a1df45120cc0cdfaced8664167e736bf8bd52977629b1d357c0b767f42f4c",
+  "bundle_id": "contrastive-0da8c86db41f2da726f340a4f779bc6480b47f55749507ea97f94decaf8d56d5",
+  "bundle_sha256": "5649e0c229b7eaaea7feea9b7f445be2bc3590da6ee0c8b8c91975ad6aa30281",
+  "evidence_items": [
+    {
+      "artifact_sha256": "d3182b2009e23dbb48043def3056a05681a8f3b1c210a2c5d4faf569b7bebed1",
+      "content": "import unittest\nunittest.runner.time.perf_counter = lambda: 0.0\nfrom src.commands import execute\nimport unittest\nclass Contract(unittest.TestCase):\n def test_archive(self): self.assertEqual(execute('archive','report'),'archived:report')\n",
+      "end_line": 6,
+      "evidence_id": "E001",
+      "kind": "frozen_test",
+      "owner": "benchmark",
+      "path": "test_contract.py",
+      "source_state": "frozen",
+      "start_line": 1
+    },
+    {
+      "artifact_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "content": "",
+      "end_line": null,
+      "evidence_id": "E002",
+      "kind": "production_source",
+      "owner": "benchmark",
+      "path": "src/__init__.py",
+      "source_state": "base",
+      "start_line": null
+    },
+    {
+      "artifact_sha256": "54e6bf9aff3d0ea1ac0f212e4e336b5950f46bf194c2fa85948e87610b2f97a1",
+      "content": "from .engine import archive\nHANDLERS={'store':archive}\ndef execute(action,name): return HANDLERS[action](name)\n",
+      "end_line": 3,
+      "evidence_id": "E003",
+      "kind": "production_source",
+      "owner": "benchmark",
+      "path": "src/commands.py",
+      "source_state": "base",
+      "start_line": 1
+    },
+    {
+      "artifact_sha256": "9845705bb76e12043b1301744912b2557aa7386fa67bf10c4bedca519797dd9e",
+      "content": "def archive(name):\n return 'stored:'+name\n",
+      "end_line": 2,
+      "evidence_id": "E004",
+      "kind": "production_source",
+      "owner": "benchmark",
+      "path": "src/engine.py",
+      "source_state": "base",
+      "start_line": 1
+    },
+    {
+      "artifact_sha256": "c52bfa487e0a30ca5c41696a1fb5ee76939f71a0db9a0d8a0bd975321dcf2831",
+      "content": "evaluation:\n  command: python -I -S -B .patchbench-eval/runner.py\n  frozen_unittest:\n    test_files:\n    - test_contract.py\n    version: 1\n  timeout_seconds: 30\nid: semantic-16\nmetadata:\n  language: python\nrepository:\n  base_commit: 253b8703b6434a04665b549aaaa8e45ee27341a5\n  path: repository\n  type: local\nschema_version: 1\ntask:\n  prompt: Support the archive action through the public command interface.\n",
+      "end_line": 17,
+      "evidence_id": "E005",
+      "kind": "task_contract",
+      "owner": "benchmark",
+      "path": null,
+      "source_state": null,
+      "start_line": 1
+    },
+    {
+      "artifact_sha256": "4648f94ea8fc349f87cff1c43cfb53eb8ce1a3919910edd36446728ce4b587fa",
+      "content": "diff --git a/src/engine.py b/src/engine.py\nindex 0f3872a..f27ff75 100644\n--- a/src/engine.py\n+++ b/src/engine.py\n@@ -1,2 +1,2 @@\n def archive(name):\n- return 'stored:'+name\n+ return 'archived:'+name\n",
+      "end_line": 8,
+      "evidence_id": "E006",
+      "kind": "canonical_patch",
+      "owner": "subject",
+      "path": "patch.diff",
+      "source_state": null,
+      "start_line": 1
+    },
+    {
+      "artifact_sha256": "091cc3e623a1c6b02e690b475874bee45475f586ebd0b15bc11ca5d5f634c322",
+      "content": "Command: python -I -S -B .patchbench-eval/runner.py\nExit code: 1\nDuration seconds: 0.000000\n\nSTDOUT:\n\nSTDERR:\ntest_archive (_patchbench_frozen_0.Contract.test_archive) ... ERROR\n\n======================================================================\nERROR: test_archive (_patchbench_frozen_0.Contract.test_archive)\n----------------------------------------------------------------------\nTraceback (most recent call last):\n  File \"/tmp/patchbench-diagnosis-v1-candidate-stage/semantic-16/workspaces/evaluation-subject-work/test_contract.py\", line 6, in test_archive\n    def test_archive(self): self.assertEqual(execute('archive','report'),'archived:report')\n                                             ^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/tmp/patchbench-diagnosis-v1-candidate-stage/semantic-16/workspaces/evaluation-subject-work/src/commands.py\", line 3, in execute\n    def execute(action,name): return HANDLERS[action](name)\n                                     ~~~~~~~~^^^^^^^^\nKeyError: 'archive'\n\n----------------------------------------------------------------------\nRan 1 test in 0.000s\n\nFAILED (errors=1)",
+      "end_line": 25,
+      "evidence_id": "E007",
+      "kind": "evaluation_output",
+      "owner": "subject",
+      "path": "test.log",
+      "source_state": null,
+      "start_line": 1
+    },
+    {
+      "artifact_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "content": "",
+      "end_line": null,
+      "evidence_id": "E008",
+      "kind": "production_source",
+      "owner": "subject",
+      "path": "src/__init__.py",
+      "source_state": "candidate",
+      "start_line": null
+    },
+    {
+      "artifact_sha256": "54e6bf9aff3d0ea1ac0f212e4e336b5950f46bf194c2fa85948e87610b2f97a1",
+      "content": "from .engine import archive\nHANDLERS={'store':archive}\ndef execute(action,name): return HANDLERS[action](name)\n",
+      "end_line": 3,
+      "evidence_id": "E009",
+      "kind": "production_source",
+      "owner": "subject",
+      "path": "src/commands.py",
+      "source_state": "candidate",
+      "start_line": 1
+    },
+    {
+      "artifact_sha256": "c7e997ced4e89763d6225269afb279751c4f66d019eb1809a650de549b1aae48",
+      "content": "def archive(name):\n return 'archived:'+name\n",
+      "end_line": 2,
+      "evidence_id": "E010",
+      "kind": "production_source",
+      "owner": "subject",
+      "path": "src/engine.py",
+      "source_state": "candidate",
+      "start_line": 1
+    },
+    {
+      "artifact_sha256": "fb79fdcde3f6df3feca56295153a298c82f30340ddcce00362c40b16da92e465",
+      "content": "Command: python -I -S -B .patchbench-eval/runner.py\nExit code: 0\nDuration seconds: 0.000000\n\nSTDOUT:\n\nSTDERR:\ntest_archive (_patchbench_frozen_0.Contract.test_archive) ... ok\n\n----------------------------------------------------------------------\nRan 1 test in 0.000s\n\nOK",
+      "end_line": 13,
+      "evidence_id": "P001",
+      "kind": "peer_evaluation",
+      "owner": "peer",
+      "path": "test.log",
+      "source_state": null,
+      "start_line": 1
+    },
+    {
+      "artifact_sha256": "e0bbd6a3081aa271accdd5be639e8f525d381b9550f01f51ca916efc3c0c30a8",
+      "content": "diff --git a/src/commands.py b/src/commands.py\nindex 413acf3..fc468fb 100644\n--- a/src/commands.py\n+++ b/src/commands.py\n@@ -1,3 +1,3 @@\n from .engine import archive\n-HANDLERS={'store':archive}\n+HANDLERS={'store':archive,'archive':archive}\n def execute(action,name): return HANDLERS[action](name)\ndiff --git a/src/engine.py b/src/engine.py\nindex 0f3872a..f27ff75 100644\n--- a/src/engine.py\n+++ b/src/engine.py\n@@ -1,2 +1,2 @@\n def archive(name):\n- return 'stored:'+name\n+ return 'archived:'+name\n",
+      "end_line": 17,
+      "evidence_id": "P002",
+      "kind": "peer_patch",
+      "owner": "peer",
+      "path": "patch.diff",
+      "source_state": null,
+      "start_line": 1
+    },
+    {
+      "artifact_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "content": "",
+      "end_line": null,
+      "evidence_id": "P003",
+      "kind": "peer_source",
+      "owner": "peer",
+      "path": "src/__init__.py",
+      "source_state": "candidate",
+      "start_line": null
+    },
+    {
+      "artifact_sha256": "f7a7b50a2659a1b6bee19c77d3fe19330073a3de7ac6313160dc2f72785032e0",
+      "content": "from .engine import archive\nHANDLERS={'store':archive,'archive':archive}\ndef execute(action,name): return HANDLERS[action](name)\n",
+      "end_line": 3,
+      "evidence_id": "P004",
+      "kind": "peer_source",
+      "owner": "peer",
+      "path": "src/commands.py",
+      "source_state": "candidate",
+      "start_line": 1
+    },
+    {
+      "artifact_sha256": "c7e997ced4e89763d6225269afb279751c4f66d019eb1809a650de549b1aae48",
+      "content": "def archive(name):\n return 'archived:'+name\n",
+      "end_line": 2,
+      "evidence_id": "P005",
+      "kind": "peer_source",
+      "owner": "peer",
+      "path": "src/engine.py",
+      "source_state": "candidate",
+      "start_line": 1
+    }
+  ],
+  "mode": "contrastive",
+  "official_evaluation_passed": false,
+  "peer_run_id": "semantic-16-peer",
+  "provenance": {
+    "peer": {
+      "peer_candidate_snapshot_sha256": "c53f015d0fd92d3a50c5ac16e33c77d2d3ab9026dcbefc7aa5a868c3e1a5ddf2",
+      "peer_evaluation_log_sha256": "fb79fdcde3f6df3feca56295153a298c82f30340ddcce00362c40b16da92e465",
+      "peer_experiment_id": "semantic-16-peers",
+      "peer_patch_sha256": "e0bbd6a3081aa271accdd5be639e8f525d381b9550f01f51ca916efc3c0c30a8",
+      "peer_run_id": "semantic-16-peer",
+      "peer_run_index": 0
+    },
+    "subject": {
+      "base_source_snapshot_sha256": "ac4393162d17710eb532c4a23bd71a0a5984ad91baf66a9d5596de2bbcaa69c8",
+      "benchmark_definition_sha256": "286a1df45120cc0cdfaced8664167e736bf8bd52977629b1d357c0b767f42f4c",
+      "candidate_source_snapshot_sha256": "2483bd88640256dc0bd756d8e281a02f458a84560c197cc5799a15666ee52b8b",
+      "canonical_patch_sha256": "4648f94ea8fc349f87cff1c43cfb53eb8ce1a3919910edd36446728ce4b587fa",
+      "evaluation_log_sha256": "091cc3e623a1c6b02e690b475874bee45475f586ebd0b15bc11ca5d5f634c322",
+      "frozen_tests_snapshot_sha256": "e0fe60d8fd543665f490e8e84041c15e5067274fe1478c5b76ec93bc448d38d3",
+      "task_contract_sha256": "c52bfa487e0a30ca5c41696a1fb5ee76939f71a0db9a0d8a0bd975321dcf2831"
+    }
+  },
+  "schema_version": 1,
+  "source_snapshot_policy": "full_bounded_production_v1:5872fe6c90dcbe418f35d9548e49b7e473794cb388faa8e9374f7a283f7ac77b",
+  "subject_run_id": "semantic-16-subject",
+  "task_fingerprint_sha256": "74cc877dfea8b59305e774e2ae9b7501ca8a80572dd41a831d9288009e432544",
+  "task_id": "semantic-16"
+}

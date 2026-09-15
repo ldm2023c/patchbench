@@ -1,0 +1,168 @@
+{
+  "agent_status": "completed",
+  "base_commit": "027be02c096fcee1e712e1724b1a49df49f812fc",
+  "benchmark_definition_sha256": "46eba240327d8771c0d135eaec912632098be5c9624348c3f735541cd4e811ad",
+  "bundle_id": "contrastive-441ebda6c2d4f55435f36ce5c1f704df8740f4389b407173f08c3971c1fc007b",
+  "bundle_sha256": "14f15e45a0d8ca54c5fb1e5bd692c7df958341d5908bb549d5472b6c1d405047",
+  "evidence_items": [
+    {
+      "artifact_sha256": "6e265f0f4d5976e6b9a7301861c6709af28eb4a42aa7876c7f55097d784c9254",
+      "content": "import unittest\nunittest.runner.time.perf_counter = lambda: 0.0\nfrom src.message import render\nimport unittest\nclass Contract(unittest.TestCase):\n def test_render(self): self.assertEqual(render('Ada'),'Hello Ada.'); self.assertEqual(render('Ada',True),'Hello Ada!')\n",
+      "end_line": 6,
+      "evidence_id": "E001",
+      "kind": "frozen_test",
+      "owner": "benchmark",
+      "path": "test_contract.py",
+      "source_state": "frozen",
+      "start_line": 1
+    },
+    {
+      "artifact_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "content": "",
+      "end_line": null,
+      "evidence_id": "E002",
+      "kind": "production_source",
+      "owner": "benchmark",
+      "path": "src/__init__.py",
+      "source_state": "base",
+      "start_line": null
+    },
+    {
+      "artifact_sha256": "fcabf113f1b916f96acabc3f7ec272054b2984806fc34d14c15e210a81151148",
+      "content": "def render(name):\n return 'Hello '+name+'.'\n",
+      "end_line": 2,
+      "evidence_id": "E003",
+      "kind": "production_source",
+      "owner": "benchmark",
+      "path": "src/message.py",
+      "source_state": "base",
+      "start_line": 1
+    },
+    {
+      "artifact_sha256": "ce8401bb9bf15d72b0e09ef7f301ab733e96db6c74c2beb89c4467d43098acba",
+      "content": "evaluation:\n  command: python -I -S -B .patchbench-eval/runner.py\n  frozen_unittest:\n    test_files:\n    - test_contract.py\n    version: 1\n  timeout_seconds: 30\nid: semantic-09\nmetadata:\n  language: python\nrepository:\n  base_commit: 027be02c096fcee1e712e1724b1a49df49f812fc\n  path: repository\n  type: local\nschema_version: 1\ntask:\n  prompt: Add opt-in excited rendering while retaining legacy default output.\n",
+      "end_line": 17,
+      "evidence_id": "E004",
+      "kind": "task_contract",
+      "owner": "benchmark",
+      "path": null,
+      "source_state": null,
+      "start_line": 1
+    },
+    {
+      "artifact_sha256": "de91a976e4f90efb2bee9a9c1974dafc2e4479cd6a131e1e9d19bb8b0b976748",
+      "content": "diff --git a/src/message.py b/src/message.py\nindex 379d142..0d4c50f 100644\n--- a/src/message.py\n+++ b/src/message.py\n@@ -1,2 +1,2 @@\n-def render(name):\n- return 'Hello '+name+'.'\n+def render(name, excited=True):\n+ return ('Hello '+name)+('!' if excited else '.')\n",
+      "end_line": 9,
+      "evidence_id": "E005",
+      "kind": "canonical_patch",
+      "owner": "subject",
+      "path": "patch.diff",
+      "source_state": null,
+      "start_line": 1
+    },
+    {
+      "artifact_sha256": "faa0bf386c5c0a5805a25738803cef173826cb3be0a79787f9698deb86ab4930",
+      "content": "Command: python -I -S -B .patchbench-eval/runner.py\nExit code: 1\nDuration seconds: 0.000000\n\nSTDOUT:\n\nSTDERR:\ntest_render (_patchbench_frozen_0.Contract.test_render) ... FAIL\n\n======================================================================\nFAIL: test_render (_patchbench_frozen_0.Contract.test_render)\n----------------------------------------------------------------------\nTraceback (most recent call last):\n  File \"/tmp/patchbench-diagnosis-v1-candidate-stage/semantic-09/workspaces/evaluation-subject-work/test_contract.py\", line 6, in test_render\n    def test_render(self): self.assertEqual(render('Ada'),'Hello Ada.'); self.assertEqual(render('Ada',True),'Hello Ada!')\n                           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\nAssertionError: 'Hello Ada!' != 'Hello Ada.'\n- Hello Ada!\n?          ^\n+ Hello Ada.\n?          ^\n\n\n----------------------------------------------------------------------\nRan 1 test in 0.000s\n\nFAILED (failures=1)",
+      "end_line": 27,
+      "evidence_id": "E006",
+      "kind": "evaluation_output",
+      "owner": "subject",
+      "path": "test.log",
+      "source_state": null,
+      "start_line": 1
+    },
+    {
+      "artifact_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "content": "",
+      "end_line": null,
+      "evidence_id": "E007",
+      "kind": "production_source",
+      "owner": "subject",
+      "path": "src/__init__.py",
+      "source_state": "candidate",
+      "start_line": null
+    },
+    {
+      "artifact_sha256": "6c86ed0b3c19cb73ca455343b5a7abc82e41c144bba93cc0cc48766294f35d5b",
+      "content": "def render(name, excited=True):\n return ('Hello '+name)+('!' if excited else '.')\n",
+      "end_line": 2,
+      "evidence_id": "E008",
+      "kind": "production_source",
+      "owner": "subject",
+      "path": "src/message.py",
+      "source_state": "candidate",
+      "start_line": 1
+    },
+    {
+      "artifact_sha256": "6dd04a704a150c01ae723b9e5873eb08cd993edecf6709b425a9b779dab892db",
+      "content": "Command: python -I -S -B .patchbench-eval/runner.py\nExit code: 0\nDuration seconds: 0.000000\n\nSTDOUT:\n\nSTDERR:\ntest_render (_patchbench_frozen_0.Contract.test_render) ... ok\n\n----------------------------------------------------------------------\nRan 1 test in 0.000s\n\nOK",
+      "end_line": 13,
+      "evidence_id": "P001",
+      "kind": "peer_evaluation",
+      "owner": "peer",
+      "path": "test.log",
+      "source_state": null,
+      "start_line": 1
+    },
+    {
+      "artifact_sha256": "ac75cf0973ad03feded9ab7e8b8689aa1df5ca1636e0249c7690b2009797279b",
+      "content": "diff --git a/src/message.py b/src/message.py\nindex 379d142..23ab416 100644\n--- a/src/message.py\n+++ b/src/message.py\n@@ -1,2 +1,2 @@\n-def render(name):\n- return 'Hello '+name+'.'\n+def render(name, excited=False):\n+ return ('Hello '+name)+('!' if excited else '.')\n",
+      "end_line": 9,
+      "evidence_id": "P002",
+      "kind": "peer_patch",
+      "owner": "peer",
+      "path": "patch.diff",
+      "source_state": null,
+      "start_line": 1
+    },
+    {
+      "artifact_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "content": "",
+      "end_line": null,
+      "evidence_id": "P003",
+      "kind": "peer_source",
+      "owner": "peer",
+      "path": "src/__init__.py",
+      "source_state": "candidate",
+      "start_line": null
+    },
+    {
+      "artifact_sha256": "15577249dbf91b2da6bc9fa7eb1e3fcc7d07ee2bfdbc099eb4ee7998fa8abadc",
+      "content": "def render(name, excited=False):\n return ('Hello '+name)+('!' if excited else '.')\n",
+      "end_line": 2,
+      "evidence_id": "P004",
+      "kind": "peer_source",
+      "owner": "peer",
+      "path": "src/message.py",
+      "source_state": "candidate",
+      "start_line": 1
+    }
+  ],
+  "mode": "contrastive",
+  "official_evaluation_passed": false,
+  "peer_run_id": "semantic-09-peer",
+  "provenance": {
+    "peer": {
+      "peer_candidate_snapshot_sha256": "b167da9aab64178f72f1d2a3dd360ac72595399aedb00d63dd0537fd488c86df",
+      "peer_evaluation_log_sha256": "6dd04a704a150c01ae723b9e5873eb08cd993edecf6709b425a9b779dab892db",
+      "peer_experiment_id": "semantic-09-peers",
+      "peer_patch_sha256": "ac75cf0973ad03feded9ab7e8b8689aa1df5ca1636e0249c7690b2009797279b",
+      "peer_run_id": "semantic-09-peer",
+      "peer_run_index": 0
+    },
+    "subject": {
+      "base_source_snapshot_sha256": "25985c6a977cf5701ead5e905f927c8101117d50e61e439afe37f0e67f436894",
+      "benchmark_definition_sha256": "46eba240327d8771c0d135eaec912632098be5c9624348c3f735541cd4e811ad",
+      "candidate_source_snapshot_sha256": "b20f09b9ea91995efc9266da168f16df374057a0dc00eed15dcffa0306e3534f",
+      "canonical_patch_sha256": "de91a976e4f90efb2bee9a9c1974dafc2e4479cd6a131e1e9d19bb8b0b976748",
+      "evaluation_log_sha256": "faa0bf386c5c0a5805a25738803cef173826cb3be0a79787f9698deb86ab4930",
+      "frozen_tests_snapshot_sha256": "e4dd1fea2dd23af5fd583ae28d01c73a015e376c1f59a87871730a1aa200f161",
+      "task_contract_sha256": "ce8401bb9bf15d72b0e09ef7f301ab733e96db6c74c2beb89c4467d43098acba"
+    }
+  },
+  "schema_version": 1,
+  "source_snapshot_policy": "full_bounded_production_v1:5872fe6c90dcbe418f35d9548e49b7e473794cb388faa8e9374f7a283f7ac77b",
+  "subject_run_id": "semantic-09-subject",
+  "task_fingerprint_sha256": "d0056c0a61ca8b97b6cddfdf8c1945c3449a0d2ab961598d2434ece440a8da51",
+  "task_id": "semantic-09"
+}

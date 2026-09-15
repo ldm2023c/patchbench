@@ -1,0 +1,168 @@
+{
+  "agent_status": "completed",
+  "base_commit": "806d6842e7cdcb0184c9d99e84c656a5b344ab45",
+  "benchmark_definition_sha256": "033be8f08a6671d18a66c9ab78a0b03e551345d18572ed3be94a9a41af7f1801",
+  "bundle_id": "contrastive-74595bb4e9ee536ba754c654fce07d1b2a46291a080aa46b8ca20e41abc63293",
+  "bundle_sha256": "8618bc020ad872a01fbf01e6922c1946957cc809d43712795272f970afca60b4",
+  "evidence_items": [
+    {
+      "artifact_sha256": "50c3896dd41eed342e37e32f8a413c58bc777cb771f9588f5130fb55d88ef7c6",
+      "content": "import unittest\nunittest.runner.time.perf_counter = lambda: 0.0\nfrom src.limits import cap\nimport unittest\nclass Contract(unittest.TestCase):\n def test_cap(self):\n  self.assertEqual(cap(20),20); self.assertEqual(cap(90),80)\n",
+      "end_line": 7,
+      "evidence_id": "E001",
+      "kind": "frozen_test",
+      "owner": "benchmark",
+      "path": "test_contract.py",
+      "source_state": "frozen",
+      "start_line": 1
+    },
+    {
+      "artifact_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "content": "",
+      "end_line": null,
+      "evidence_id": "E002",
+      "kind": "production_source",
+      "owner": "benchmark",
+      "path": "src/__init__.py",
+      "source_state": "base",
+      "start_line": null
+    },
+    {
+      "artifact_sha256": "722f06a6779e16b619b78bb0489871620e6bb40bb86f48c590d4f4093e4ed6e9",
+      "content": "def cap(value):\n    return min(value, 100)\n",
+      "end_line": 2,
+      "evidence_id": "E003",
+      "kind": "production_source",
+      "owner": "benchmark",
+      "path": "src/limits.py",
+      "source_state": "base",
+      "start_line": 1
+    },
+    {
+      "artifact_sha256": "cde871b97c710b28d8c84b1bc2da30d6dd042a4f19d06fa31f8904cd61addaca",
+      "content": "evaluation:\n  command: python -I -S -B .patchbench-eval/runner.py\n  frozen_unittest:\n    test_files:\n    - test_contract.py\n    version: 1\n  timeout_seconds: 30\nid: semantic-02\nmetadata:\n  language: python\nrepository:\n  base_commit: 806d6842e7cdcb0184c9d99e84c656a5b344ab45\n  path: repository\n  type: local\nschema_version: 1\ntask:\n  prompt: Cap values at the revised upper boundary of 80.\n",
+      "end_line": 17,
+      "evidence_id": "E004",
+      "kind": "task_contract",
+      "owner": "benchmark",
+      "path": null,
+      "source_state": null,
+      "start_line": 1
+    },
+    {
+      "artifact_sha256": "e5ce0395cdbaefab9252addbef04b58f626ace9f0613a1808b5f7df844b5e694",
+      "content": "diff --git a/src/limits.py b/src/limits.py\nindex 41f3e39..b0cb8c6 100644\n--- a/src/limits.py\n+++ b/src/limits.py\n@@ -1,2 +1,2 @@\n def cap(value):\n-    return min(value, 100)\n+    return max(value, 80)\n",
+      "end_line": 8,
+      "evidence_id": "E005",
+      "kind": "canonical_patch",
+      "owner": "subject",
+      "path": "patch.diff",
+      "source_state": null,
+      "start_line": 1
+    },
+    {
+      "artifact_sha256": "76455c4c4721d9861f861efbd93fb559d9244adbe3085972e5b97b47f490b144",
+      "content": "Command: python -I -S -B .patchbench-eval/runner.py\nExit code: 1\nDuration seconds: 0.000000\n\nSTDOUT:\n\nSTDERR:\ntest_cap (_patchbench_frozen_0.Contract.test_cap) ... FAIL\n\n======================================================================\nFAIL: test_cap (_patchbench_frozen_0.Contract.test_cap)\n----------------------------------------------------------------------\nTraceback (most recent call last):\n  File \"/tmp/patchbench-diagnosis-v1-candidate-stage/semantic-02/workspaces/evaluation-subject-work/test_contract.py\", line 7, in test_cap\n    self.assertEqual(cap(20),20); self.assertEqual(cap(90),80)\n    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^\nAssertionError: 80 != 20\n\n----------------------------------------------------------------------\nRan 1 test in 0.000s\n\nFAILED (failures=1)",
+      "end_line": 22,
+      "evidence_id": "E006",
+      "kind": "evaluation_output",
+      "owner": "subject",
+      "path": "test.log",
+      "source_state": null,
+      "start_line": 1
+    },
+    {
+      "artifact_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "content": "",
+      "end_line": null,
+      "evidence_id": "E007",
+      "kind": "production_source",
+      "owner": "subject",
+      "path": "src/__init__.py",
+      "source_state": "candidate",
+      "start_line": null
+    },
+    {
+      "artifact_sha256": "00484d0360bb5baeb97a6ebbfbb795fd3fca56e3c54deee09b810eee4bbd02df",
+      "content": "def cap(value):\n    return max(value, 80)\n",
+      "end_line": 2,
+      "evidence_id": "E008",
+      "kind": "production_source",
+      "owner": "subject",
+      "path": "src/limits.py",
+      "source_state": "candidate",
+      "start_line": 1
+    },
+    {
+      "artifact_sha256": "635bc21e299b90db7dc275fec8fc3e24fdaee1cdf9d5378e098418bec3ad861e",
+      "content": "Command: python -I -S -B .patchbench-eval/runner.py\nExit code: 0\nDuration seconds: 0.000000\n\nSTDOUT:\n\nSTDERR:\ntest_cap (_patchbench_frozen_0.Contract.test_cap) ... ok\n\n----------------------------------------------------------------------\nRan 1 test in 0.000s\n\nOK",
+      "end_line": 13,
+      "evidence_id": "P001",
+      "kind": "peer_evaluation",
+      "owner": "peer",
+      "path": "test.log",
+      "source_state": null,
+      "start_line": 1
+    },
+    {
+      "artifact_sha256": "33eac60a6bf8e4bfc797a99f205be02c9b604749d77fa337d70bb4383bca0c77",
+      "content": "diff --git a/src/limits.py b/src/limits.py\nindex 41f3e39..d79094d 100644\n--- a/src/limits.py\n+++ b/src/limits.py\n@@ -1,2 +1,2 @@\n def cap(value):\n-    return min(value, 100)\n+    return min(value, 80)\n",
+      "end_line": 8,
+      "evidence_id": "P002",
+      "kind": "peer_patch",
+      "owner": "peer",
+      "path": "patch.diff",
+      "source_state": null,
+      "start_line": 1
+    },
+    {
+      "artifact_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "content": "",
+      "end_line": null,
+      "evidence_id": "P003",
+      "kind": "peer_source",
+      "owner": "peer",
+      "path": "src/__init__.py",
+      "source_state": "candidate",
+      "start_line": null
+    },
+    {
+      "artifact_sha256": "e146511ab78dd49e1177f5d8ea61de8a601e23cfa67da4419d75df0edee68021",
+      "content": "def cap(value):\n    return min(value, 80)\n",
+      "end_line": 2,
+      "evidence_id": "P004",
+      "kind": "peer_source",
+      "owner": "peer",
+      "path": "src/limits.py",
+      "source_state": "candidate",
+      "start_line": 1
+    }
+  ],
+  "mode": "contrastive",
+  "official_evaluation_passed": false,
+  "peer_run_id": "semantic-02-peer",
+  "provenance": {
+    "peer": {
+      "peer_candidate_snapshot_sha256": "28bc48177b71b9315a5d313c2a8b891ddad282f6622aa8f4f1b6d8151cd4c410",
+      "peer_evaluation_log_sha256": "635bc21e299b90db7dc275fec8fc3e24fdaee1cdf9d5378e098418bec3ad861e",
+      "peer_experiment_id": "semantic-02-peers",
+      "peer_patch_sha256": "33eac60a6bf8e4bfc797a99f205be02c9b604749d77fa337d70bb4383bca0c77",
+      "peer_run_id": "semantic-02-peer",
+      "peer_run_index": 0
+    },
+    "subject": {
+      "base_source_snapshot_sha256": "abd93d140edb44abcceb9018a9f30892ea68b3151e474893a0b5b9079ccba6f1",
+      "benchmark_definition_sha256": "033be8f08a6671d18a66c9ab78a0b03e551345d18572ed3be94a9a41af7f1801",
+      "candidate_source_snapshot_sha256": "b53eb12708759be3760e4ed5e3849f74f42ed3b77426a557a2d2c174b8f4eb56",
+      "canonical_patch_sha256": "e5ce0395cdbaefab9252addbef04b58f626ace9f0613a1808b5f7df844b5e694",
+      "evaluation_log_sha256": "76455c4c4721d9861f861efbd93fb559d9244adbe3085972e5b97b47f490b144",
+      "frozen_tests_snapshot_sha256": "a4c65b117d2d0b13fbc6a4bfc77dbcd1ac85edefb8a95cbb1f7876f4c2d0b140",
+      "task_contract_sha256": "cde871b97c710b28d8c84b1bc2da30d6dd042a4f19d06fa31f8904cd61addaca"
+    }
+  },
+  "schema_version": 1,
+  "source_snapshot_policy": "full_bounded_production_v1:5872fe6c90dcbe418f35d9548e49b7e473794cb388faa8e9374f7a283f7ac77b",
+  "subject_run_id": "semantic-02-subject",
+  "task_fingerprint_sha256": "32ac2a1905b5097dca383eb6df3f422e32ae0a22b55a8d259b469889aee46fda",
+  "task_id": "semantic-02"
+}
