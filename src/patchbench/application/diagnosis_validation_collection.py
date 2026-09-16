@@ -4,6 +4,7 @@ from enum import Enum
 import hashlib
 import json
 from pathlib import Path
+import shutil
 from typing import Mapping
 
 from pydantic import ValidationError
@@ -35,6 +36,8 @@ class DiagnosisValidationCollectionReason(str, Enum):
     FROZEN_BUNDLE_PLAN_MISMATCH = "frozen_bundle_plan_mismatch"
     DIAGNOSIS_ARTIFACT_MISMATCH = "diagnosis_artifact_mismatch"
     COLLECTION_ALREADY_EXISTS = "collection_already_exists"
+    COLLECTION_PERSISTENCE_FAILED = "collection_persistence_failed"
+    EXTERNAL_POLICY_NOT_ALLOWED = "external_policy_not_allowed"
 
 
 class DiagnosisValidationCollectionError(RuntimeError):
@@ -158,6 +161,46 @@ def _verify_execution_artifact(run_root: Path, slot, provider_settings, external
         )
 
 
+def _plan_identity(slot) -> tuple[str, DiagnosisMode, str, str]:
+    return (
+        slot.case_id,
+        slot.mode,
+        slot.frozen_bundle_path,
+        slot.frozen_bundle_sha256,
+    )
+
+
+def _persist_collection(collection_root: Path, collection: DiagnosisValidationCollection) -> None:
+    if collection_root.exists():
+        raise DiagnosisValidationCollectionError(
+            DiagnosisValidationCollectionReason.COLLECTION_ALREADY_EXISTS,
+            "collection directory already exists",
+        )
+    created = False
+    try:
+        collection_root.mkdir(parents=True, exist_ok=False)
+        created = True
+        (collection_root / "collection.json").write_bytes(_disk_json_bytes(collection))
+    except FileExistsError as error:
+        raise DiagnosisValidationCollectionError(
+            DiagnosisValidationCollectionReason.COLLECTION_ALREADY_EXISTS,
+            "collection directory already exists",
+        ) from error
+    except OSError as error:
+        if created:
+            try:
+                shutil.rmtree(collection_root)
+            except OSError as cleanup_error:
+                raise DiagnosisValidationCollectionError(
+                    DiagnosisValidationCollectionReason.COLLECTION_PERSISTENCE_FAILED,
+                    f"collection write failed and cleanup failed: {cleanup_error}",
+                ) from error
+        raise DiagnosisValidationCollectionError(
+            DiagnosisValidationCollectionReason.COLLECTION_PERSISTENCE_FAILED,
+            "unable to persist collection",
+        ) from error
+
+
 def collect_diagnosis_validation_shards(
     *,
     validation_root: Path,
@@ -183,11 +226,6 @@ def collect_diagnosis_validation_shards(
         _safe_direct_child(run_id, DiagnosisValidationCollectionReason.INVALID_SELECTION)
 
     collection_root = _collection_root(Path(results_root), collection_id)
-    if collection_root.exists():
-        raise DiagnosisValidationCollectionError(
-            DiagnosisValidationCollectionReason.COLLECTION_ALREADY_EXISTS,
-            "collection directory already exists",
-        )
 
     canonical_plan = build_diagnosis_validation_run_plan(Path(validation_root))
     plan_by_case = {case_id: canonical_plan[index * 2:index * 2 + 2]
@@ -209,6 +247,11 @@ def collect_diagnosis_validation_shards(
                 DiagnosisValidationCollectionReason.FROZEN_IDENTITY_MISMATCH,
                 "selected run frozen identity differs from current verified suite",
             )
+        if not record.external_policy.external_llm_allowed:
+            raise DiagnosisValidationCollectionError(
+                DiagnosisValidationCollectionReason.EXTERNAL_POLICY_NOT_ALLOWED,
+                "successful selected run must have external LLM permission enabled",
+            )
         if baseline_provider is None:
             baseline_provider = record.provider_settings
             baseline_policy = record.external_policy
@@ -223,9 +266,7 @@ def collect_diagnosis_validation_shards(
                 "selected run external policy differs",
             )
         expected_pair = plan_by_case[case_id]
-        if [(slot.case_id, slot.mode, slot.frozen_bundle_sha256) for slot in record.plan] != [
-            (slot.case_id, slot.mode, slot.frozen_bundle_sha256) for slot in expected_pair
-        ]:
+        if [_plan_identity(slot) for slot in record.plan] != [_plan_identity(slot) for slot in expected_pair]:
             raise DiagnosisValidationCollectionError(
                 DiagnosisValidationCollectionReason.FROZEN_BUNDLE_PLAN_MISMATCH,
                 "selected run plan differs from canonical frozen plan",
@@ -264,12 +305,5 @@ def collect_diagnosis_validation_shards(
             "collection_sha256": compute_diagnosis_validation_collection_sha256(collection)
         }
     )
-    try:
-        collection_root.mkdir(parents=True, exist_ok=False)
-        (collection_root / "collection.json").write_bytes(_disk_json_bytes(collection))
-    except OSError as error:
-        raise DiagnosisValidationCollectionError(
-            DiagnosisValidationCollectionReason.COLLECTION_ALREADY_EXISTS,
-            "unable to create collection directory or write collection",
-        ) from error
+    _persist_collection(collection_root, collection)
     return collection

@@ -130,7 +130,7 @@ def test_full_or_multicase_run_is_rejected(tmp_path):
     assert_reason(caught, "run_case_mismatch")
 
 
-@pytest.mark.parametrize("slot_index,status", [(0, "pending"), (0, "failed"), (1, "failed")])
+@pytest.mark.parametrize("slot_index,status", [(0, "pending"), (0, "failed"), (1, "pending"), (1, "failed")])
 def test_pending_or_failed_slots_are_rejected(tmp_path, slot_index, status):
     results, selections, _ = make_successful_shards(tmp_path)
     data = read_run(results, selections["semantic-01"])
@@ -179,11 +179,34 @@ def test_external_policy_mismatch_is_rejected(tmp_path):
     assert_reason(caught, "external_policy_mismatch")
 
 
+def test_external_llm_disallowed_is_rejected_even_when_all_shards_match(tmp_path):
+    results, selections, _ = make_successful_shards(tmp_path)
+    for run_id in selections.values():
+        data = read_run(results, run_id)
+        data["external_policy"]["external_llm_allowed"] = False
+        write_run(results, run_id, data)
+    with pytest.raises(DiagnosisValidationCollectionError) as caught:
+        collect(tmp_path, results, selections)
+    assert_reason(caught, "external_policy_not_allowed")
+
+
 def test_frozen_bundle_identity_or_plan_mismatch_is_rejected(tmp_path):
     results, selections, _ = make_successful_shards(tmp_path)
     data = read_run(results, selections["semantic-01"])
     data["plan"][0]["frozen_bundle_sha256"] = "0" * 64
     data["slots"][0]["frozen_bundle_sha256"] = "0" * 64
+    write_run(results, selections["semantic-01"], data)
+    with pytest.raises(DiagnosisValidationCollectionError) as caught:
+        collect(tmp_path, results, selections)
+    assert_reason(caught, "frozen_bundle_plan_mismatch")
+
+
+def test_frozen_bundle_path_plan_mismatch_is_rejected_even_when_ledger_is_parseable(tmp_path):
+    results, selections, _ = make_successful_shards(tmp_path)
+    data = read_run(results, selections["semantic-01"])
+    alternate_path = "bundles/semantic-01/blind-alternate.json"
+    data["plan"][0]["frozen_bundle_path"] = alternate_path
+    data["slots"][0]["frozen_bundle_path"] = alternate_path
     write_run(results, selections["semantic-01"], data)
     with pytest.raises(DiagnosisValidationCollectionError) as caught:
         collect(tmp_path, results, selections)
@@ -201,7 +224,7 @@ def test_ledger_slot_identity_mismatch_with_artifact_is_rejected(tmp_path, field
     assert_reason(caught, "diagnosis_artifact_mismatch")
 
 
-def test_tampered_or_missing_diagnosis_execution_artifact_is_rejected(tmp_path):
+def test_tampered_diagnosis_execution_artifact_is_rejected(tmp_path):
     results, selections, _ = make_successful_shards(tmp_path)
     data = read_run(results, selections["semantic-01"])
     diagnosis_id = data["slots"][0]["diagnosis_id"]
@@ -209,6 +232,17 @@ def test_tampered_or_missing_diagnosis_execution_artifact_is_rejected(tmp_path):
     payload = json.loads(execution.read_text(encoding="utf-8"))
     payload["provider"]["returned_model"] = "tampered-model"
     execution.write_text(json.dumps(payload, ensure_ascii=False, sort_keys=True, indent=2) + "\n", encoding="utf-8")
+    with pytest.raises(DiagnosisValidationCollectionError) as caught:
+        collect(tmp_path, results, selections)
+    assert_reason(caught, "diagnosis_artifact_mismatch")
+
+
+def test_missing_diagnosis_execution_artifact_is_rejected(tmp_path):
+    results, selections, _ = make_successful_shards(tmp_path)
+    data = read_run(results, selections["semantic-01"])
+    diagnosis_id = data["slots"][0]["diagnosis_id"]
+    execution = results / "diagnosis-validation-v1" / selections["semantic-01"] / "diagnoses" / diagnosis_id / "execution.json"
+    execution.unlink()
     with pytest.raises(DiagnosisValidationCollectionError) as caught:
         collect(tmp_path, results, selections)
     assert_reason(caught, "diagnosis_artifact_mismatch")
@@ -223,6 +257,28 @@ def test_unsafe_collection_id_and_existing_collection_directory_are_rejected(tmp
     with pytest.raises(DiagnosisValidationCollectionError) as caught:
         collect(tmp_path, results, selections, collection_id="once")
     assert_reason(caught, "collection_already_exists")
+
+
+def test_collection_write_failure_is_all_or_nothing_and_retryable(tmp_path, monkeypatch):
+    results, selections, _ = make_successful_shards(tmp_path)
+    collection_root = results / "diagnosis-validation-v1/collections/retryable"
+    original_write_bytes = Path.write_bytes
+
+    def fail_collection_write(path, data):
+        if path == collection_root / "collection.json":
+            raise OSError("injected collection write failure")
+        return original_write_bytes(path, data)
+
+    with monkeypatch.context() as patch:
+        patch.setattr(Path, "write_bytes", fail_collection_write)
+        with pytest.raises(DiagnosisValidationCollectionError) as caught:
+            collect(tmp_path, results, selections, collection_id="retryable")
+    assert_reason(caught, "collection_persistence_failed")
+    assert not collection_root.exists()
+
+    collection = collect(tmp_path, results, selections, collection_id="retryable")
+    assert collection.collection_id == "retryable"
+    assert (collection_root / "collection.json").exists()
 
 
 def test_missing_selected_run_is_rejected(tmp_path):
