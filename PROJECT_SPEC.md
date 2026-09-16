@@ -2,8 +2,9 @@
 
 ## 1. Project Overview
 
-V1.1 is COMPLETE. V1.2 Diagnosis infrastructure D1–D5 is implemented and
-reviewed; validation remains pending. See [Project Status](docs/PROJECT_STATUS.md).
+V1.1 is COMPLETE. V1.2 Diagnosis infrastructure and validation machinery are
+implemented through D6-R2; real-provider acquisition and final empirical
+reporting remain incomplete. See [Project Status](docs/PROJECT_STATUS.md).
 
 **Project Name:** PatchBench
 
@@ -60,8 +61,10 @@ The current workflow retains the completed foundation and adds optional Diagnosi
     patch without rerunning an Agent.
 11. For eligible semantic failures, compile complete bounded evidence and optionally
     infer Blind or same-cell PASS Contrastive hypotheses without revising truth.
-12. Audit citations and preserve completed Diagnosis execution artifacts. Human-gold
-    scoring is the next validation layer, not a current measured result.
+12. Audit citations and preserve completed Diagnosis execution artifacts.
+13. Score typed Diagnoses against Human Gold, aggregate Blind/Contrastive metrics,
+    and run frozen real-provider validation shards before claiming empirical
+    Diagnosis accuracy.
 
 ---
 
@@ -154,8 +157,8 @@ The completed V1/V1.1 foundation remains implemented:
 - descriptive explicit PASS-vs-FAIL comparison;
 - historical patch Replay with zero Agent executions.
 
-V1.2 Evidence-Grounded Diagnosis infrastructure D1–D5 is complete, externally
-reviewed, and merged into `v1.2`. Official evaluator truth is deterministic and
+V1.2 Evidence-Grounded Diagnosis infrastructure and validation machinery through
+D6-R2 are complete, externally reviewed, and merged into `v1.2`. Official evaluator truth is deterministic and
 immutable within Diagnosis. Diagnosis is optional evidence-grounded inference:
 it may be uncertain, wrong, or abstain, and never changes official PASS/FAIL.
 
@@ -167,14 +170,24 @@ comparison evidence, not a reference fix. External inference is opt-in and close
 by default; untrusted evidence framing does not establish prompt-injection
 security or private-repository safety. See [Diagnosis](docs/DIAGNOSIS.md).
 
-D6 Human-Gold Validation & Metrics is designed/next, not implemented. Next is
-D6.1 Human Gold Contract + deterministic per-case scoring. D4-P real OpenAI Blind
-smoke testing and D6-R real provider validation are blocked by API billing/credits;
-D6-R also needs its implementation prerequisites. No successful real OpenAI
-Diagnosis request or measured Diagnosis accuracy exists. The
-[V1.1 frozen release](evidence/v1.1/FINAL_REPORT.md) remains the only empirical
-coding-agent reliability release: 32 Runs, 30 PASS, two external Codex quota
-failures, and 30/30 normally completed executions passing.
+D6 Human-Gold Validation & Metrics is implemented as deterministic
+infrastructure: typed Human Gold contracts, exact Gold identity, route and
+semantic scoring, aggregate metrics, exact Blind/Contrastive pairing, paired
+transition/delta metrics, and a frozen Diagnosis Validation V1 suite. The suite
+contains 15 cases: 13 semantic cases and two operational routing cases. D6-R1/R2
+provide a real-provider acquisition runner and deterministic semantic-case
+sharding; a shard always runs Blind then Contrastive and never retries or
+resumes.
+
+Real-provider validation is in progress, not complete. One formal sharded
+acquisition through a third-party OpenAI-compatible gateway completed for
+`semantic-01`, but full 13-case semantic acquisition is blocked by external
+provider/gateway timeout instability under the locked request configuration.
+No published Diagnosis accuracy, family accuracy, abstention metric, or
+Blind-vs-Contrastive conclusion exists yet. The
+[V1.1 frozen release](evidence/v1.1/FINAL_REPORT.md) remains the completed
+empirical coding-agent reliability release: 32 Runs, 30 PASS, two external
+Codex quota failures, and 30/30 normally completed executions passing.
 
 Current CLI commands are `validate-task`, `run`, `experiment`, `replay`, and
 `analyze`. Diagnosis is an application API with no CLI command.

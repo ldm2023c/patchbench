@@ -2,15 +2,18 @@
 
 ## 1. Purpose and current state
 
-V1.2 Diagnosis infrastructure D1–D5 is implemented, externally reviewed, and
-merged into `v1.2`. This is a programmatic subsystem, not a Diagnosis CLI.
-D6 Human-Gold Validation & Metrics is designed/next, not implemented.
-See [Project Status](PROJECT_STATUS.md) for accepted commits and blockers.
+V1.2 Diagnosis infrastructure and validation machinery are implemented through
+D6-R2 and merged into `v1.2`. This is a programmatic subsystem, not a
+`patchbench` Diagnosis CLI. See [Project Status](PROJECT_STATUS.md) for accepted
+commits, frozen suite identities, and current acquisition status.
 
 Blind Diagnosis is the headline mode. Contrastive Diagnosis is a secondary
 same-cell PASS ablation. Both produce hypotheses, not a root-cause oracle.
 Neither changes official evaluation, repairs patches, retrieves hidden context,
-or infers a reference fix. No empirical Diagnosis-accuracy claim exists yet.
+or infers a reference fix. Human Gold scoring and aggregate metrics are
+implemented, but no final empirical Diagnosis-accuracy claim exists until the
+frozen real-provider dataset is completely acquired, reviewed, scored, and
+reported.
 
 ## 2. Official truth vs inference
 
@@ -118,9 +121,11 @@ usage, and duration metadata. The application owns parsing and identity.
 The built-in [`OpenAI adapter`](../src/patchbench/providers/openai.py) uses the
 synchronous Responses API and `openai>=3.13,<4`. Model, reasoning effort,
 maximum output tokens, and finite positive timeout are explicit configuration.
-Its request sets `background=False`, `store=False`, `stream=False`, `tools=[]`,
+Its request sets `store=False`, `stream=False`, `tools=[]`,
 `tool_choice="none"`, `truncation="disabled"`, explicit reasoning effort and
-output limit, and strict JSON Schema under `text.format`. The client uses
+output limit, and strict JSON Schema under `text.format`. It does not send the
+optional Responses `background` parameter because an OpenAI-compatible gateway
+used for validation rejects that argument. The client uses
 `max_retries=0`. One SDK request call is made per attempt, without application
 retry; this does not claim network-level exactly-once delivery.
 
@@ -242,24 +247,89 @@ or redaction layer. The caller owns permission to transmit evidence. Tool-less
 OpenAI requests and `store=False` do not imply Zero Data Retention, absence of
 provider network access, or safety for arbitrary private repositories.
 
-## 13. D4-P status
+## 13. Human Gold scoring (D6.1)
 
-The code path and mocked official-SDK integration tests are complete. The real
-OpenAI Blind prototype is **BLOCKED_BY_API_BILLING**: live smoke testing remains
-pending funded API billing/credits. This is not a technical-failure verdict and
-there has been no successful real OpenAI Diagnosis request.
+[`diagnosis_validation.py`](../src/patchbench/application/diagnosis_validation.py)
+and [`domain/diagnosis_validation.py`](../src/patchbench/domain/diagnosis_validation.py)
+implement deterministic validation contracts for Human Gold. A
+`DiagnosisGoldCase` binds route, subject evidence identity and semantic gold.
+`compute_diagnosis_gold_sha256()` hashes the complete typed Gold JSON; scores
+carry that hash so Blind/Contrastive comparisons cannot mix different gold
+definitions.
 
-## 14. D6 design and next work
+Route scores compare `route_run_diagnosis()` output with route gold for
+operational cases. Semantic scores compare a completed `FailureDiagnosis` with
+Human Gold for abstention, preferred/top-k acceptable family, required evidence
+coverage, Auditor results, invalid citation issue counts, and forbidden-claim
+overclaim review. Human overclaim review is explicit: unreviewed applicable
+claims are not silently treated as passed. The scorer is deterministic; it does
+not ask an LLM to judge semantic correctness.
 
-D6 Human-Gold Validation & Metrics is designed/next, not implemented. The next
-slice is **D6.1 Human Gold Contract + deterministic per-case scoring**. Human
-gold will supply a validation layer separate from structural citation auditing;
-no family accuracy, Top-k, or abstention-quality result is currently measured.
-D6-R real provider validation remains blocked by API billing/credits and its
-implementation prerequisites. The only current empirical coding-agent
-reliability release is [V1.1 frozen evidence](../evidence/v1.1/FINAL_REPORT.md).
+## 14. Aggregate and paired metrics (D6.2)
 
-## 15. Invariants worth testing
+[`diagnosis_metrics.py`](../src/patchbench/application/diagnosis_metrics.py) and
+[`domain/diagnosis_metrics.py`](../src/patchbench/domain/diagnosis_metrics.py)
+compute exact counts, ratios and macro means from D6.1 scores. Metrics include
+family accuracy variants, evidence coverage, abstention accuracy/recall,
+unnecessary abstention, Auditor pass/invalid citation rates, and overclaim
+review/violation rates.
+
+Blind/Contrastive comparison requires exact pairing by case, subject evidence
+identity, Gold hash, applicability and count fields. Paired deltas report
+improved/unchanged/regressed transitions for family, abstention, evidence and
+Audit outcomes. There is intentionally no composite/global winner score.
+
+## 15. Frozen Validation V1 suite (D6.3)
+
+The frozen suite under `validation/diagnosis/v1` contains 15 cases: 13 semantic
+cases and two operational route cases. The frozen manifest byte SHA is
+`81147642b9d39cc265c69151d470e03a8c01ed53b6a629a922e0106b4a216d14`; the suite
+SHA is `ee724d3825c97f583bbbe13addd3aa0cd61b6ba3265680153486e7274c08643a`.
+
+Semantic composition is two cases each for `incorrect_local_logic`,
+`incomplete_cross_file_repair`, `partial_contract_handling`,
+`state_consistency_violation` and `regression_introduced`, plus three
+`should_abstain` cases. Operational cases cover `agent_command_failed` and
+`agent_timed_out`. Contrastive fairness review is locked before final freeze;
+Gold is not rewritten after peer evidence is shown.
+
+## 16. Real-provider validation runner and sharding (D6-R1/R2)
+
+[`diagnosis_validation_run.py`](../src/patchbench/application/diagnosis_validation_run.py)
+executes the frozen semantic plan after verifying the final freeze. With no
+selection it runs all 13 semantic cases, each Blind then Contrastive, for 26
+slots. D6-R2 adds optional `selected_case_ids`; each selected semantic case is
+still indivisible and contributes exactly Blind then Contrastive. Caller order
+cannot reorder frozen suite order, and duplicate, unknown, operational or empty
+selections fail before provider calls or output directories.
+
+Runtime ledgers live under `results/diagnosis-validation-v1/<run-id>/run.json`.
+Completed Diagnosis artifacts for that run live below the same run root under
+`diagnoses/<diagnosis-id>/`. The runner records frozen suite identity, provider
+settings, external policy, selected case IDs, exact plan, per-slot status and
+completed execution hashes or safe failure reasons. It makes one provider
+attempt per slot, stops on first failure, never retries, never resumes, and never
+stitches failed run artifacts. Historical D6-R1 full-run ledgers without
+`selected_case_ids` remain readable only for the old 26-slot full-run shape;
+partial shard ledgers must explicitly contain `selected_case_ids`.
+
+## 17. Real-provider acquisition status
+
+Real validation has begun through a third-party OpenAI-compatible gateway
+(`https://ai.ailink1.com/v1`) using the OpenAI-compatible adapter. The successful
+formal shard `diag-v1-semantic-01-gpt55-none-20260916-133614` completed both
+Blind and Contrastive for `semantic-01` with model `gpt-5.5`, reasoning effort
+`none`, `max_output_tokens=2048`, `timeout_seconds=110`,
+`max_provider_input_bytes=1000000`, and SDK/application retries disabled.
+
+This is not an official OpenAI API result, even though the adapter provenance
+uses `provider_name="openai"`. Full 13-case acquisition is incomplete. Current
+external blocking evidence is provider/gateway timeout instability under the
+locked request configuration; the project has not proven whether the timeout
+originates in the gateway, its upstream link, or the upstream model. No final
+Diagnosis metrics or Blind-vs-Contrastive conclusion are published yet.
+
+## 18. Invariants worth testing
 
 Accepted tests cover routing and exact line semantics; historical reconstruction,
 full bounded source and exact raw bytes; canonical locators; no-call preflights;
@@ -270,6 +340,10 @@ selection, exact Blind prefix preservation, and stale/forged peer provenance.
 See [compiler tests](../tests/test_diagnosis_evidence.py),
 [prompt tests](../tests/test_diagnosis_prompt.py),
 [adapter tests](../tests/test_diagnosis_provider_openai.py),
-[execution tests](../tests/test_diagnosis_execution.py), and
-[Contrastive execution tests](../tests/test_diagnosis_contrastive_execution.py).
-These are deterministic/mocked checks, not measurements of semantic accuracy.
+[execution tests](../tests/test_diagnosis_execution.py),
+[Contrastive execution tests](../tests/test_diagnosis_contrastive_execution.py),
+[validation scoring tests](../tests/test_diagnosis_validation_scoring.py),
+[metrics tests](../tests/test_diagnosis_metrics.py), and
+[validation-run tests](../tests/test_diagnosis_validation_run.py). These are
+mostly deterministic/mocked checks; runtime acquisition artifacts are not a final
+semantic accuracy report.

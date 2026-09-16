@@ -11,8 +11,11 @@ fixed official evaluation, persisted evidence, and patch Replay. V1.1 froze a
 normally completed executions passed. V1.2 adds reviewed evidence-grounded
 Diagnosis infrastructure: complete bounded evidence, Blind and same-cell PASS
 Contrastive hypotheses, a structural citation Auditor, and immutable artifacts.
-Real OpenAI Diagnosis is pending API billing, and human-gold validation is next;
-I do not yet claim measured Diagnosis accuracy.
+Human-Gold scoring, aggregate metrics, and a frozen 15-case validation suite are
+implemented. Real provider validation is in progress: one formal Blind/Contrastive
+shard completed through an OpenAI-compatible gateway, but full acquisition is
+blocked by external timeout instability. I do not yet claim measured Diagnosis
+accuracy.
 
 ## 2. 2-minute story
 
@@ -31,14 +34,16 @@ tasks: 30 PASS, two quota failures, no replacement Runs. That is a bounded resul
 not a universal model-reliability claim.
 
 V1.2 addresses a different question: what hypotheses can be grounded in a
-completed semantic failure's evidence? D1–D5 route eligible Runs, compile exact
+completed semantic failure's evidence? D1–D6 route eligible Runs, compile exact
 bounded source/tests/patch/log evidence, make optional provider inference, audit
-citations deterministically, and persist the attempt. Blind Diagnosis is the
+citations deterministically, persist the attempt, and score it against Human Gold. Blind Diagnosis is the
 headline mode. Contrastive adds one verified same-cell PASS as secondary comparison
 evidence, never a reference fix. The provider cannot change official PASS/FAIL.
 The important limitation is that structural correctness is not semantic accuracy:
-D6 human-gold validation is not implemented, and live OpenAI validation is still
-blocked by API billing/credits.
+Human-Gold validation infrastructure is implemented, but full live validation is
+not complete. One formal shard has succeeded through an OpenAI-compatible gateway;
+the current blocker is provider/gateway timeout instability under the locked
+request configuration.
 
 ## 3. 5-minute architecture walkthrough
 
@@ -66,7 +71,10 @@ blocked by API billing/credits.
    same-cell PASS in one persisted Experiment, preserves Blind E evidence, appends
    P evidence, and re-verifies selection before inference. Completed attempts,
    including Audit FAIL, use immutable four-file persistence with integrity checks.
-   D6 human gold will be a separate validation layer; it is next, not current.
+7. **Validation layer.** D6.1 scores route and semantic Diagnosis against typed
+   Human Gold; D6.2 aggregates exact metrics and paired Blind/Contrastive deltas;
+   D6.3 freezes a 15-case suite; D6-R1/R2 acquire real-provider results with
+   immutable full-run or sharded ledgers.
 
 ## 4. Questions and defensible answers
 
@@ -96,11 +104,12 @@ blocked by API billing/credits.
 
 ## 5. Current limitations — say this explicitly
 
-D1–D5 infrastructure is implemented and reviewed. Real OpenAI live Diagnosis
-remains pending API billing. D6 human-gold validation is not complete (its
-implementation is next). Therefore there is currently no empirical
-Diagnosis-accuracy claim. D4-P is BLOCKED_BY_API_BILLING, not a technical-failure
-result. D6-R also needs funded credits and its implementation prerequisites.
+Diagnosis validation infrastructure is implemented through Human-Gold scoring,
+aggregate/paired metrics and a frozen 15-case suite. Real provider validation is
+in progress: the sharded acquisition path has produced a complete live
+Blind/Contrastive result for `semantic-01` through an OpenAI-compatible gateway,
+but full acquisition is currently blocked by external timeout instability.
+Therefore there is currently no empirical Diagnosis-accuracy claim.
 
 V1.1 is the only current empirical coding-agent reliability release. Its 30/32
 end-to-end PASS rate is 93.75%; 30/30 normally completed executions passed.
@@ -113,15 +122,20 @@ See the [frozen final report](../evidence/v1.1/FINAL_REPORT.md).
 
 ## 6. Next work and resume wording
 
-Next: D6.1 Human Gold Contract + deterministic per-case scoring. D6 metrics and
-real-provider validation remain future work; Optional V2 context/service expansion
-is deferred. Current Diagnosis is programmatic; there is no Diagnosis CLI.
+Next: finish real-provider acquisition for the remaining frozen semantic cases
+under the same configuration, add the successful-shard collector if still absent,
+run the implemented D6.1/D6.2 scoring pipeline with required human overclaim
+review, score the two operational route cases, and publish the final validation
+report. Optional V2 context/service expansion is deferred. Current Diagnosis is
+programmatic; there is no `patchbench diagnose` CLI.
 
 Defensible resume wording: “Built a local coding-agent reliability harness with
 frozen evaluation, historical patch Replay, and a 32-Run evidence release; added
-reviewed evidence-grounded Diagnosis infrastructure with strict provider contracts,
-deterministic citation auditing, and immutable execution provenance.” Do not add
-an accuracy percentage for Diagnosis or claim successful live OpenAI validation.
+reviewed evidence-grounded Diagnosis infrastructure with strict provider
+contracts, deterministic citation auditing, Human-Gold validation contracts,
+paired Blind/Contrastive metrics, and immutable execution provenance.” Do not
+add an accuracy percentage for Diagnosis or describe the gateway shard as an
+official OpenAI validation result.
 
 ## Appendix: Historical decision snapshots
 

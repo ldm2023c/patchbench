@@ -36,8 +36,9 @@ Infrastructure-specific logic belongs in adapters.
 
 ### V1.2 Diagnosis layers and trust boundaries
 
-D1–D5 infrastructure is implemented and externally reviewed. D6 is designed/next,
-not implemented. Diagnosis is an application API alongside the existing CLI flow.
+D1–D6-R2 infrastructure is implemented and externally reviewed. Diagnosis is an
+application API alongside the existing CLI flow; real-provider validation uses a
+separate script harness.
 
 ```text
 L0 deterministic official evaluation (fixed PASS/FAIL)
@@ -50,7 +51,10 @@ L2 DiagnosisEvidenceBundle (Blind, or verified same-cell PASS augmentation)
 L3 FailureDiagnosis (PatchBench-owned identity/linkage)
  ↓ audit_failure_diagnosis
 L4 deterministic structural/citation Auditor → immutable artifacts
-L5 human-gold validation — next / not implemented
+ ↓ completed real-provider acquisition shards feed validation data
+L5 Human Gold deterministic scoring
+ ↓ exact Blind/Contrastive pairing and aggregate metrics
+L6 aggregate + paired validation metrics
 ```
 
 Routing itself reads recorded outcomes, not source bytes. Evidence verification
@@ -94,10 +98,20 @@ prompt/schema/payload identity, Diagnosis linkage, and an integrity hash.
 D3 storage remains three files; D4/D5 execution storage adds `execution.json`
 through distinct four-file APIs. Both are create-only, validate on save/load,
 and clean up newly created partial directories. Provider failure creates no
-completed Diagnosis artifact. See [Diagnosis technical reference](docs/DIAGNOSIS.md)
-for exact contracts and [current handoff](docs/PROJECT_STATUS.md) for accepted
-commits, D6.1 next work, and D4-P/D6-R API billing blockers. No empirical
-Diagnosis accuracy or successful real OpenAI Diagnosis request is claimed.
+completed Diagnosis artifact.
+
+D6 validation is deterministic infrastructure, not an LLM judge. Human Gold
+scoring checks route correctness, abstention, family matches, required evidence,
+Auditor issues, and human-reviewed overclaims. D6.2 aggregates exact counts and
+paired Blind/Contrastive transitions without a composite winner score. The frozen
+Validation V1 suite has 13 semantic cases and two operational routing cases.
+D6-R acquisition writes run ledgers under `results/diagnosis-validation-v1/<run-id>/`;
+D6-R2 can shard by semantic case while preserving frozen suite order. These
+runtime shards feed L5 only after a successful Blind+Contrastive pair is
+available. See [Diagnosis technical reference](docs/DIAGNOSIS.md) and
+[current handoff](docs/PROJECT_STATUS.md). No empirical Diagnosis accuracy is
+claimed until full acquisition, scoring, human overclaim review, and reporting
+are complete.
 
 ---
 
@@ -461,7 +475,12 @@ src/patchbench/
 │   ├── diagnosis.py
 │   ├── diagnosis_audit.py
 │   ├── diagnosis_execution.py
+│   ├── diagnosis_gold_lock.py
 │   ├── diagnosis_integrity.py
+│   ├── diagnosis_metrics.py
+│   ├── diagnosis_suite.py
+│   ├── diagnosis_validation.py
+│   ├── diagnosis_validation_run.py
 │   ├── evaluation_evidence.py
 │   ├── evidence_errors.py
 │   ├── failure.py

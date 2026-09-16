@@ -39,9 +39,9 @@ release was externally accepted at `7a99c2c`.
 
 ## V1.2 — Evidence-Grounded Diagnosis
 
-Diagnosis infrastructure **D1–D5 is implemented, externally code-reviewed, and
-merged into `v1.2`**. Official deterministic evaluation remains truth: Diagnosis
-is optional inference and never changes official PASS/FAIL.
+Diagnosis infrastructure **D1–D6-R2 is implemented, externally code-reviewed,
+and merged into `v1.2`**. Official deterministic evaluation remains truth:
+Diagnosis is optional inference and never changes official PASS/FAIL.
 
 A semantic failure (official FAIL with normally completed Agent execution) can
 be compiled into complete bounded evidence, then receive **Blind Diagnosis**,
@@ -50,13 +50,22 @@ verified same-cell PASS peer from a persisted Experiment. A deterministic
 Auditor checks linkage and exact citation ranges; immutable execution artifacts
 preserve the inference and its audit, including Audit FAIL.
 
-Diagnosis is currently a **programmatic subsystem**, not a CLI command. D6
-human-gold validation and metrics are next, beginning with D6.1's contract and
-deterministic per-case scoring. The live OpenAI Blind prototype (D4-P) and real
-provider validation (D6-R) remain blocked by unfunded API billing/credits.
-There is no successful live OpenAI Diagnosis result or measured Diagnosis
-accuracy claim. The V1.1 frozen release above remains the empirical reliability
-evidence; mocked provider tests are infrastructure verification.
+D6 adds Human Gold contracts, deterministic per-case scoring, aggregate and
+paired Blind/Contrastive metrics, and a frozen Diagnosis Validation V1 suite
+with 13 semantic cases plus two operational routing cases. The real-provider
+acquisition runner is sharded by semantic case-pair: one selected case always
+runs Blind then Contrastive, with no retry or resume.
+
+Diagnosis is currently a **programmatic subsystem**, not a `patchbench` CLI
+command. Real validation has begun through a third-party OpenAI-compatible
+gateway (`https://ai.ailink1.com/v1`): the formal shard
+`diag-v1-semantic-01-gpt55-none-20260916-133614` completed both Blind and
+Contrastive for `semantic-01` under the frozen configuration. Full 13-case
+semantic acquisition is not complete, and current acquisition is blocked by
+external provider/gateway timeout instability under that locked request
+configuration. There is still no published Diagnosis accuracy or
+Blind-vs-Contrastive empirical conclusion. The V1.1 frozen release above remains
+the completed empirical reliability evidence.
 
 See the [Diagnosis reference](docs/DIAGNOSIS.md) and
 [current handoff](docs/PROJECT_STATUS.md).
@@ -327,10 +336,14 @@ isolation, not a production-grade hostile multi-tenant security boundary.
 ## Project Status
 
 V1 and V1.1 are historical completed releases. The current integration branch
-is `v1.2`: Diagnosis infrastructure D1–D5 is complete; the validation layer
-remains in progress. D6.1 Human Gold Contract + deterministic per-case scoring
-is next. Real provider smoke/validation remains blocked by API billing.
-Optional V2 context-engine/service work remains deferred. See
+is `v1.2`: Diagnosis infrastructure and validation machinery are implemented
+through D6-R2, including Human Gold scoring, aggregate/pair metrics, the frozen
+15-case validation suite, and sharded real-provider acquisition. The remaining
+work is to acquire the rest of the frozen semantic shards after provider/gateway
+health recovers, collect one successful Blind+Contrastive shard per semantic
+case, run the implemented scoring/metrics, complete required human overclaim
+review, score the two operational cases, and publish the final empirical
+validation report. Optional V2 context-engine/service work remains deferred. See
 [Project Status](docs/PROJECT_STATUS.md) for accepted commits and boundaries.
 
 Historical patch Replay has been validated end to end with both a FakeAgent
