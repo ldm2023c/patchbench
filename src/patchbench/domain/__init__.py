@@ -99,12 +99,20 @@ from patchbench.domain.diagnosis_gold_lock import (
     DiagnosisGoldLockCase, DiagnosisGoldLockManifest, DiagnosisGoldLockSuite,
     compute_diagnosis_gold_lock_suite_sha256,
 )
+from patchbench.domain.diagnosis_validation_collection import (
+    DiagnosisValidationCollectedCase, DiagnosisValidationCollectedSlot,
+    DiagnosisValidationCollection, compute_diagnosis_validation_collection_sha256,
+)
 from patchbench.domain.diagnosis_validation_run import (
     DiagnosisValidationRunRecord, DiagnosisValidationRunSlot,
     DiagnosisValidationRunSlotResult,
 )
 
 __all__ = [
+    "DiagnosisValidationCollectedCase",
+    "DiagnosisValidationCollectedSlot",
+    "DiagnosisValidationCollection",
+    "compute_diagnosis_validation_collection_sha256",
     "DiagnosisValidationRunRecord",
     "DiagnosisValidationRunSlot",
     "DiagnosisValidationRunSlotResult",

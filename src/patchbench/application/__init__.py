@@ -37,6 +37,10 @@ from patchbench.application.diagnosis_validation_run import (
     DiagnosisValidationRunError, DiagnosisValidationRunReason,
     build_diagnosis_validation_run_plan, run_frozen_diagnosis_validation,
 )
+from patchbench.application.diagnosis_validation_collection import (
+    DiagnosisValidationCollectionError, DiagnosisValidationCollectionReason,
+    collect_diagnosis_validation_shards, parse_case_selection,
+)
 
 __all__ = ["ReplayError", "ReplayExecution", "replay_run", "run_task",
            "DiagnosisValidationRunError", "DiagnosisValidationRunReason",
@@ -61,4 +65,8 @@ __all__ = ["ReplayError", "ReplayExecution", "replay_run", "run_task",
            "verify_semantic_validation_case",
            "DiagnosisMetricsError", "DiagnosisMetricsReason",
            "aggregate_route_scores", "aggregate_semantic_scores",
-           "compare_blind_contrastive"]
+           "compare_blind_contrastive",
+           "DiagnosisValidationCollectionError",
+           "DiagnosisValidationCollectionReason",
+           "collect_diagnosis_validation_shards",
+           "parse_case_selection"]
