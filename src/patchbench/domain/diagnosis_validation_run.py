@@ -53,6 +53,20 @@ class DiagnosisValidationRunSlotResult(DiagnosisValidationRunSlot):
 class DiagnosisValidationRunRecord(DomainModel):
     model_config = ConfigDict(extra="forbid", frozen=True, str_strip_whitespace=False)
 
+    @model_validator(mode="before")
+    @classmethod
+    def populate_legacy_selected_case_ids(cls, data):
+        if isinstance(data, dict) and "selected_case_ids" not in data and isinstance(data.get("plan"), list):
+            selected = []
+            for slot in data["plan"]:
+                if isinstance(slot, dict):
+                    case_id = slot.get("case_id")
+                    if case_id is not None and case_id not in selected:
+                        selected.append(case_id)
+            data = dict(data)
+            data["selected_case_ids"] = selected
+        return data
+
     schema_version: Annotated[int, Field(strict=True, ge=1, le=1)] = 1
     run_id: NonEmptyString
     suite_id: Literal["diagnosis-validation-v1"] = "diagnosis-validation-v1"
@@ -60,8 +74,9 @@ class DiagnosisValidationRunRecord(DomainModel):
     frozen_suite_sha256: Sha256Hex
     provider_settings: DiagnosisProviderSettings
     external_policy: DiagnosisExternalLLMPolicy
-    plan: list[DiagnosisValidationRunSlot] = Field(min_length=26, max_length=26)
-    slots: list[DiagnosisValidationRunSlotResult] = Field(min_length=26, max_length=26)
+    selected_case_ids: list[NonEmptyString] = Field(min_length=1, max_length=13)
+    plan: list[DiagnosisValidationRunSlot] = Field(min_length=2, max_length=26)
+    slots: list[DiagnosisValidationRunSlotResult] = Field(min_length=2, max_length=26)
 
     @field_validator("run_id")
     @classmethod
@@ -74,8 +89,19 @@ class DiagnosisValidationRunRecord(DomainModel):
 
     @model_validator(mode="after")
     def validate_plan_slots(self) -> Self:
-        if len(self.plan) != 26 or len(self.slots) != 26:
-            raise ValueError("diagnosis validation run requires exactly 26 slots")
+        if not 1 <= len(self.selected_case_ids) <= 13:
+            raise ValueError("diagnosis validation run requires 1 to 13 selected cases")
+        if len(set(self.selected_case_ids)) != len(self.selected_case_ids):
+            raise ValueError("selected case IDs must be unique")
+        if len(self.plan) != 2 * len(self.selected_case_ids) or len(self.slots) != len(self.plan):
+            raise ValueError("plan and slots must contain one Blind/Contrastive pair per selected case")
+        for index, case_id in enumerate(self.selected_case_ids):
+            blind = self.plan[2 * index]
+            contrastive = self.plan[2 * index + 1]
+            if (blind.case_id != case_id or contrastive.case_id != case_id
+                    or blind.mode is not DiagnosisMode.BLIND
+                    or contrastive.mode is not DiagnosisMode.CONTRASTIVE):
+                raise ValueError("each selected case must have exactly Blind then Contrastive slots")
         for planned, actual in zip(self.plan, self.slots, strict=True):
             if (planned.case_id != actual.case_id or planned.mode is not actual.mode
                     or planned.frozen_bundle_path != actual.frozen_bundle_path

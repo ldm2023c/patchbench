@@ -111,6 +111,7 @@ def test_complete_fake_provider_run_writes_only_runtime_results_and_preserves_su
         external_policy=policy())
     run_root = tmp_path / "results/diagnosis-validation-v1/official-test"
     assert len(provider.calls) == 26
+    assert record.selected_case_ids == list(SEMANTIC_CASE_IDS)
     assert {slot.status for slot in record.slots} == {"completed"}
     assert len(list((run_root / "diagnoses").iterdir())) == 26
     assert (run_root / "run.json").exists()
@@ -234,3 +235,97 @@ def test_run_record_rejects_slots_that_do_not_match_plan(tmp_path):
     raw["slots"][0]["frozen_bundle_sha256"] = raw["plan"][1]["frozen_bundle_sha256"]
     with pytest.raises(ValidationError):
         DiagnosisValidationRunRecord.model_validate(raw)
+
+
+def test_one_case_shard_runs_exact_blind_contrastive_pair(tmp_path):
+    provider = CountingProvider()
+    record = run_frozen_diagnosis_validation(validation_root=VALIDATION, candidate_root=CANDIDATES,
+        results_root=tmp_path / "results", run_id="shard-semantic-01", provider=provider,
+        external_policy=policy(), selected_case_ids=["semantic-01"])
+    assert len(provider.calls) == 2
+    assert record.selected_case_ids == ["semantic-01"]
+    assert [(slot.case_id, slot.mode) for slot in record.plan] == [
+        ("semantic-01", DiagnosisMode.BLIND),
+        ("semantic-01", DiagnosisMode.CONTRASTIVE),
+    ]
+    assert [slot.status for slot in record.slots] == ["completed", "completed"]
+    assert len(list((tmp_path / "results/diagnosis-validation-v1/shard-semantic-01/diagnoses").iterdir())) == 2
+
+
+def test_multi_case_selection_preserves_frozen_order_not_caller_order(tmp_path):
+    provider = CountingProvider(fail_at=1, reason=DiagnosisExecutionReason.PROVIDER_REFUSED)
+    record = run_frozen_diagnosis_validation(validation_root=VALIDATION, candidate_root=CANDIDATES,
+        results_root=tmp_path / "results", run_id="shard-two", provider=provider,
+        external_policy=policy(), selected_case_ids=["semantic-06", "semantic-05"])
+    assert len(provider.calls) == 1
+    assert record.selected_case_ids == ["semantic-05", "semantic-06"]
+    assert [(slot.case_id, slot.mode) for slot in record.plan] == [
+        ("semantic-05", DiagnosisMode.BLIND),
+        ("semantic-05", DiagnosisMode.CONTRASTIVE),
+        ("semantic-06", DiagnosisMode.BLIND),
+        ("semantic-06", DiagnosisMode.CONTRASTIVE),
+    ]
+
+
+@pytest.mark.parametrize("selection", [
+    ["semantic-01", "semantic-01"],
+    ["semantic-99"],
+    ["operational-01"],
+    [],
+])
+def test_invalid_case_selection_fails_before_provider_or_output(tmp_path, selection):
+    provider = CountingProvider()
+    with pytest.raises(DiagnosisValidationRunError) as caught:
+        run_frozen_diagnosis_validation(validation_root=VALIDATION, candidate_root=CANDIDATES,
+            results_root=tmp_path / "results", run_id="bad-selection", provider=provider,
+            external_policy=policy(), selected_case_ids=selection)
+    assert caught.value.reason.value == "invalid_selection"
+    assert provider.calls == []
+    assert not (tmp_path / "results/diagnosis-validation-v1/bad-selection").exists()
+
+
+def test_one_case_failure_preserves_completed_blind_and_failed_contrastive_without_retry(tmp_path):
+    provider = CountingProvider(fail_at=2, reason=DiagnosisExecutionReason.PROVIDER_FAILED)
+    record = run_frozen_diagnosis_validation(validation_root=VALIDATION, candidate_root=CANDIDATES,
+        results_root=tmp_path / "results", run_id="shard-fail-second", provider=provider,
+        external_policy=policy(), selected_case_ids=["semantic-01"])
+    assert len(provider.calls) == 2
+    assert [(slot.case_id, slot.mode, slot.status) for slot in record.slots] == [
+        ("semantic-01", DiagnosisMode.BLIND, "completed"),
+        ("semantic-01", DiagnosisMode.CONTRASTIVE, "failed"),
+    ]
+    assert record.slots[1].failure_reason == "provider_failed"
+
+
+def test_run_record_rejects_selected_case_ids_that_do_not_match_plan(tmp_path):
+    provider = CountingProvider(fail_at=1, reason=DiagnosisExecutionReason.PROVIDER_REFUSED)
+    record = run_frozen_diagnosis_validation(validation_root=VALIDATION, candidate_root=CANDIDATES,
+        results_root=tmp_path / "results", run_id="selected-mismatch", provider=provider,
+        external_policy=policy(), selected_case_ids=["semantic-01"])
+    raw = record.model_dump(mode="json")
+    raw["selected_case_ids"] = ["semantic-02"]
+    with pytest.raises(ValidationError):
+        DiagnosisValidationRunRecord.model_validate(raw)
+
+
+def test_run_record_rejects_missing_contrastive_pair(tmp_path):
+    provider = CountingProvider(fail_at=1, reason=DiagnosisExecutionReason.PROVIDER_REFUSED)
+    record = run_frozen_diagnosis_validation(validation_root=VALIDATION, candidate_root=CANDIDATES,
+        results_root=tmp_path / "results", run_id="missing-pair", provider=provider,
+        external_policy=policy(), selected_case_ids=["semantic-01"])
+    raw = record.model_dump(mode="json")
+    raw["plan"] = raw["plan"][:1]
+    raw["slots"] = raw["slots"][:1]
+    with pytest.raises(ValidationError):
+        DiagnosisValidationRunRecord.model_validate(raw)
+
+
+def test_legacy_full_run_record_without_selected_case_ids_is_readable(tmp_path):
+    provider = CountingProvider(fail_at=1, reason=DiagnosisExecutionReason.PROVIDER_REFUSED)
+    record = run_frozen_diagnosis_validation(validation_root=VALIDATION, candidate_root=CANDIDATES,
+        results_root=tmp_path / "results", run_id="legacy-readable", provider=provider,
+        external_policy=policy())
+    raw = record.model_dump(mode="json")
+    raw.pop("selected_case_ids")
+    loaded = DiagnosisValidationRunRecord.model_validate(raw)
+    assert loaded.selected_case_ids == list(SEMANTIC_CASE_IDS)

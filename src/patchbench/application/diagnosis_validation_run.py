@@ -1,5 +1,6 @@
 """Run the frozen Diagnosis Validation V1 suite with an injected provider."""
 
+from collections.abc import Sequence
 from enum import Enum
 import hashlib
 import json
@@ -31,6 +32,7 @@ class DiagnosisValidationRunReason(str, Enum):
     INVALID_RUN_ID = "invalid_run_id"
     RUN_ALREADY_EXISTS = "run_already_exists"
     INVALID_PLAN = "invalid_plan"
+    INVALID_SELECTION = "invalid_selection"
 
 
 class DiagnosisValidationRunError(RuntimeError):
@@ -71,6 +73,7 @@ def _suite_cases(root: Path) -> list[DiagnosisGoldLockCase]:
 
 def build_diagnosis_validation_run_plan(
     validation_root: Path,
+    selected_case_ids: Sequence[str] | None = None,
 ) -> list[DiagnosisValidationRunSlot]:
     root = Path(validation_root)
     semantic_cases = [
@@ -82,6 +85,29 @@ def build_diagnosis_validation_run_plan(
             DiagnosisValidationRunReason.INVALID_PLAN,
             "frozen suite must declare exactly 13 semantic diagnosis cases",
         )
+    if selected_case_ids is not None:
+        selected = list(selected_case_ids)
+        if not selected:
+            raise DiagnosisValidationRunError(
+                DiagnosisValidationRunReason.INVALID_SELECTION,
+                "selected_case_ids must not be empty",
+            )
+        if len(set(selected)) != len(selected):
+            raise DiagnosisValidationRunError(
+                DiagnosisValidationRunReason.INVALID_SELECTION,
+                "selected_case_ids must not contain duplicates",
+            )
+        semantic_by_id = {case.case_id: case for case in semantic_cases}
+        all_case_ids = {case.case_id for case in _suite_cases(root)}
+        unknown = sorted(set(selected) - all_case_ids)
+        non_semantic = sorted((set(selected) & all_case_ids) - set(semantic_by_id))
+        if unknown or non_semantic:
+            raise DiagnosisValidationRunError(
+                DiagnosisValidationRunReason.INVALID_SELECTION,
+                "selected_case_ids must name frozen semantic diagnosis cases",
+            )
+        selected_set = set(selected)
+        semantic_cases = [case for case in semantic_cases if case.case_id in selected_set]
 
     plan = []
     for case in semantic_cases:
@@ -130,6 +156,7 @@ def _record(
     frozen_suite_sha256: str,
     provider: DiagnosisProvider,
     external_policy: DiagnosisExternalLLMPolicy,
+    selected_case_ids: list[str],
     plan: list[DiagnosisValidationRunSlot],
     slots: list[DiagnosisValidationRunSlotResult],
 ) -> DiagnosisValidationRunRecord:
@@ -139,6 +166,7 @@ def _record(
         frozen_suite_sha256=frozen_suite_sha256,
         provider_settings=provider.settings,
         external_policy=external_policy,
+        selected_case_ids=selected_case_ids,
         plan=plan,
         slots=slots,
     )
@@ -171,6 +199,7 @@ def run_frozen_diagnosis_validation(
     run_id: str,
     provider: DiagnosisProvider,
     external_policy: DiagnosisExternalLLMPolicy,
+    selected_case_ids: Sequence[str] | None = None,
 ) -> DiagnosisValidationRunRecord:
     """Execute the exact 13 x 2 frozen plan with one provider attempt per slot."""
     validation_root = Path(validation_root)
@@ -184,10 +213,10 @@ def run_frozen_diagnosis_validation(
             "frozen validation suite failed verification",
         ) from error
 
-    plan = build_diagnosis_validation_run_plan(validation_root)
+    plan = build_diagnosis_validation_run_plan(validation_root, selected_case_ids=selected_case_ids)
     expected = [(case_id, mode) for case_id in SEMANTIC_CASE_IDS
                 for mode in (DiagnosisMode.BLIND, DiagnosisMode.CONTRASTIVE)]
-    if [(slot.case_id, slot.mode) for slot in plan] != expected or len(plan) != 26:
+    if selected_case_ids is None and ([(slot.case_id, slot.mode) for slot in plan] != expected or len(plan) != 26):
         raise DiagnosisValidationRunError(
             DiagnosisValidationRunReason.INVALID_PLAN,
             "frozen execution plan differs from accepted V1 order",
@@ -202,13 +231,17 @@ def run_frozen_diagnosis_validation(
             f"run root already exists or cannot be created: {run_root}",
         ) from error
 
+    selected_cases = []
+    for slot in plan:
+        if slot.case_id not in selected_cases:
+            selected_cases.append(slot.case_id)
     slots = _pending_slots(plan)
     freeze_sha = hashlib.sha256((validation_root / "freeze-manifest.json").read_bytes()).hexdigest()
     record_path = run_root / "run.json"
     output_store = FilesystemArtifactStore(run_root)
     _write_ledger(record_path, _record(run_id=run_id, freeze_manifest_sha256=freeze_sha,
         frozen_suite_sha256=manifest.suite_sha256, provider=provider,
-        external_policy=external_policy, plan=plan, slots=slots))
+        external_policy=external_policy, selected_case_ids=selected_cases, plan=plan, slots=slots))
 
     for index, slot in enumerate(plan):
         bundle = _bundle(validation_root, slot.frozen_bundle_path, slot.case_id, slot.mode)
@@ -243,7 +276,7 @@ def run_frozen_diagnosis_validation(
             )
             final = _record(run_id=run_id, freeze_manifest_sha256=freeze_sha,
                 frozen_suite_sha256=manifest.suite_sha256, provider=provider,
-                external_policy=external_policy, plan=plan, slots=slots)
+                external_policy=external_policy, selected_case_ids=selected_cases, plan=plan, slots=slots)
             _write_ledger(record_path, final)
             return final
         except ArtifactStoreError as error:
@@ -254,11 +287,11 @@ def run_frozen_diagnosis_validation(
             )
             final = _record(run_id=run_id, freeze_manifest_sha256=freeze_sha,
                 frozen_suite_sha256=manifest.suite_sha256, provider=provider,
-                external_policy=external_policy, plan=plan, slots=slots)
+                external_policy=external_policy, selected_case_ids=selected_cases, plan=plan, slots=slots)
             _write_ledger(record_path, final)
             return final
         _write_ledger(record_path, _record(run_id=run_id, freeze_manifest_sha256=freeze_sha,
             frozen_suite_sha256=manifest.suite_sha256, provider=provider,
-            external_policy=external_policy, plan=plan, slots=slots))
+            external_policy=external_policy, selected_case_ids=selected_cases, plan=plan, slots=slots))
 
     return DiagnosisValidationRunRecord.model_validate_json(record_path.read_bytes())

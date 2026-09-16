@@ -20,6 +20,7 @@ def main() -> None:
     parser.add_argument("--max-output-tokens", type=int, required=True)
     parser.add_argument("--timeout-seconds", type=float, required=True)
     parser.add_argument("--max-provider-input-bytes", type=int, required=True)
+    parser.add_argument("--case-id", action="append", dest="case_ids")
     args = parser.parse_args()
 
     provider = OpenAIDiagnosisProvider(
@@ -38,6 +39,7 @@ def main() -> None:
             external_llm_allowed=True,
             max_provider_input_bytes=args.max_provider_input_bytes,
         ),
+        selected_case_ids=args.case_ids,
     )
     print(json.dumps(record.model_dump(mode="json"), ensure_ascii=False, sort_keys=True))
 
