@@ -457,8 +457,13 @@ src/patchbench/
 │   ├── diagnosis_contrastive.py
 │   ├── diagnosis_evidence.py
 │   ├── diagnosis_execution.py
+│   ├── diagnosis_gold_lock.py
+│   ├── diagnosis_metrics.py
 │   ├── diagnosis_peer.py
 │   ├── diagnosis_prompt.py
+│   ├── diagnosis_suite.py
+│   ├── diagnosis_validation.py
+│   ├── diagnosis_validation_run.py
 │   ├── evaluation.py
 │   ├── experiment.py
 │   ├── local_run.py

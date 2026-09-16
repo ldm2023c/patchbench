@@ -6,8 +6,8 @@ this document when they disagree.
 
 ## Current state and next action
 
-- **Integration branch:** `v1.2`; current checked integration head is `8507dbd`
-  (`fix: tighten diagnosis shard ledger compatibility`).
+- **Integration branch:** `v1.2`; D6-R2 pre-documentation-sync implementation
+  baseline is `8507dbd` (`fix: tighten diagnosis shard ledger compatibility`).
 - **Implemented and code-reviewed:** V1.2 Diagnosis D1–D6-R2 is merged into
   `v1.2`.
 - **Historical release:** V1.1 frozen evidence is COMPLETE; V1 M0–M6 is also
@@ -46,12 +46,12 @@ owner's external review status, not a Git-generated verdict.
 | D1 — domain and routing | PASS / merged | `bed6ab9a17ad832599f135e4c285da8e3b06eb7c`; invariants `017778b4136c8ba6fb0ccdaedaf5e6036dc98377` |
 | D2 — complete deterministic evidence | PASS / merged | `95e9df353258cc33b10663a1b03214f31e07a2ba`; locators `ba60792e2a8091cb1fe18bb59df52a08994e744f` |
 | D3 — Auditor and immutable persistence | PASS / merged | `b911e4efba08ad4c58356a46e8490cc1fb3c077e` |
-| D4 — Blind provider execution | PASS / merged | `af9eb7534cd40cef3430ea9e7dc3e3401b71afd7` plus later adapter compatibility on current `v1.2` |
+| D4 — Blind provider execution | PASS / merged | `af9eb7534cd40cef3430ea9e7dc3e3401b71afd7` |
 | D5 — deterministic Contrastive Diagnosis | PASS / merged | `3b8e69cc48c141dc2dd58b9986e01de3e0f0d7b7`; execution trust boundary `3e4af7dd78fe1f7268b142e6b2e44db74d277c23` |
-| D6.1 — Human Gold + per-case scoring | PASS / merged | implemented in `diagnosis_validation.py`; binds exact Gold SHA and scores route/semantic cases |
-| D6.2 — aggregate + paired metrics | PASS / merged | implemented in `diagnosis_metrics.py`; exact Blind/Contrastive pairing, no composite winner score |
+| D6.1 — Human Gold + per-case scoring | PASS / merged | `26b04955c63b322aaf6d9781c5b4e6ab1858a730` |
+| D6.2 — aggregate + paired metrics | PASS / merged | implementation `52a2dd2e90e7623e19f03e94f669ce37f213334b`; Gold identity fix `93ab6a75a8e3d08271f8f9604c0e16cbf0675681` |
 | D6.3 — frozen Validation V1 | PASS / merged | gold lock `d3b105c`; Phase A/B/final freeze through `e044842` |
-| D6-R1 — frozen provider-run harness | PASS / merged | `3daa725`; hardening `8f5a059` |
+| D6-R1 — frozen provider-run harness | PASS / merged | `3daa7250a39f80125f65dc2be6340c21dfcfb0c8`; hardening `8f5a059`; includes removal of explicit `background=False` for OpenAI-compatible gateway compatibility |
 | D6-R2 — sharded acquisition | PASS / merged | `ad28043`; ledger compatibility fix `8507dbd` |
 
 ## Frozen Validation V1 suite
@@ -112,7 +112,7 @@ Blind: completed
 Contrastive: completed
 ```
 
-Earlier full-run attempts stopped after transient provider failures at slot 4
+Earlier full-run attempts stopped after provider failures at slot 4
 and slot 10. A separate early failed run was caused by missing local credentials
 and is not evidence about model/gateway reliability. Later exact-request
 diagnostics with credentials and base URL confirmed observed `APITimeoutError`

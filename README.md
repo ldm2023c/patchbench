@@ -58,7 +58,7 @@ runs Blind then Contrastive, with no retry or resume.
 
 Diagnosis is currently a **programmatic subsystem**, not a `patchbench` CLI
 command. Real validation has begun through a third-party OpenAI-compatible
-gateway (`https://ai.ailink1.com/v1`): the formal shard
+gateway: the formal shard
 `diag-v1-semantic-01-gpt55-none-20260916-133614` completed both Blind and
 Contrastive for `semantic-01` under the frozen configuration. Full 13-case
 semantic acquisition is not complete, and current acquisition is blocked by
