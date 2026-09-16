@@ -201,7 +201,7 @@ def run_frozen_diagnosis_validation(
     external_policy: DiagnosisExternalLLMPolicy,
     selected_case_ids: Sequence[str] | None = None,
 ) -> DiagnosisValidationRunRecord:
-    """Execute the exact 13 x 2 frozen plan with one provider attempt per slot."""
+    """Execute the full frozen suite or selected frozen case-pairs once per slot."""
     validation_root = Path(validation_root)
     candidate_root = Path(candidate_root)
     results_root = Path(results_root)

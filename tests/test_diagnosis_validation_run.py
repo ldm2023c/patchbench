@@ -329,3 +329,14 @@ def test_legacy_full_run_record_without_selected_case_ids_is_readable(tmp_path):
     raw.pop("selected_case_ids")
     loaded = DiagnosisValidationRunRecord.model_validate(raw)
     assert loaded.selected_case_ids == list(SEMANTIC_CASE_IDS)
+
+
+def test_shard_run_record_without_selected_case_ids_is_rejected(tmp_path):
+    provider = CountingProvider(fail_at=1, reason=DiagnosisExecutionReason.PROVIDER_REFUSED)
+    record = run_frozen_diagnosis_validation(validation_root=VALIDATION, candidate_root=CANDIDATES,
+        results_root=tmp_path / "results", run_id="shard-missing-selected", provider=provider,
+        external_policy=policy(), selected_case_ids=["semantic-01"])
+    raw = record.model_dump(mode="json")
+    raw.pop("selected_case_ids")
+    with pytest.raises(ValidationError):
+        DiagnosisValidationRunRecord.model_validate(raw)

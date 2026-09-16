@@ -56,15 +56,21 @@ class DiagnosisValidationRunRecord(DomainModel):
     @model_validator(mode="before")
     @classmethod
     def populate_legacy_selected_case_ids(cls, data):
-        if isinstance(data, dict) and "selected_case_ids" not in data and isinstance(data.get("plan"), list):
-            selected = []
-            for slot in data["plan"]:
-                if isinstance(slot, dict):
-                    case_id = slot.get("case_id")
-                    if case_id is not None and case_id not in selected:
-                        selected.append(case_id)
-            data = dict(data)
-            data["selected_case_ids"] = selected
+        if not (isinstance(data, dict) and "selected_case_ids" not in data
+                and isinstance(data.get("plan"), list) and len(data["plan"]) == 26):
+            return data
+        selected = []
+        for index in range(0, 26, 2):
+            blind = data["plan"][index]
+            contrastive = data["plan"][index + 1]
+            if not (isinstance(blind, dict) and isinstance(contrastive, dict)
+                    and blind.get("case_id") == contrastive.get("case_id")
+                    and blind.get("mode") == DiagnosisMode.BLIND.value
+                    and contrastive.get("mode") == DiagnosisMode.CONTRASTIVE.value):
+                return data
+            selected.append(blind.get("case_id"))
+        data = dict(data)
+        data["selected_case_ids"] = selected
         return data
 
     schema_version: Annotated[int, Field(strict=True, ge=1, le=1)] = 1
