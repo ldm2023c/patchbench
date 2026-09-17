@@ -51,12 +51,14 @@ L2 DiagnosisEvidenceBundle (Blind, or verified same-cell PASS augmentation)
 L3 FailureDiagnosis (PatchBench-owned identity/linkage)
  ↓ audit_failure_diagnosis
 L4 deterministic structural/citation Auditor → immutable artifacts
- ↓ completed real-provider acquisition shards feed validation data
-L5 Human Gold deterministic scoring
- ↓ exact Blind/Contrastive pairing and aggregate metrics
-L6 aggregate + paired validation metrics
- ↓ immutable collection, finalized semantic scores, operational scoring
-L7 final frozen-suite validation result artifact
+ ↓ completed audited Diagnosis executions / acquisition shards
+D6-R3 immutable selected collection
+ ↓ Human Gold deterministic semantic scoring + human overclaim finalization
+D6-R4 finalized semantic scores
+ ↓ exact aggregate / paired Blind-Contrastive metrics, plus operational route scores
+D6.2 metrics + D6-R5 operational scoring
+ ↓
+D6-R5 final frozen-suite validation result artifact
 ```
 
 Routing itself reads recorded outcomes, not source bytes. Evidence verification

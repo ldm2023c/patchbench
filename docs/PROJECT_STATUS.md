@@ -6,9 +6,8 @@ this document when they disagree.
 
 ## Current state and next action
 
-- **Integration branch:** `v1.2`; accepted D6-R5 implementation head is
-  `929f44f4cdd43cd8eb5262a62853767c9a002c20`. The current feature branch is a
-  documentation-only sync on top of that implementation baseline.
+- **Integration branch:** `v1.2`; accepted D6-R5 implementation baseline is
+  `929f44f4cdd43cd8eb5262a62853767c9a002c20`.
 - **Implemented and code-reviewed:** V1.2 Diagnosis D1–D6-R5 is merged into
   `v1.2`.
 - **Historical release:** V1.1 frozen evidence is COMPLETE; V1 M0–M6 is also
@@ -30,9 +29,10 @@ this document when they disagree.
   diagnosis quality, statistical significance, or a general claim that PASS peers
   help or harm Diagnosis.
 
-The next work is human review/publication or a separate future milestone. Optional
-V2 context-engine/service work remains deferred and is not authorized by the V1.2
-Diagnosis result.
+Diagnosis V1.2 validation is complete through D6-R5. No more provider calls are
+required for V1.2. Further postmortem, V2, service, or context-engine work
+requires a separate future milestone and is not part of this completed validation
+slice.
 
 ## Accepted Diagnosis history
 

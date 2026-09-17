@@ -180,8 +180,11 @@ sharding; D6-R3 freezes the selected successful acquisition collection; D6-R4
 finalizes semantic scores with human forbidden-claim review; D6-R5 publishes the
 final deterministic result artifact.
 
-Frozen real-provider validation completed through a third-party OpenAI-compatible
-gateway using the `gpt-6-astra` Pro route label. On the frozen 13 semantic cases,
+Frozen real-provider validation completed with protocol label `gpt6astra-pro-v1`,
+requested model `gpt-6-astra`, and a third-party OpenAI-compatible Pro route. The
+requested model may be a provider alias; this is not an official OpenAI API or
+model-identity claim, and the collection does not cryptographically prove gateway
+or base URL identity. On the frozen 13 semantic cases,
 Blind achieved 9/10 preferred Top-1 and 9/10 acceptable Top-k on non-abstention
 cases; Contrastive achieved 8/10 for both. Both modes had 0/3 abstention recall.
 The paired comparison showed no family improvement from Contrastive, one family

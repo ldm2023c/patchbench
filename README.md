@@ -57,9 +57,11 @@ acquisition runner supports frozen full-run or semantic-case shards; each
 selected semantic case runs Blind then Contrastive, with no retry or resume.
 
 Diagnosis is currently a **programmatic subsystem**, not a `patchbench` CLI
-command. Frozen real validation has completed for the 13 semantic cases through
-a third-party OpenAI-compatible gateway using the `gpt-6-astra` Pro route label,
-plus deterministic operational routing scores for the two operational cases.
+command. Frozen real validation has completed for the 13 semantic cases with
+protocol label `gpt6astra-pro-v1`, requested model `gpt-6-astra`, and a
+third-party OpenAI-compatible Pro route, plus deterministic operational routing
+scores for the two operational cases. This is not an official OpenAI API or
+model-identity claim.
 On this frozen 13-case semantic suite, Blind scored 9/10 preferred Top-1 and
 9/10 acceptable Top-k over non-abstention cases; Contrastive scored 8/10 for
 both. Both modes had 0/3 abstention recall, and the only paired family/audit

@@ -125,9 +125,9 @@ See the [frozen final report](../evidence/v1.1/FINAL_REPORT.md).
 
 ## 6. Next work and resume wording
 
-Next: human review/publication or a separately authorized future milestone.
-Optional V2 context/service expansion is deferred. Current Diagnosis is
-programmatic; there is no `patchbench diagnose` CLI.
+V1.2 Diagnosis validation is complete through D6-R5. Further postmortem, V2,
+service, or context work is optional and requires separate authorization. Current
+Diagnosis is programmatic; there is no `patchbench diagnose` CLI.
 
 Defensible resume wording: “Built a local coding-agent reliability harness with
 frozen evaluation, historical patch Replay, and a 32-Run evidence release; added
