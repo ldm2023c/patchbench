@@ -103,12 +103,31 @@ from patchbench.domain.diagnosis_validation_collection import (
     DiagnosisValidationCollectedCase, DiagnosisValidationCollectedSlot,
     DiagnosisValidationCollection, compute_diagnosis_validation_collection_sha256,
 )
+from patchbench.domain.diagnosis_validation_scoring import (
+    DiagnosisValidationFinalScores, DiagnosisValidationOverclaimPacketItem,
+    DiagnosisValidationOverclaimReviewPacket, DiagnosisValidationOverclaimReviewSet,
+    DiagnosisValidationScoredCase, DiagnosisValidationScoredSlot,
+    DiagnosisValidationScoringPreparation,
+    compute_diagnosis_validation_final_scores_sha256,
+    compute_diagnosis_validation_preparation_sha256,
+    compute_diagnosis_validation_review_packet_sha256,
+)
 from patchbench.domain.diagnosis_validation_run import (
     DiagnosisValidationRunRecord, DiagnosisValidationRunSlot,
     DiagnosisValidationRunSlotResult,
 )
 
 __all__ = [
+    "DiagnosisValidationFinalScores",
+    "DiagnosisValidationOverclaimPacketItem",
+    "DiagnosisValidationOverclaimReviewPacket",
+    "DiagnosisValidationOverclaimReviewSet",
+    "DiagnosisValidationScoredCase",
+    "DiagnosisValidationScoredSlot",
+    "DiagnosisValidationScoringPreparation",
+    "compute_diagnosis_validation_final_scores_sha256",
+    "compute_diagnosis_validation_preparation_sha256",
+    "compute_diagnosis_validation_review_packet_sha256",
     "DiagnosisValidationCollectedCase",
     "DiagnosisValidationCollectedSlot",
     "DiagnosisValidationCollection",
