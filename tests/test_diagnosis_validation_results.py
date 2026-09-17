@@ -201,6 +201,10 @@ def test_command_failed_and_timed_out_cases_score_through_route_scorer(d6r5_resu
     ("unfinished", "unfinished_semantic_score_review"),
     ("gold", "semantic_score_identity_mismatch"),
     ("subject", "semantic_score_identity_mismatch"),
+    ("diagnosis_id_rehashed", "semantic_score_identity_mismatch"),
+    ("deterministic_metric", "semantic_score_identity_mismatch"),
+    ("overclaim_applicability_false", "semantic_score_identity_mismatch"),
+    ("unknown_claim", "semantic_score_identity_mismatch"),
 ])
 def test_semantic_score_artifact_validation(d6r5_results, mutation, reason):
     raw = json.loads(_score_path(d6r5_results).read_text(encoding="utf-8"))
@@ -223,6 +227,23 @@ def test_semantic_score_artifact_validation(d6r5_results, mutation, reason):
         _write_scores(d6r5_results, raw)
     elif mutation == "subject":
         raw["scores"][0]["subject_evidence_sha256"] = "0" * 64
+        _write_scores(d6r5_results, raw)
+    elif mutation == "diagnosis_id_rehashed":
+        raw["scores"][0]["diagnosis_id"] = "diag-rehashed-but-not-prepared"
+        _write_scores(d6r5_results, raw)
+    elif mutation == "deterministic_metric":
+        raw["scores"][0]["predicted_abstain"] = not raw["scores"][0]["predicted_abstain"]
+        _write_scores(d6r5_results, raw)
+    elif mutation == "overclaim_applicability_false":
+        raw["scores"][0]["overclaim_applicable"] = False
+        raw["scores"][0]["overclaim_reviewed"] = False
+        raw["scores"][0]["overclaim_violation"] = None
+        raw["scores"][0]["violated_claim_ids"] = []
+        _write_scores(d6r5_results, raw)
+    elif mutation == "unknown_claim":
+        raw["scores"][0]["overclaim_reviewed"] = True
+        raw["scores"][0]["overclaim_violation"] = True
+        raw["scores"][0]["violated_claim_ids"] = ["unknown-claim"]
         _write_scores(d6r5_results, raw)
     with pytest.raises(DiagnosisValidationResultError) as caught:
         _compute(d6r5_results)
@@ -270,6 +291,28 @@ def test_collection_sha_mismatch_is_rejected(d6r5_results):
     with pytest.raises(DiagnosisValidationResultError) as caught:
         _compute(d6r5_results)
     _assert_reason(caught, "invalid_collection")
+
+
+def test_self_consistent_collection_frozen_identity_mismatch_is_rejected(d6r5_results):
+    collection_raw = json.loads(_collection_path(d6r5_results).read_text(encoding="utf-8"))
+    preparation_raw = json.loads(_prep_path(d6r5_results).read_text(encoding="utf-8"))
+    scores_raw = json.loads(_score_path(d6r5_results).read_text(encoding="utf-8"))
+
+    collection_raw["freeze_manifest_sha256"] = "0" * 64
+    collection = _write_collection(d6r5_results, collection_raw)
+
+    preparation_raw["collection_sha256"] = collection.collection_sha256
+    preparation_raw["freeze_manifest_sha256"] = collection.freeze_manifest_sha256
+    preparation = _write_preparation(d6r5_results, preparation_raw)
+
+    scores_raw["collection_sha256"] = collection.collection_sha256
+    scores_raw["preparation_sha256"] = preparation.preparation_sha256
+    scores_raw["freeze_manifest_sha256"] = collection.freeze_manifest_sha256
+    _write_scores(d6r5_results, scores_raw)
+
+    with pytest.raises(DiagnosisValidationResultError) as caught:
+        _compute(d6r5_results)
+    _assert_reason(caught, "frozen_validation_identity_mismatch")
 
 
 def test_frozen_manifest_and_gold_lock_identity_mismatch_rejected(tmp_path, d6r5_results):

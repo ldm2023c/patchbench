@@ -282,17 +282,83 @@ def _verify_provenance_chain(scores, preparation, collection, manifest, gold_loc
             DiagnosisValidationResultReason.COLLECTION_IDENTITY_MISMATCH,
             "preparation does not match collection provenance",
         )
+    if (collection.freeze_manifest_sha256 != preparation.freeze_manifest_sha256
+            or collection.freeze_manifest_sha256 != scores.freeze_manifest_sha256
+            or collection.frozen_suite_sha256 != preparation.frozen_suite_sha256
+            or collection.frozen_suite_sha256 != scores.frozen_suite_sha256):
+        raise DiagnosisValidationResultError(
+            DiagnosisValidationResultReason.COLLECTION_IDENTITY_MISMATCH,
+            "collection frozen identity differs from preparation or semantic scores",
+        )
     if (scores.freeze_manifest_sha256 != freeze_sha_value
             or scores.frozen_suite_sha256 != manifest.suite_sha256
-            or scores.gold_lock_suite_sha256 != gold_lock_sha):
+            or scores.gold_lock_suite_sha256 != gold_lock_sha
+            or collection.freeze_manifest_sha256 != freeze_sha_value
+            or collection.frozen_suite_sha256 != manifest.suite_sha256):
         raise DiagnosisValidationResultError(
             DiagnosisValidationResultReason.FROZEN_VALIDATION_IDENTITY_MISMATCH,
             "semantic scores differ from current frozen validation identity",
         )
 
 
-def _verify_semantic_gold_identity(scores: list[SemanticDiagnosisScore], gold_lock) -> None:
+_SEMANTIC_PREPARATION_PROJECTION = (
+    "case_id",
+    "gold_sha256",
+    "subject_evidence_sha256",
+    "diagnosis_id",
+    "mode",
+    "predicted_abstain",
+    "abstention_correct",
+    "preferred_top1_match",
+    "top1_acceptable_match",
+    "topk_acceptable_match",
+    "required_evidence_satisfied",
+    "required_evidence_total",
+    "audit_passed",
+    "audit_issue_count",
+    "invalid_citation_issue_count",
+    "overclaim_applicable",
+)
+
+
+def _semantic_preparation_projection(score: SemanticDiagnosisScore) -> tuple:
+    return tuple(getattr(score, field) for field in _SEMANTIC_PREPARATION_PROJECTION)
+
+
+def _preparation_slot_by_identity(preparation: DiagnosisValidationScoringPreparation):
+    result = {}
+    for case in preparation.cases:
+        result[(case.case_id, DiagnosisMode.BLIND)] = case.blind
+        result[(case.case_id, DiagnosisMode.CONTRASTIVE)] = case.contrastive
+    return result
+
+
+def _load_semantic_gold(validation_root: Path, lock_case) -> DiagnosisGoldCase:
+    try:
+        gold = DiagnosisGoldCase.model_validate_json((validation_root / lock_case.gold_path).read_bytes())
+    except (OSError, UnicodeError, ValidationError) as error:
+        raise DiagnosisValidationResultError(
+            DiagnosisValidationResultReason.FROZEN_VALIDATION_IDENTITY_MISMATCH,
+            f"invalid locked semantic Gold for {lock_case.case_id}",
+        ) from error
+    if (gold.case_id != lock_case.case_id
+            or gold.semantic_gold is None
+            or compute_diagnosis_gold_sha256(gold) != lock_case.gold_sha256):
+        raise DiagnosisValidationResultError(
+            DiagnosisValidationResultReason.FROZEN_VALIDATION_IDENTITY_MISMATCH,
+            f"locked semantic Gold identity differs for {lock_case.case_id}",
+        )
+    return gold
+
+
+def _verify_semantic_scores_against_preparation_and_gold(
+    validation_root: Path,
+    scores: list[SemanticDiagnosisScore],
+    preparation: DiagnosisValidationScoringPreparation,
+    gold_lock,
+) -> None:
     lock_by_case = {case.case_id: case for case in gold_lock.cases}
+    slots = _preparation_slot_by_identity(preparation)
     for index, case_id in enumerate(SEMANTIC_CASE_IDS):
         lock_case = lock_by_case.get(case_id)
         if lock_case is None:
@@ -300,13 +366,33 @@ def _verify_semantic_gold_identity(scores: list[SemanticDiagnosisScore], gold_lo
                 DiagnosisValidationResultReason.FROZEN_VALIDATION_IDENTITY_MISMATCH,
                 f"missing semantic Gold lock case {case_id}",
             )
+        gold = _load_semantic_gold(validation_root, lock_case)
+        frozen_claim_ids = {claim.claim_id for claim in gold.semantic_gold.forbidden_claims}
         for score in (scores[2 * index], scores[2 * index + 1]):
+            slot = slots.get((score.case_id, score.mode))
+            if slot is None or _semantic_preparation_projection(score) != _semantic_preparation_projection(slot.preliminary_score):
+                raise DiagnosisValidationResultError(
+                    DiagnosisValidationResultReason.SEMANTIC_SCORE_IDENTITY_MISMATCH,
+                    "semantic score differs from its D6-R4 preparation slot",
+                )
             if (score.gold_sha256 != lock_case.gold_sha256
                     or score.subject_evidence_sha256 != lock_case.subject_evidence_sha256):
                 raise DiagnosisValidationResultError(
                     DiagnosisValidationResultReason.SEMANTIC_SCORE_IDENTITY_MISMATCH,
                     "semantic score Gold or subject identity differs from frozen Gold lock",
                 )
+            if score.overclaim_applicable != bool(frozen_claim_ids):
+                raise DiagnosisValidationResultError(
+                    DiagnosisValidationResultReason.SEMANTIC_SCORE_IDENTITY_MISMATCH,
+                    "semantic score overclaim applicability differs from frozen Gold",
+                )
+            if frozen_claim_ids:
+                if (not score.overclaim_reviewed or score.overclaim_violation is None
+                        or not set(score.violated_claim_ids).issubset(frozen_claim_ids)):
+                    raise DiagnosisValidationResultError(
+                        DiagnosisValidationResultReason.SEMANTIC_SCORE_IDENTITY_MISMATCH,
+                        "semantic score overclaim review differs from frozen Gold claim IDs",
+                    )
 
 
 def _load_operational_gold(validation_root: Path, lock_case) -> DiagnosisGoldCase:
@@ -412,7 +498,8 @@ def compute_diagnosis_validation_results(
     collection = _load_collection(results_root, semantic_scores.collection_id)
     manifest, gold_lock, gold_lock_sha, freeze_sha_value = _verified_gold_lock(validation_root, candidate_root)
     _verify_provenance_chain(semantic_scores, preparation, collection, manifest, gold_lock_sha, freeze_sha_value)
-    _verify_semantic_gold_identity(semantic_scores.scores, gold_lock)
+    _verify_semantic_scores_against_preparation_and_gold(
+        validation_root, semantic_scores.scores, preparation, gold_lock)
 
     operational_scores = _score_operational_cases(validation_root, gold_lock)
     try:
