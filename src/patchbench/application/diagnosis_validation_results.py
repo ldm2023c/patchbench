@@ -290,6 +290,7 @@ def _verify_provenance_chain(scores, preparation, collection, manifest, gold_loc
             DiagnosisValidationResultReason.COLLECTION_IDENTITY_MISMATCH,
             "collection frozen identity differs from preparation or semantic scores",
         )
+    _verify_preparation_collection_slots(preparation, collection)
     if (scores.freeze_manifest_sha256 != freeze_sha_value
             or scores.frozen_suite_sha256 != manifest.suite_sha256
             or scores.gold_lock_suite_sha256 != gold_lock_sha
@@ -299,6 +300,41 @@ def _verify_provenance_chain(scores, preparation, collection, manifest, gold_loc
             DiagnosisValidationResultReason.FROZEN_VALIDATION_IDENTITY_MISMATCH,
             "semantic scores differ from current frozen validation identity",
         )
+
+
+def _verify_preparation_collection_slots(
+    preparation: DiagnosisValidationScoringPreparation,
+    collection: DiagnosisValidationCollection,
+) -> None:
+    if len(preparation.cases) != len(collection.cases) or len(collection.cases) != len(SEMANTIC_CASE_IDS):
+        raise DiagnosisValidationResultError(
+            DiagnosisValidationResultReason.PREPARATION_IDENTITY_MISMATCH,
+            "preparation and collection case counts differ",
+        )
+    for expected_case_id, prepared, collected in zip(
+        SEMANTIC_CASE_IDS, preparation.cases, collection.cases, strict=True,
+    ):
+        if (prepared.case_id != expected_case_id
+                or collected.case_id != expected_case_id
+                or prepared.case_id != collected.case_id
+                or prepared.blind.run_id != collected.run_id
+                or prepared.contrastive.run_id != collected.run_id):
+            raise DiagnosisValidationResultError(
+                DiagnosisValidationResultReason.PREPARATION_IDENTITY_MISMATCH,
+                "preparation case provenance differs from selected collection",
+            )
+        for prepared_slot, collected_slot in (
+            (prepared.blind, collected.blind),
+            (prepared.contrastive, collected.contrastive),
+        ):
+            if (prepared_slot.mode is not collected_slot.mode
+                    or prepared_slot.diagnosis_id != collected_slot.diagnosis_id
+                    or prepared_slot.execution_sha256 != collected_slot.execution_sha256
+                    or prepared_slot.bundle_sha256 != collected_slot.frozen_bundle_sha256):
+                raise DiagnosisValidationResultError(
+                    DiagnosisValidationResultReason.PREPARATION_IDENTITY_MISMATCH,
+                    "preparation slot provenance differs from selected collection",
+                )
 
 
 _SEMANTIC_PREPARATION_PROJECTION = (

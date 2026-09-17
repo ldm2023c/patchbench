@@ -275,6 +275,35 @@ def test_preparation_sha_mismatch_is_rejected(d6r5_results):
     _assert_reason(caught, "invalid_preparation")
 
 
+def test_rehashed_preparation_and_scores_diagnosis_id_still_must_match_collection(d6r5_results):
+    preparation_raw = json.loads(_prep_path(d6r5_results).read_text(encoding="utf-8"))
+    scores_raw = json.loads(_score_path(d6r5_results).read_text(encoding="utf-8"))
+    new_id = "diag-rehashed-preparation-only"
+    preparation_raw["cases"][0]["blind"]["diagnosis_id"] = new_id
+    preparation_raw["cases"][0]["blind"]["preliminary_score"]["diagnosis_id"] = new_id
+    scores_raw["scores"][0]["diagnosis_id"] = new_id
+    preparation = _write_preparation(d6r5_results, preparation_raw)
+    scores_raw["preparation_sha256"] = preparation.preparation_sha256
+    _write_scores(d6r5_results, scores_raw)
+
+    with pytest.raises(DiagnosisValidationResultError) as caught:
+        _compute(d6r5_results)
+    _assert_reason(caught, "preparation_identity_mismatch")
+
+
+def test_rehashed_preparation_acquisition_field_still_must_match_collection(d6r5_results):
+    preparation_raw = json.loads(_prep_path(d6r5_results).read_text(encoding="utf-8"))
+    scores_raw = json.loads(_score_path(d6r5_results).read_text(encoding="utf-8"))
+    preparation_raw["cases"][0]["blind"]["execution_sha256"] = "0" * 64
+    preparation = _write_preparation(d6r5_results, preparation_raw)
+    scores_raw["preparation_sha256"] = preparation.preparation_sha256
+    _write_scores(d6r5_results, scores_raw)
+
+    with pytest.raises(DiagnosisValidationResultError) as caught:
+        _compute(d6r5_results)
+    _assert_reason(caught, "preparation_identity_mismatch")
+
+
 def test_collection_sha_and_order_are_verified(d6r5_results):
     raw = json.loads(_collection_path(d6r5_results).read_text(encoding="utf-8"))
     raw["cases"][0], raw["cases"][1] = raw["cases"][1], raw["cases"][0]
