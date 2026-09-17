@@ -45,6 +45,10 @@ from patchbench.application.diagnosis_validation_scoring import (
     DiagnosisValidationScoringError, DiagnosisValidationScoringReason,
     finalize_diagnosis_validation_scoring, prepare_diagnosis_validation_scoring,
 )
+from patchbench.application.diagnosis_validation_results import (
+    DiagnosisValidationResultError, DiagnosisValidationResultReason,
+    compute_diagnosis_validation_results,
+)
 
 __all__ = ["ReplayError", "ReplayExecution", "replay_run", "run_task",
            "DiagnosisValidationRunError", "DiagnosisValidationRunReason",
@@ -77,4 +81,7 @@ __all__ = ["ReplayError", "ReplayExecution", "replay_run", "run_task",
            "DiagnosisValidationScoringError",
            "DiagnosisValidationScoringReason",
            "finalize_diagnosis_validation_scoring",
-           "prepare_diagnosis_validation_scoring"]
+           "prepare_diagnosis_validation_scoring",
+           "DiagnosisValidationResultError",
+           "DiagnosisValidationResultReason",
+           "compute_diagnosis_validation_results"]
