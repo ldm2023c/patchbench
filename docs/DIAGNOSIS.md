@@ -3,17 +3,18 @@
 ## 1. Purpose and current state
 
 V1.2 Diagnosis infrastructure and validation machinery are implemented through
-D6-R2 and merged into `v1.2`. This is a programmatic subsystem, not a
+D6-R5 and merged into `v1.2`. This is a programmatic subsystem, not a
 `patchbench` Diagnosis CLI. See [Project Status](PROJECT_STATUS.md) for accepted
-commits, frozen suite identities, and current acquisition status.
+commits, frozen suite identities, final artifact identities, and interpretation
+boundaries.
 
 Blind Diagnosis is the headline mode. Contrastive Diagnosis is a secondary
 same-cell PASS ablation. Both produce hypotheses, not a root-cause oracle.
 Neither changes official evaluation, repairs patches, retrieves hidden context,
-or infers a reference fix. Human Gold scoring and aggregate metrics are
-implemented, but no final empirical Diagnosis-accuracy claim exists until the
-frozen real-provider dataset is completely acquired, reviewed, scored, and
-reported.
+or infers a reference fix. The frozen Validation V1 result reports bounded
+13-case semantic Diagnosis metrics plus two operational routing scores; it does
+not establish broad model reliability, production Diagnosis quality, statistical
+significance, or a general claim that PASS peers help or harm Diagnosis.
 
 ## 2. Official truth vs inference
 
@@ -313,21 +314,76 @@ stitches failed run artifacts. Historical D6-R1 full-run ledgers without
 `selected_case_ids` remain readable only for the old 26-slot full-run shape;
 partial shard ledgers must explicitly contain `selected_case_ids`.
 
-## 17. Real-provider acquisition status
+## 17. Acquisition collection and finalized results (D6-R3/R4/R5)
 
-Real validation has begun through a third-party OpenAI-compatible gateway
-(`https://ai.ailink1.com/v1`) using the OpenAI-compatible adapter. The successful
-formal shard `diag-v1-semantic-01-gpt55-none-20260916-133614` completed both
-Blind and Contrastive for `semantic-01` with model `gpt-5.5`, reasoning effort
-`none`, `max_output_tokens=2048`, `timeout_seconds=110`,
-`max_provider_input_bytes=1000000`, and SDK/application retries disabled.
+D6-R3 collects completed selected acquisition shards into an immutable collection
+after verifying the frozen suite, run ledger invariants, slot order, bundle path
+and hash identity, external policy, and persisted Diagnosis execution artifacts.
+The final collection is:
 
-This is not an official OpenAI API result, even though the adapter provenance
-uses `provider_name="openai"`. Full 13-case acquisition is incomplete. Current
-external blocking evidence is provider/gateway timeout instability under the
-locked request configuration; the project has not proven whether the timeout
-originates in the gateway, its upstream link, or the upstream model. No final
-Diagnosis metrics or Blind-vs-Contrastive conclusion are published yet.
+```text
+results/diagnosis-validation-v1/collections/gpt6astra-pro-v1/collection.json
+collection_sha256 = 592bdf99f36afcbd3d54d770a7bf12a484a1e42ca2c1b08867712d174b36a738
+```
+
+It contains exactly one successful Blind+Contrastive pair for each of the 13
+frozen semantic cases. Runtime ledgers and collections are local/ignored runtime
+artifacts rather than committed frozen inputs.
+
+D6-R4 prepares semantic scores and a human overclaim-review packet, then finalizes
+26 semantic scores only after applicable forbidden-claim review is complete. The
+final semantic scores are:
+
+```text
+results/diagnosis-validation-v1/semantic-scores/gpt6astra-pro-v1-semantic-scores-v1/scores.json
+score_sha256 = 5c3a74133ae9653d1e7d7906cd45e91810daea9964d35334e57ca65e5aa86e19
+```
+
+D6-R5 binds the collection, scoring preparation, finalized semantic scores,
+frozen manifest identity and operational Gold into the final deterministic result:
+
+```text
+results/diagnosis-validation-v1/final-results/gpt6astra-pro-v1-final-v1/result.json
+result_sha256 = cc5ffa71a418d622dcf904963870e447e04cab956d117724f06c0b810e300fa4
+```
+
+The final collection used protocol label `gpt6astra-pro-v1`, requested model
+`gpt-6-astra`, reasoning effort `none`, and a third-party OpenAI-compatible Pro
+route. Because the request used the OpenAI-compatible adapter, persisted provider
+provenance uses `provider_name="openai"`; that is not an official OpenAI API
+result, does not prove gateway/base URL identity cryptographically, and does not
+claim that `gpt-6-astra` is an official OpenAI model name. Earlier `gpt-5.5`
+gateway runs are historical attempts, not the final result.
+
+Final metrics on the frozen semantic suite:
+
+| Metric | Blind | Contrastive |
+|---|---:|---:|
+| Preferred Top-1 over non-abstention cases | 9/10 | 8/10 |
+| Acceptable Top-1 over non-abstention cases | 9/10 | 8/10 |
+| Acceptable Top-k over non-abstention cases | 9/10 | 8/10 |
+| Required evidence micro coverage | 30/35 (85.7%) | 28/35 (80.0%) |
+| Required evidence macro coverage | 87.5% | 82.5% |
+| Auditor pass rate | 13/13 | 12/13 |
+| Invalid citation cases / issues | 0/13 / 0 | 1/13 / 2 |
+| Abstention recall | 0/3 | 0/3 |
+| Unnecessary abstention | 0/10 | 0/10 |
+| Overclaim review coverage | 13/13 | 13/13 |
+| Frozen forbidden-claim violations | 0/13 | 0/13 |
+
+Operational routing is 2/2 correct for `agent_command_failed` and
+`agent_timed_out`. Paired Blind-vs-Contrastive deltas show no failure-family
+improvement, nine unchanged non-abstention families and one regression
+(`semantic-09`). Required evidence has one improvement (`semantic-07`), one
+regression (`semantic-09`) and total satisfied delta -2. Audit has one regression
+(`semantic-09`) with two invalid citation issues. Abstention correctness is
+unchanged, and both modes have 0/3 abstention recall.
+
+These results are bounded to the frozen Diagnosis Validation V1 suite. Do not
+state that Contrastive is generally worse, that PASS peers harm diagnosis, that
+Blind is universally better, that the model never overclaims, or that the result
+is statistically significant. The 0/13 frozen forbidden-claim violation count
+means no violations were marked during the required human review for this suite.
 
 ## 18. Invariants worth testing
 
@@ -343,7 +399,9 @@ See [compiler tests](../tests/test_diagnosis_evidence.py),
 [execution tests](../tests/test_diagnosis_execution.py),
 [Contrastive execution tests](../tests/test_diagnosis_contrastive_execution.py),
 [validation scoring tests](../tests/test_diagnosis_validation_scoring.py),
-[metrics tests](../tests/test_diagnosis_metrics.py), and
-[validation-run tests](../tests/test_diagnosis_validation_run.py). These are
-mostly deterministic/mocked checks; runtime acquisition artifacts are not a final
-semantic accuracy report.
+[metrics tests](../tests/test_diagnosis_metrics.py),
+[validation-run tests](../tests/test_diagnosis_validation_run.py),
+[collection tests](../tests/test_diagnosis_validation_collection.py), and
+[final-result tests](../tests/test_diagnosis_validation_results.py). These are
+mostly deterministic/mocked checks; runtime provider artifacts remain local and
+ignored even when they feed the final Validation V1 result.

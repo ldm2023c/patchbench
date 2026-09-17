@@ -6,9 +6,10 @@ this document when they disagree.
 
 ## Current state and next action
 
-- **Integration branch:** `v1.2`; D6-R2 pre-documentation-sync implementation
-  baseline is `8507dbd` (`fix: tighten diagnosis shard ledger compatibility`).
-- **Implemented and code-reviewed:** V1.2 Diagnosis D1–D6-R2 is merged into
+- **Integration branch:** `v1.2`; accepted D6-R5 implementation head is
+  `929f44f4cdd43cd8eb5262a62853767c9a002c20`. The current feature branch is a
+  documentation-only sync on top of that implementation baseline.
+- **Implemented and code-reviewed:** V1.2 Diagnosis D1–D6-R5 is merged into
   `v1.2`.
 - **Historical release:** V1.1 frozen evidence is COMPLETE; V1 M0–M6 is also
   complete.
@@ -16,25 +17,22 @@ this document when they disagree.
   and two operational routing cases. Freeze manifest byte SHA is
   `81147642b9d39cc265c69151d470e03a8c01ed53b6a629a922e0106b4a216d14`; frozen
   suite SHA is `ee724d3825c97f583bbbe13addd3aa0cd61b6ba3265680153486e7274c08643a`.
-- **Real-provider acquisition:** in progress, not complete. One formal sharded
-  acquisition has completed through a third-party OpenAI-compatible gateway
-  (`https://ai.ailink1.com/v1`):
-  `diag-v1-semantic-01-gpt55-none-20260916-133614`, selected case
-  `semantic-01`, Blind completed and Contrastive completed.
-- **External blocker:** current acquisition is blocked by provider/gateway
-  availability / timeout instability under the locked request configuration. Do
-  not attribute the timeout specifically to the gateway, gateway-to-upstream
-  link, or upstream model; that has not been proven.
-- **Empirical boundary:** no final Diagnosis accuracy, family accuracy,
-  abstention-quality, or Blind-vs-Contrastive empirical conclusion is published.
-  Only complete successful shards may enter the final validation dataset.
+- **Real-provider acquisition:** complete for the frozen 13 semantic cases through
+  collection `gpt6astra-pro-v1`; collection SHA is
+  `592bdf99f36afcbd3d54d770a7bf12a484a1e42ca2c1b08867712d174b36a738`.
+- **Final semantic scores:** `gpt6astra-pro-v1-semantic-scores-v1`; score SHA is
+  `5c3a74133ae9653d1e7d7906cd45e91810daea9964d35334e57ca65e5aa86e19`. Human
+  forbidden-claim review is complete for all applicable diagnoses.
+- **Final Validation V1 result:** `gpt6astra-pro-v1-final-v1`; result SHA is
+  `cc5ffa71a418d622dcf904963870e447e04cab956d117724f06c0b810e300fa4`.
+- **Empirical boundary:** the reported Diagnosis metrics apply only to the frozen
+  Validation V1 suite. They do not establish broad model reliability, production
+  diagnosis quality, statistical significance, or a general claim that PASS peers
+  help or harm Diagnosis.
 
-The next work is to wait for provider/gateway health to recover, acquire the
-remaining semantic cases under the same frozen configuration, implement a
-successful-shard collector/selection step if still absent from source, run the
-already implemented D6.1 scoring, perform required human overclaim review, run
-D6.2 aggregate and paired metrics, score the two operational routing cases, and
-produce the final V1.2 empirical validation report.
+The next work is human review/publication or a separate future milestone. Optional
+V2 context-engine/service work remains deferred and is not authorized by the V1.2
+Diagnosis result.
 
 ## Accepted Diagnosis history
 
@@ -51,8 +49,11 @@ owner's external review status, not a Git-generated verdict.
 | D6.1 — Human Gold + per-case scoring | PASS / merged | `26b04955c63b322aaf6d9781c5b4e6ab1858a730` |
 | D6.2 — aggregate + paired metrics | PASS / merged | implementation `52a2dd2e90e7623e19f03e94f669ce37f213334b`; Gold identity fix `93ab6a75a8e3d08271f8f9604c0e16cbf0675681` |
 | D6.3 — frozen Validation V1 | PASS / merged | gold lock `d3b105c`; Phase A/B/final freeze through `e044842` |
-| D6-R1 — frozen provider-run harness | PASS / merged | `3daa7250a39f80125f65dc2be6340c21dfcfb0c8`; hardening `8f5a059`; includes removal of explicit `background=False` for OpenAI-compatible gateway compatibility |
-| D6-R2 — sharded acquisition | PASS / merged | `ad28043`; ledger compatibility fix `8507dbd` |
+| D6-R1 — frozen provider-run harness | PASS / merged | `3daa7250a39f80125f65dc2be6340c21dfcfb0c8`; hardening `8f5a05951df4bd43c63ad48bcc9e3ec67e8062b4`; includes removal of explicit `background=False` for OpenAI-compatible gateway compatibility |
+| D6-R2 — sharded acquisition | PASS / merged | `ad280432e3dd1f991bfbca3520a1d2a603b8eabe`; ledger compatibility fix `8507dbda5704f52d0712501a79844d0d34a5a4b5` |
+| D6-R3 — immutable acquisition collection | PASS / merged | `bd1de8874cf9ddd5707f0c962552e17a3ccb8d83` |
+| D6-R4 — semantic scoring finalization | PASS / merged | `ea902b55347c4a9611ec7507f7c3d61786cc7f35` |
+| D6-R5 — operational scoring + final result | PASS / merged | implementation `204007fe99b509cab6e6f14b49675e92fba4fbcc`; provenance fixes `33f4209b193e17629917685079ebe9311f074cd9` and `929f44f4cdd43cd8eb5262a62853767c9a002c20` |
 
 ## Frozen Validation V1 suite
 
@@ -80,50 +81,67 @@ artifacts for Contrastive verification live under
 `fixtures/diagnosis_validation/v1_candidates/_support` and are not copied into
 the frozen validation tree.
 
-## Real-provider acquisition status
+## Real-provider acquisition and final result
 
-The locked acquisition configuration is:
+The final collection uses protocol label `gpt6astra-pro-v1`, requested model
+`gpt-6-astra`, reasoning effort `none`, and the OpenAI-compatible adapter through
+a third-party OpenAI-compatible gateway. This is not an official OpenAI API
+result, does not prove the gateway/base URL cryptographically, and does not claim
+that `gpt-6-astra` is an official OpenAI model name. Earlier `gpt-5.5` gateway
+attempts are historical acquisition attempts and are not the final Validation V1
+result.
 
-- model: `gpt-5.5`
-- reasoning effort: `none`
-- max output tokens: `2048`
-- timeout seconds: `110`
-- max provider input bytes: `1000000`
-- SDK/application retries: `0`
-- Responses API-compatible request
-- `store=false`
-- `tools=[]`
-- `tool_choice="none"`
-- `truncation="disabled"`
-- `stream=false`
+Final artifacts under `results/diagnosis-validation-v1/`:
 
-The live experiment uses a third-party OpenAI-compatible gateway at
-`https://ai.ailink1.com/v1`. The PatchBench adapter and persisted provider
-provenance use `provider_name="openai"` because the implementation uses the
-OpenAI-compatible SDK/Responses adapter. Do not describe the successful shard as
-an official OpenAI API result.
+- `collections/gpt6astra-pro-v1/collection.json`
+  - collection SHA: `592bdf99f36afcbd3d54d770a7bf12a484a1e42ca2c1b08867712d174b36a738`
+  - 13/13 semantic cases selected with successful Blind and Contrastive slots.
+- `scoring-preparations/gpt6astra-pro-v1-scoring-v1/preparation.json` and
+  `overclaim-review-packet.json`
+  - D6-R4 preparation for human forbidden-claim review.
+- `semantic-scores/gpt6astra-pro-v1-semantic-scores-v1/scores.json`
+  - score SHA: `5c3a74133ae9653d1e7d7906cd45e91810daea9964d35334e57ca65e5aa86e19`
+  - 26 finalized semantic scores.
+- `final-results/gpt6astra-pro-v1-final-v1/result.json`
+  - result SHA: `cc5ffa71a418d622dcf904963870e447e04cab956d117724f06c0b810e300fa4`
+  - operational routing: 2/2 correct.
 
-The successful formal shard is:
+Final semantic aggregate on the 13-case frozen suite:
 
-```text
-run_id: diag-v1-semantic-01-gpt55-none-20260916-133614
-selected_case_ids: [semantic-01]
-Blind: completed
-Contrastive: completed
-```
+| Metric | Blind | Contrastive |
+|---|---:|---:|
+| Preferred Top-1 over non-abstention cases | 9/10 | 8/10 |
+| Acceptable Top-1 over non-abstention cases | 9/10 | 8/10 |
+| Acceptable Top-k over non-abstention cases | 9/10 | 8/10 |
+| Required evidence micro coverage | 30/35 (85.7%) | 28/35 (80.0%) |
+| Required evidence macro coverage | 87.5% | 82.5% |
+| Auditor pass rate | 13/13 | 12/13 |
+| Invalid citation cases / issues | 0/13 / 0 | 1/13 / 2 |
+| Abstention recall | 0/3 | 0/3 |
+| Unnecessary abstention | 0/10 | 0/10 |
+| Overclaim review coverage | 13/13 | 13/13 |
+| Frozen forbidden-claim violations | 0/13 | 0/13 |
 
-Earlier full-run attempts stopped after provider failures at slot 4
-and slot 10. A separate early failed run was caused by missing local credentials
-and is not evidence about model/gateway reliability. Later exact-request
-diagnostics with credentials and base URL confirmed observed `APITimeoutError`
-near the locked 110-second timeout; a generic padded non-benchmark provider
-health check also timed out near the same timeout. The conservative current
-blocker is provider/gateway timeout instability under the locked configuration.
+Paired Blind-vs-Contrastive deltas:
 
-Failed acquisition attempts are retained and never overwritten, resumed, or
-stitched. A failed shard must be rerun under a new run ID. Only one complete
-successful Blind+Contrastive shard per semantic case may feed the final
-validation dataset.
+- Failure-family transitions over 10 non-abstention cases: improved 0, unchanged
+  9, regressed 1. The sole family regression is `semantic-09`.
+- Required-evidence transitions over 10 non-abstention cases: improved 1,
+  unchanged 8, regressed 1, total satisfied delta -2. `semantic-07` improved by
+  +1 required evidence item with unchanged family/audit; `semantic-09` regressed
+  from 4/4 to 1/4 required evidence, with family regression and Audit PASS→FAIL.
+- Audit transitions over all 13 semantic cases: improved 0, unchanged 12,
+  regressed 1. The sole Audit regression is `semantic-09`, with two invalid
+  citation issues.
+- Abstention correctness was unchanged for all 13 pairs; both modes failed to
+  abstain on all three `should_abstain` cases.
+
+Interpretation: on this frozen suite, Contrastive did not improve failure-family
+accuracy and introduced one family/audit regression. This is a bounded
+observation, not a claim that Contrastive is generally worse or that PASS peers
+harm Diagnosis. The 0/13 frozen forbidden-claim violation count means no
+violations were marked in the human review for this frozen suite; it is not proof
+that the model never overclaims.
 
 ## Implemented boundary
 
@@ -145,7 +163,8 @@ human-reviewed forbidden overclaim fields. D6.2 aggregates deterministic counts
 and exact paired Blind/Contrastive deltas; it intentionally has no global
 composite winner score. D6.3 freezes the 15-case validation suite. D6-R1/R2 run
 real-provider acquisition with immutable ledgers and optional semantic-case
-shards.
+shards. D6-R3 collects selected successful shards, D6-R4 finalizes semantic
+scores after human overclaim review, and D6-R5 emits the final result artifact.
 
 These are programmatic APIs and scripts. Existing `patchbench` CLI commands
 remain `validate-task`, `run`, `experiment`, `replay`, and `analyze`; there is
@@ -165,12 +184,15 @@ no public Diagnosis CLI command. See [Diagnosis](DIAGNOSIS.md) for contracts and
   private-repository safety or prompt-injection security claim follows.
 - D6 scoring is deterministic validation against Human Gold; it is not an LLM
   judge and does not change official truth.
-- D6-R acquisition has no retry, resume, hidden collector, or failed-run stitching.
+- D6-R acquisition has no retry, resume, or failed-run stitching. The D6-R3
+  collector accepts only complete selected successful shards and records immutable
+  collection identity.
 - Do not move `v1.1-evidence-freeze` from
   `94cd2873c42af7f5c697e6316316c9cb59fc6d8b`, rewrite frozen evidence, replace
   failed Runs, or silently add new experiments.
 - No retrieval, automatic repair, multiple peers, cross-agent Contrastive work,
-  final Diagnosis accuracy, or Optional V2 context/service expansion is present.
+  statistical significance claim, broad production Diagnosis claim, or Optional
+  V2 context/service expansion is present.
 
 ## Historical empirical evidence
 

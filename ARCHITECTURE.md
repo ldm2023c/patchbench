@@ -36,7 +36,7 @@ Infrastructure-specific logic belongs in adapters.
 
 ### V1.2 Diagnosis layers and trust boundaries
 
-D1–D6-R2 infrastructure is implemented and externally reviewed. Diagnosis is an
+D1–D6-R5 infrastructure is implemented and externally reviewed. Diagnosis is an
 application API alongside the existing CLI flow; real-provider validation uses a
 separate script harness.
 
@@ -55,6 +55,8 @@ L4 deterministic structural/citation Auditor → immutable artifacts
 L5 Human Gold deterministic scoring
  ↓ exact Blind/Contrastive pairing and aggregate metrics
 L6 aggregate + paired validation metrics
+ ↓ immutable collection, finalized semantic scores, operational scoring
+L7 final frozen-suite validation result artifact
 ```
 
 Routing itself reads recorded outcomes, not source bytes. Evidence verification
@@ -106,12 +108,14 @@ Auditor issues, and human-reviewed overclaims. D6.2 aggregates exact counts and
 paired Blind/Contrastive transitions without a composite winner score. The frozen
 Validation V1 suite has 13 semantic cases and two operational routing cases.
 D6-R acquisition writes run ledgers under `results/diagnosis-validation-v1/<run-id>/`;
-D6-R2 can shard by semantic case while preserving frozen suite order. These
-runtime shards feed L5 only after a successful Blind+Contrastive pair is
-available. See [Diagnosis technical reference](docs/DIAGNOSIS.md) and
-[current handoff](docs/PROJECT_STATUS.md). No empirical Diagnosis accuracy is
-claimed until full acquisition, scoring, human overclaim review, and reporting
-are complete.
+D6-R2 can shard by semantic case while preserving frozen suite order. D6-R3
+collects exactly one successful Blind+Contrastive pair per frozen semantic case.
+D6-R4 finalizes semantic scores after human forbidden-claim review. D6-R5 writes
+the final deterministic result under `results/diagnosis-validation-v1/final-results/`.
+See [Diagnosis technical reference](docs/DIAGNOSIS.md) and
+[current handoff](docs/PROJECT_STATUS.md). The published Diagnosis metrics are
+bounded to the frozen Validation V1 suite and do not establish broad benchmark or
+production reliability.
 
 ---
 
@@ -463,7 +467,10 @@ src/patchbench/
 │   ├── diagnosis_prompt.py
 │   ├── diagnosis_suite.py
 │   ├── diagnosis_validation.py
+│   ├── diagnosis_validation_collection.py
+│   ├── diagnosis_validation_results.py
 │   ├── diagnosis_validation_run.py
+│   ├── diagnosis_validation_scoring.py
 │   ├── evaluation.py
 │   ├── experiment.py
 │   ├── local_run.py
@@ -485,7 +492,10 @@ src/patchbench/
 │   ├── diagnosis_metrics.py
 │   ├── diagnosis_suite.py
 │   ├── diagnosis_validation.py
+│   ├── diagnosis_validation_collection.py
+│   ├── diagnosis_validation_results.py
 │   ├── diagnosis_validation_run.py
+│   ├── diagnosis_validation_scoring.py
 │   ├── evaluation_evidence.py
 │   ├── evidence_errors.py
 │   ├── failure.py

@@ -3,8 +3,8 @@
 ## 1. Project Overview
 
 V1.1 is COMPLETE. V1.2 Diagnosis infrastructure and validation machinery are
-implemented through D6-R2; real-provider acquisition and final empirical
-reporting remain incomplete. See [Project Status](docs/PROJECT_STATUS.md).
+implemented through D6-R5, including the frozen Validation V1 result artifact.
+See [Project Status](docs/PROJECT_STATUS.md).
 
 **Project Name:** PatchBench
 
@@ -63,8 +63,8 @@ The current workflow retains the completed foundation and adds optional Diagnosi
     infer Blind or same-cell PASS Contrastive hypotheses without revising truth.
 12. Audit citations and preserve completed Diagnosis execution artifacts.
 13. Score typed Diagnoses against Human Gold, aggregate Blind/Contrastive metrics,
-    and run frozen real-provider validation shards before claiming empirical
-    Diagnosis accuracy.
+    collect frozen real-provider validation shards, and publish bounded frozen-suite
+    Diagnosis results with explicit limitations.
 
 ---
 
@@ -158,7 +158,7 @@ The completed V1/V1.1 foundation remains implemented:
 - historical patch Replay with zero Agent executions.
 
 V1.2 Evidence-Grounded Diagnosis infrastructure and validation machinery through
-D6-R2 are complete, externally reviewed, and merged into `v1.2`. Official evaluator truth is deterministic and
+D6-R5 are complete, externally reviewed, and merged into `v1.2`. Official evaluator truth is deterministic and
 immutable within Diagnosis. Diagnosis is optional evidence-grounded inference:
 it may be uncertain, wrong, or abstain, and never changes official PASS/FAIL.
 
@@ -176,15 +176,19 @@ semantic scoring, aggregate metrics, exact Blind/Contrastive pairing, paired
 transition/delta metrics, and a frozen Diagnosis Validation V1 suite. The suite
 contains 15 cases: 13 semantic cases and two operational routing cases. D6-R1/R2
 provide a real-provider acquisition runner and deterministic semantic-case
-sharding; a shard always runs Blind then Contrastive and never retries or
-resumes.
+sharding; D6-R3 freezes the selected successful acquisition collection; D6-R4
+finalizes semantic scores with human forbidden-claim review; D6-R5 publishes the
+final deterministic result artifact.
 
-Real-provider validation is in progress, not complete. One formal sharded
-acquisition through a third-party OpenAI-compatible gateway completed for
-`semantic-01`, but full 13-case semantic acquisition is blocked by external
-provider/gateway timeout instability under the locked request configuration.
-No published Diagnosis accuracy, family accuracy, abstention metric, or
-Blind-vs-Contrastive conclusion exists yet. The
+Frozen real-provider validation completed through a third-party OpenAI-compatible
+gateway using the `gpt-6-astra` Pro route label. On the frozen 13 semantic cases,
+Blind achieved 9/10 preferred Top-1 and 9/10 acceptable Top-k on non-abstention
+cases; Contrastive achieved 8/10 for both. Both modes had 0/3 abstention recall.
+The paired comparison showed no family improvement from Contrastive, one family
+regression (`semantic-09`), one required-evidence improvement, one
+required-evidence regression and one Audit regression. The operational routing
+cases were 2/2 correct. These are bounded Validation V1 results, not broad model
+reliability or production-diagnosis claims. The
 [V1.1 frozen release](evidence/v1.1/FINAL_REPORT.md) remains the completed
 empirical coding-agent reliability release: 32 Runs, 30 PASS, two external
 Codex quota failures, and 30/30 normally completed executions passing.

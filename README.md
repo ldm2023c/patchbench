@@ -39,7 +39,7 @@ release was externally accepted at `7a99c2c`.
 
 ## V1.2 — Evidence-Grounded Diagnosis
 
-Diagnosis infrastructure **D1–D6-R2 is implemented, externally code-reviewed,
+Diagnosis infrastructure **D1–D6-R5 is implemented, externally code-reviewed,
 and merged into `v1.2`**. Official deterministic evaluation remains truth:
 Diagnosis is optional inference and never changes official PASS/FAIL.
 
@@ -53,19 +53,20 @@ preserve the inference and its audit, including Audit FAIL.
 D6 adds Human Gold contracts, deterministic per-case scoring, aggregate and
 paired Blind/Contrastive metrics, and a frozen Diagnosis Validation V1 suite
 with 13 semantic cases plus two operational routing cases. The real-provider
-acquisition runner is sharded by semantic case-pair: one selected case always
-runs Blind then Contrastive, with no retry or resume.
+acquisition runner supports frozen full-run or semantic-case shards; each
+selected semantic case runs Blind then Contrastive, with no retry or resume.
 
 Diagnosis is currently a **programmatic subsystem**, not a `patchbench` CLI
-command. Real validation has begun through a third-party OpenAI-compatible
-gateway: the formal shard
-`diag-v1-semantic-01-gpt55-none-20260916-133614` completed both Blind and
-Contrastive for `semantic-01` under the frozen configuration. Full 13-case
-semantic acquisition is not complete, and current acquisition is blocked by
-external provider/gateway timeout instability under that locked request
-configuration. There is still no published Diagnosis accuracy or
-Blind-vs-Contrastive empirical conclusion. The V1.1 frozen release above remains
-the completed empirical reliability evidence.
+command. Frozen real validation has completed for the 13 semantic cases through
+a third-party OpenAI-compatible gateway using the `gpt-6-astra` Pro route label,
+plus deterministic operational routing scores for the two operational cases.
+On this frozen 13-case semantic suite, Blind scored 9/10 preferred Top-1 and
+9/10 acceptable Top-k over non-abstention cases; Contrastive scored 8/10 for
+both. Both modes had 0/3 abstention recall, and the only paired family/audit
+regression was `semantic-09`. These are bounded suite results, not a general
+claim that PASS peers harm diagnosis or that Blind is universally better. The
+V1.1 frozen release above remains the completed empirical coding-agent
+reliability evidence.
 
 See the [Diagnosis reference](docs/DIAGNOSIS.md) and
 [current handoff](docs/PROJECT_STATUS.md).
@@ -337,14 +338,12 @@ isolation, not a production-grade hostile multi-tenant security boundary.
 
 V1 and V1.1 are historical completed releases. The current integration branch
 is `v1.2`: Diagnosis infrastructure and validation machinery are implemented
-through D6-R2, including Human Gold scoring, aggregate/pair metrics, the frozen
-15-case validation suite, and sharded real-provider acquisition. The remaining
-work is to acquire the rest of the frozen semantic shards after provider/gateway
-health recovers, collect one successful Blind+Contrastive shard per semantic
-case, run the implemented scoring/metrics, complete required human overclaim
-review, score the two operational cases, and publish the final empirical
-validation report. Optional V2 context-engine/service work remains deferred. See
-[Project Status](docs/PROJECT_STATUS.md) for accepted commits and boundaries.
+through D6-R5, including Human Gold scoring, aggregate/pair metrics, the frozen
+15-case validation suite, sharded real-provider acquisition, immutable
+collection, finalized semantic scores, operational route scoring, and the final
+Validation V1 result artifact. Optional V2 context-engine/service work remains
+deferred. See [Project Status](docs/PROJECT_STATUS.md) for accepted commits,
+artifact identities, and interpretation boundaries.
 
 Historical patch Replay has been validated end to end with both a FakeAgent
 source Run and a real Codex source Run using Docker evaluation. The real

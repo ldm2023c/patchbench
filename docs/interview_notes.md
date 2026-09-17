@@ -11,11 +11,12 @@ fixed official evaluation, persisted evidence, and patch Replay. V1.1 froze a
 normally completed executions passed. V1.2 adds reviewed evidence-grounded
 Diagnosis infrastructure: complete bounded evidence, Blind and same-cell PASS
 Contrastive hypotheses, a structural citation Auditor, and immutable artifacts.
-Human-Gold scoring, aggregate metrics, and a frozen 15-case validation suite are
-implemented. Real provider validation is in progress: one formal Blind/Contrastive
-shard completed through an OpenAI-compatible gateway, but full acquisition is
-blocked by external timeout instability. I do not yet claim measured Diagnosis
-accuracy.
+Human-Gold scoring, aggregate metrics, a frozen 15-case validation suite, real
+provider acquisition, semantic score finalization, and the final Validation V1
+result are implemented. On the frozen 13 semantic cases, Blind reached 9/10
+preferred Top-1 over non-abstention cases while Contrastive reached 8/10; both
+modes had 0/3 abstention recall. I describe these as bounded suite results, not
+general Diagnosis accuracy.
 
 ## 2. 2-minute story
 
@@ -40,10 +41,8 @@ citations deterministically, persist the attempt, and score it against Human Gol
 headline mode. Contrastive adds one verified same-cell PASS as secondary comparison
 evidence, never a reference fix. The provider cannot change official PASS/FAIL.
 The important limitation is that structural correctness is not semantic accuracy:
-Human-Gold validation infrastructure is implemented, but full live validation is
-not complete. One formal shard has succeeded through an OpenAI-compatible gateway;
-the current blocker is provider/gateway timeout instability under the locked
-request configuration.
+the final real-provider Validation V1 result is a small frozen-suite measurement,
+not proof of production diagnosis quality or broad model reliability.
 
 ## 3. 5-minute architecture walkthrough
 
@@ -74,7 +73,8 @@ request configuration.
 7. **Validation layer.** D6.1 scores route and semantic Diagnosis against typed
    Human Gold; D6.2 aggregates exact metrics and paired Blind/Contrastive deltas;
    D6.3 freezes a 15-case suite; D6-R1/R2 acquire real-provider results with
-   immutable full-run or sharded ledgers.
+   immutable full-run or sharded ledgers; D6-R3/R4/R5 collect successful shards,
+   finalize human-reviewed semantic scores, and publish the final result artifact.
 
 ## 4. Questions and defensible answers
 
@@ -105,11 +105,14 @@ request configuration.
 ## 5. Current limitations — say this explicitly
 
 Diagnosis validation infrastructure is implemented through Human-Gold scoring,
-aggregate/paired metrics and a frozen 15-case suite. Real provider validation is
-in progress: the sharded acquisition path has produced a complete live
-Blind/Contrastive result for `semantic-01` through an OpenAI-compatible gateway,
-but full acquisition is currently blocked by external timeout instability.
-Therefore there is currently no empirical Diagnosis-accuracy claim.
+aggregate/paired metrics, a frozen 15-case suite, real-provider acquisition,
+semantic score finalization and the final Validation V1 result. On the frozen
+13 semantic cases, Blind scored 9/10 preferred Top-1 over non-abstention cases
+and Contrastive scored 8/10; both modes had 0/3 abstention recall. The paired
+comparison showed no family improvement from Contrastive and one family/audit
+regression at `semantic-09`. These are bounded suite results, not statistical
+significance, production readiness, or a claim that Contrastive is generally
+worse.
 
 V1.1 is the only current empirical coding-agent reliability release. Its 30/32
 end-to-end PASS rate is 93.75%; 30/30 normally completed executions passed.
@@ -122,20 +125,20 @@ See the [frozen final report](../evidence/v1.1/FINAL_REPORT.md).
 
 ## 6. Next work and resume wording
 
-Next: finish real-provider acquisition for the remaining frozen semantic cases
-under the same configuration, add the successful-shard collector if still absent,
-run the implemented D6.1/D6.2 scoring pipeline with required human overclaim
-review, score the two operational route cases, and publish the final validation
-report. Optional V2 context/service expansion is deferred. Current Diagnosis is
+Next: human review/publication or a separately authorized future milestone.
+Optional V2 context/service expansion is deferred. Current Diagnosis is
 programmatic; there is no `patchbench diagnose` CLI.
 
 Defensible resume wording: “Built a local coding-agent reliability harness with
 frozen evaluation, historical patch Replay, and a 32-Run evidence release; added
 reviewed evidence-grounded Diagnosis infrastructure with strict provider
 contracts, deterministic citation auditing, Human-Gold validation contracts,
-paired Blind/Contrastive metrics, and immutable execution provenance.” Do not
-add an accuracy percentage for Diagnosis or describe the gateway shard as an
-official OpenAI validation result.
+paired Blind/Contrastive metrics, immutable execution provenance, and a bounded
+15-case Validation V1 result.” If giving numbers, specify the denominator and
+suite: “On the frozen 13 semantic cases, Blind scored 9/10 preferred Top-1 over
+non-abstention cases; Contrastive scored 8/10; both had 0/3 abstention recall.”
+Do not call the gateway result an official OpenAI validation result or a broad
+Diagnosis accuracy claim.
 
 ## Appendix: Historical decision snapshots
 
