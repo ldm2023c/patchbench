@@ -1,5 +1,12 @@
 """PatchBench domain models."""
 
+from patchbench.domain.benchmark import (
+    BenchmarkCapability, BenchmarkCandidateFile, BenchmarkCandidateManifest,
+    BenchmarkCandidateTask, BenchmarkDesignManifest, BenchmarkTaskProfile,
+    DesignedDifficulty, compute_benchmark_candidate_sha256,
+    compute_benchmark_design_sha256,
+)
+
 from patchbench.domain.aggregation import (
     ExperimentAggregationError,
     aggregate_runs,
@@ -122,6 +129,15 @@ from patchbench.domain.diagnosis_validation_run import (
 )
 
 __all__ = [
+    "BenchmarkCapability",
+    "BenchmarkCandidateFile",
+    "BenchmarkCandidateManifest",
+    "BenchmarkCandidateTask",
+    "BenchmarkDesignManifest",
+    "BenchmarkTaskProfile",
+    "DesignedDifficulty",
+    "compute_benchmark_candidate_sha256",
+    "compute_benchmark_design_sha256",
     "DiagnosisValidationFinalScores",
     "DiagnosisValidationFinalResult",
     "compute_diagnosis_validation_result_sha256",

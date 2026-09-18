@@ -1,0 +1,79 @@
+{
+  "schema_version": 1,
+  "suite_id": "patchbench-v1.3",
+  "difficulty_rubric_version": "structural-v1",
+  "tasks": [
+    {
+      "task_id": "env_config",
+      "primary_capability": "local_boundary",
+      "designed_difficulty": "easy",
+      "rationale": "Typed environment configuration parsing distinguishes unset, empty, false, zero, enums, and numeric bounds within one principal repair locus."
+    },
+    {
+      "task_id": "request_signing",
+      "primary_capability": "local_boundary",
+      "designed_difficulty": "medium",
+      "rationale": "HMAC canonicalization must coordinate repeated and empty query fields, exact percent encoding, UTF-8, ordered duplicate headers, path and body identity, and verification consistency."
+    },
+    {
+      "task_id": "byte_ranges",
+      "primary_capability": "local_boundary",
+      "designed_difficulty": "hard",
+      "rationale": "A bounded byte-range parser and resolver combines suffix, open-ended, malformed, and unsatisfiable cases with several interacting boundary rules."
+    },
+    {
+      "task_id": "config_resolution",
+      "primary_capability": "cross_file",
+      "designed_difficulty": "easy",
+      "rationale": "CLI, environment, config, and default precedence spans loader and runtime boundaries while preserving explicit false and zero values."
+    },
+    {
+      "task_id": "message_codec",
+      "primary_capability": "cross_file",
+      "designed_difficulty": "medium",
+      "rationale": "A versioned model, encoder, and decoder must agree on validation, round trips, and canonical bytes across module contracts."
+    },
+    {
+      "task_id": "schema_upgrade",
+      "primary_capability": "cross_file",
+      "designed_difficulty": "hard",
+      "rationale": "Persisted v1 to v2 migration coordinates readers, writers, and migration with backward reads, v2 writes, future-version rejection, and idempotency."
+    },
+    {
+      "task_id": "resource_lifecycle",
+      "primary_capability": "state_consistency",
+      "designed_difficulty": "easy",
+      "rationale": "A local acquire, use, and release lifecycle must handle exactly-once cleanup, failure cleanup, and closed-state behavior with deterministic fake resources."
+    },
+    {
+      "task_id": "streaming_events",
+      "primary_capability": "state_consistency",
+      "designed_difficulty": "medium",
+      "rationale": "Incremental NDJSON decoding tracks chunk, UTF-8, framing, record-number, and size-limit state across multiple feed operations."
+    },
+    {
+      "task_id": "atomic_batch",
+      "primary_capability": "state_consistency",
+      "designed_difficulty": "hard",
+      "rationale": "Ordered transactional mutations combine rollback, journals, idempotency, conflict handling, and the requirement to leave no partial effects."
+    },
+    {
+      "task_id": "format_fallback",
+      "primary_capability": "regression_robustness",
+      "designed_difficulty": "easy",
+      "rationale": "New-format parsing may use legacy fallback for the intended absence condition, while malformed input and unrelated failures must remain visible."
+    },
+    {
+      "task_id": "atomic_writer",
+      "primary_capability": "regression_robustness",
+      "designed_difficulty": "medium",
+      "rationale": "Temporary write, replace, and cleanup behavior must survive deterministic filesystem faults and retry or error paths without leaving bad state."
+    },
+    {
+      "task_id": "cache_revalidation",
+      "primary_capability": "regression_robustness",
+      "designed_difficulty": "hard",
+      "rationale": "Fresh, stale, and expired cache states interact with conditional validation, stale-if-error fallback, validator preservation, protocol errors, and timing."
+    }
+  ]
+}
