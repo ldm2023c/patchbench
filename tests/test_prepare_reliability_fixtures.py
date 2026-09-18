@@ -74,6 +74,10 @@ def test_preparation_and_behavioral_baseline(tmp_path, name):
             }[name]
             for case in failures:
                 assert re.search(rf"^{case} \([^\n]+\) \.\.\. (FAIL|ERROR)$", result.stderr, re.MULTILINE), result.stderr
+            if name == "env_config":
+                for key in ("APP_DEBUG", "APP_WORKERS", "APP_MODE", "APP_LABEL"):
+                    for value in (False, 0, None):
+                        assert f"(name='{key}', value={value!r}) ... FAIL" in result.stderr
             legacy = {"streaming_events": "test_simple_ascii", "request_signing": "test_simple_legacy_request",
                       "atomic_batch": "test_single_commit", "cache_revalidation": "test_fresh_hit",
                       "env_config": "test_missing_defaults", "byte_ranges": "test_first_byte",

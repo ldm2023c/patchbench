@@ -3,7 +3,7 @@ id: env_config
 repository:
   type: local
   path: ../../../fixtures/reliability/.prepared/env_config
-  base_commit: ece46129505f0ae60193475f9cbd9e81c7a0d93c
+  base_commit: cb27f12e22bdd6981ef7283c53cb84d177707e34
 task:
   prompt: |
     Environment-derived runtime configuration behaves inconsistently when an

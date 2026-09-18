@@ -91,6 +91,12 @@ class EnvironmentConfigTests(unittest.TestCase):
             with self.subTest(name=name), self.assertRaisesRegex(ConfigError, name):
                 load_env({name: 7})
 
+    def test_present_falsy_owned_values_must_be_text(self):
+        for name in ("APP_DEBUG", "APP_WORKERS", "APP_MODE", "APP_LABEL"):
+            for value in (False, 0, None):
+                with self.subTest(name=name, value=value), self.assertRaisesRegex(ConfigError, name):
+                    load_env({name: value})
+
 
 if __name__ == "__main__":
     unittest.main()

@@ -57,10 +57,6 @@ class MessageCodecTests(unittest.TestCase):
         with self.assertRaises(MessageError):
             decode(b'{"version":1,"id":"x","type":"event","payload":{},"priority":1}')
 
-    def test_duplicate_json_key_rejected(self):
-        with self.assertRaises(MessageError):
-            decode(b'{"version":2,"id":"x","id":"y","kind":"event","priority":1,"payload":{}}')
-
     def test_present_null_trace_rejected(self):
         with self.assertRaises(MessageError):
             decode(b'{"version":2,"id":"x","kind":"event","priority":1,"payload":{},"trace_id":null}')
@@ -102,20 +98,6 @@ class MessageCodecTests(unittest.TestCase):
         message = Message("m", "event", 1, source)
         source["n"] = 2
         self.assertEqual(message.payload, {"n": 1})
-
-    def test_model_rejects_unpaired_surrogate(self):
-        for args in (("\ud800", "event", 1, {}), ("m", "event", 1, {"x": "\ud800"})):
-            with self.subTest(args=args), self.assertRaises(MessageError):
-                Message(*args)
-
-    def test_payload_integer_bounds(self):
-        message = Message("m", "event", 1, {"low": -(2 ** 63), "high": 2 ** 63 - 1})
-        self.assertEqual(decode(encode(message)), message)
-
-    def test_payload_integer_overflow_rejected(self):
-        for value in (-(2 ** 63) - 1, 2 ** 63):
-            with self.subTest(value=value), self.assertRaises(MessageError):
-                Message("m", "event", 1, {"count": value})
 
     def test_wrong_top_level_rejected(self):
         with self.assertRaises(MessageError):

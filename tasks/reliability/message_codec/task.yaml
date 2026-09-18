@@ -3,7 +3,7 @@ id: message_codec
 repository:
   type: local
   path: ../../../fixtures/reliability/.prepared/message_codec
-  base_commit: d928736aca51f2474b9c52a05847437e1ec5c0c5
+  base_commit: b15e2d7073674c4fab6424b38cd1132036085c6f
 task:
   prompt: |
     Application messages round-trip for some current JSON documents, but the
