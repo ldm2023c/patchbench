@@ -12,7 +12,8 @@ from scripts.prepare_pilot_fixtures import (
 )
 
 CANDIDATES = ("streaming_events", "request_signing", "atomic_batch", "cache_revalidation",
-              "env_config", "byte_ranges", "config_resolution", "message_codec")
+              "env_config", "byte_ranges", "config_resolution", "message_codec",
+              "resource_lifecycle", "schema_upgrade", "format_fallback", "atomic_writer")
 FIXTURE_ROOT = PROJECT_ROOT / "fixtures" / "reliability"
 
 

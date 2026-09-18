@@ -1,0 +1,21 @@
+schema_version: 1
+id: atomic_writer
+repository:
+  type: local
+  path: ../../../fixtures/reliability/.prepared/atomic_writer
+  base_commit: 410ad03d317495065c277ed10dce8673b543cfba
+task:
+  prompt: |
+    Record replacement leaves temporary state after injected write or replace
+    failures, so later writes can fail despite a healthy filesystem. Repair
+    the documented replacement, cleanup, preservation, and retry behavior.
+    Add regression tests if useful and keep the complete suite passing.
+evaluation:
+  command: "python -I -S -B .patchbench-eval/runner.py"
+  timeout_seconds: 120
+  frozen_unittest:
+    version: 1
+    test_files:
+      - test_atomic_writer.py
+metadata:
+  language: python

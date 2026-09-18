@@ -1,0 +1,21 @@
+schema_version: 1
+id: format_fallback
+repository:
+  type: local
+  path: ../../../fixtures/reliability/.prepared/format_fallback
+  base_commit: 259549e05b1566c22c83a3dbb38613859a708c96
+task:
+  prompt: |
+    The settings loader sometimes uses the legacy format even when the
+    preferred format exists but cannot be parsed or read. Repair fallback
+    behavior according to the repository's public format and error contract.
+    Add regression tests if useful and keep the complete suite passing.
+evaluation:
+  command: "python -I -S -B .patchbench-eval/runner.py"
+  timeout_seconds: 120
+  frozen_unittest:
+    version: 1
+    test_files:
+      - test_format_fallback.py
+metadata:
+  language: python

@@ -295,6 +295,8 @@ def test_python_environment_does_not_replace_runner_imports(tmp_path, monkeypatc
     ("atomic_batch", 36, 10, 0), ("cache_revalidation", 39, 19, 1),
     ("env_config", 25, 27, 0), ("byte_ranges", 29, 12, 4),
     ("config_resolution", 22, 13, 0), ("message_codec", 24, 6, 4),
+    ("resource_lifecycle", 15, 3, 1), ("schema_upgrade", 28, 12, 1),
+    ("format_fallback", 15, 5, 0), ("atomic_writer", 16, 2, 2),
 ])
 def test_reliability_official_frozen_baselines(tmp_path, name, tests, failures, errors):
     from scripts.prepare_reliability_fixtures import FIXTURE_ROOT, PROJECT_ROOT, prepare_fixture

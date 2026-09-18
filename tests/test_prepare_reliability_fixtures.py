@@ -35,6 +35,8 @@ def test_preparation_and_behavioral_baseline(tmp_path, name):
         "atomic_batch": "test_batchstore.py", "cache_revalidation": "test_cacheclient.py",
         "env_config": "test_envcfg.py", "byte_ranges": "test_byterange.py",
         "config_resolution": "test_serviceconf.py", "message_codec": "test_msgcodec.py",
+        "resource_lifecycle": "test_resource_lifecycle.py", "schema_upgrade": "test_schema_upgrade.py",
+        "format_fallback": "test_format_fallback.py", "atomic_writer": "test_atomic_writer.py",
     }[name]]
     assert task.evaluation.timeout_seconds == 120
     with TemporaryDirectory(dir=tmp_path) as temporary:
@@ -71,6 +73,14 @@ def test_preparation_and_behavioral_baseline(tmp_path, name):
                                       "test_bad_shadowed_field_is_still_rejected"],
                 "message_codec": ["test_canonical_zero_priority_vector", "test_canonical_unicode_bytes",
                                   "test_v1_type_maps_to_kind_and_default_priority", "test_future_version_rejected"],
+                "resource_lifecycle": ["test_close_twice_releases_once", "test_operation_failure_cleans_up",
+                                       "test_operation_failure_closes_lease", "test_use_after_close_rejected"],
+                "schema_upgrade": ["test_v1_backward_read_preserves_tags", "test_save_new_emits_v2",
+                                   "test_migrate_v1_preserves_data", "test_future_version_read_rejected"],
+                "format_fallback": ["test_malformed_current_json_no_fallback", "test_permission_error_no_fallback",
+                                    "test_unrelated_io_error_no_fallback", "test_invalid_current_value_no_fallback"],
+                "atomic_writer": ["test_write_failure_removes_partial_temp", "test_replace_failure_removes_temp",
+                                  "test_retry_after_write_failure", "test_retry_after_replace_failure"],
             }[name]
             for case in failures:
                 assert re.search(rf"^{case} \([^\n]+\) \.\.\. (FAIL|ERROR)$", result.stderr, re.MULTILINE), result.stderr
@@ -81,7 +91,9 @@ def test_preparation_and_behavioral_baseline(tmp_path, name):
             legacy = {"streaming_events": "test_simple_ascii", "request_signing": "test_simple_legacy_request",
                       "atomic_batch": "test_single_commit", "cache_revalidation": "test_fresh_hit",
                       "env_config": "test_missing_defaults", "byte_ranges": "test_first_byte",
-                      "config_resolution": "test_defaults", "message_codec": "test_canonical_ascii_vector"}[name]
+                      "config_resolution": "test_defaults", "message_codec": "test_canonical_ascii_vector",
+                      "resource_lifecycle": "test_simple_use", "schema_upgrade": "test_simple_v2_read",
+                      "format_fallback": "test_current_wins", "atomic_writer": "test_simple_replace"}[name]
             assert re.search(rf"^{legacy} \([^\n]+\) \.\.\. ok$", result.stderr, re.MULTILINE)
             assert "ImportError" not in result.stderr and "ModuleNotFoundError" not in result.stderr
             assert len(re.findall(r" \.\.\. ok$", result.stderr, re.MULTILINE)) >= 10

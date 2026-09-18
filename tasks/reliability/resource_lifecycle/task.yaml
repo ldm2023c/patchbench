@@ -1,0 +1,21 @@
+schema_version: 1
+id: resource_lifecycle
+repository:
+  type: local
+  path: ../../../fixtures/reliability/.prepared/resource_lifecycle
+  base_commit: 04894536b630ae99a9c64b62d1da5edd9b59ae1d
+task:
+  prompt: |
+    Resource leases behave inconsistently after failed operations and repeated
+    closure. Repair the lifecycle to satisfy the repository's documented
+    acquire, use, release, and closed-state contract. Add regression tests if
+    useful and keep the complete suite passing.
+evaluation:
+  command: "python -I -S -B .patchbench-eval/runner.py"
+  timeout_seconds: 120
+  frozen_unittest:
+    version: 1
+    test_files:
+      - test_resource_lifecycle.py
+metadata:
+  language: python
