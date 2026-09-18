@@ -33,6 +33,8 @@ def test_preparation_and_behavioral_baseline(tmp_path, name):
     assert task.evaluation.frozen_unittest.test_files == [{
         "streaming_events": "test_eventstream.py", "request_signing": "test_websign.py",
         "atomic_batch": "test_batchstore.py", "cache_revalidation": "test_cacheclient.py",
+        "env_config": "test_envcfg.py", "byte_ranges": "test_byterange.py",
+        "config_resolution": "test_serviceconf.py", "message_codec": "test_msgcodec.py",
     }[name]]
     assert task.evaluation.timeout_seconds == 120
     with TemporaryDirectory(dir=tmp_path) as temporary:
@@ -59,11 +61,23 @@ def test_preparation_and_behavioral_baseline(tmp_path, name):
                                  "test_changed_payload_conflict", "test_failed_key_corrected_retry"],
                 "cache_revalidation": ["test_304_preserves_validator", "test_replacement_validator",
                                        "test_failed_refresh_does_not_change_entry", "test_expired_error_propagates"],
+                "env_config": ["test_present_empty_debug_rejected", "test_present_empty_label",
+                               "test_unknown_boolean_rejected", "test_mode_case_is_exact"],
+                "byte_ranges": ["test_suffix_short", "test_clips_explicit_end",
+                                "test_open_ended_past_end_is_unsatisfiable",
+                                "test_large_arbitrary_integer_is_unsatisfiable"],
+                "config_resolution": ["test_override_false_wins", "test_override_zero_wins",
+                                      "test_override_empty_label_wins",
+                                      "test_bad_shadowed_field_is_still_rejected"],
+                "message_codec": ["test_canonical_zero_priority_vector", "test_canonical_unicode_bytes",
+                                  "test_v1_type_maps_to_kind_and_default_priority", "test_future_version_rejected"],
             }[name]
             for case in failures:
                 assert re.search(rf"^{case} \([^\n]+\) \.\.\. (FAIL|ERROR)$", result.stderr, re.MULTILINE), result.stderr
             legacy = {"streaming_events": "test_simple_ascii", "request_signing": "test_simple_legacy_request",
-                      "atomic_batch": "test_single_commit", "cache_revalidation": "test_fresh_hit"}[name]
+                      "atomic_batch": "test_single_commit", "cache_revalidation": "test_fresh_hit",
+                      "env_config": "test_missing_defaults", "byte_ranges": "test_first_byte",
+                      "config_resolution": "test_defaults", "message_codec": "test_canonical_ascii_vector"}[name]
             assert re.search(rf"^{legacy} \([^\n]+\) \.\.\. ok$", result.stderr, re.MULTILINE)
             assert "ImportError" not in result.stderr and "ModuleNotFoundError" not in result.stderr
             assert len(re.findall(r" \.\.\. ok$", result.stderr, re.MULTILINE)) >= 10

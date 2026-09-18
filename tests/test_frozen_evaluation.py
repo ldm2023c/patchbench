@@ -293,6 +293,8 @@ def test_python_environment_does_not_replace_runner_imports(tmp_path, monkeypatc
 @pytest.mark.parametrize("name,tests,failures,errors", [
     ("streaming_events", 33, 8, 6), ("request_signing", 35, 17, 0),
     ("atomic_batch", 36, 10, 0), ("cache_revalidation", 39, 19, 1),
+    ("env_config", 24, 15, 0), ("byte_ranges", 29, 12, 4),
+    ("config_resolution", 22, 13, 0), ("message_codec", 28, 11, 4),
 ])
 def test_reliability_official_frozen_baselines(tmp_path, name, tests, failures, errors):
     from scripts.prepare_reliability_fixtures import FIXTURE_ROOT, PROJECT_ROOT, prepare_fixture

@@ -1,0 +1,22 @@
+schema_version: 1
+id: config_resolution
+repository:
+  type: local
+  path: ../../../fixtures/reliability/.prepared/config_resolution
+  base_commit: 641d1c2b135b2d690af7d41c8fdef1699a94a907
+task:
+  prompt: |
+    Already-parsed service configuration layers lose explicit falsy values and
+    can let invalid supplied fields disappear before runtime resolution.
+    Restore the documented loader/resolver contract for presence, validation,
+    per-field precedence, and defaults. See the repository's public contract.
+    Add regression tests if useful and keep the complete suite passing.
+evaluation:
+  command: "python -I -S -B .patchbench-eval/runner.py"
+  timeout_seconds: 120
+  frozen_unittest:
+    version: 1
+    test_files:
+      - test_serviceconf.py
+metadata:
+  language: python

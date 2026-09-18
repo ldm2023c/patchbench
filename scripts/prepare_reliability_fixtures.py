@@ -11,7 +11,8 @@ from scripts.prepare_pilot_fixtures import (
     FixturePreparationError, PROJECT_ROOT, git, prepare_fixture, template_files,
 )
 
-CANDIDATES = ("streaming_events", "request_signing", "atomic_batch", "cache_revalidation")
+CANDIDATES = ("streaming_events", "request_signing", "atomic_batch", "cache_revalidation",
+              "env_config", "byte_ranges", "config_resolution", "message_codec")
 FIXTURE_ROOT = PROJECT_ROOT / "fixtures" / "reliability"
 
 

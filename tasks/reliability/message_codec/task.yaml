@@ -1,0 +1,23 @@
+schema_version: 1
+id: message_codec
+repository:
+  type: local
+  path: ../../../fixtures/reliability/.prepared/message_codec
+  base_commit: d928736aca51f2474b9c52a05847437e1ec5c0c5
+task:
+  prompt: |
+    Application messages round-trip for some current JSON documents, but the
+    encoder and decoder disagree on canonical bytes, version compatibility,
+    and malformed document handling. Repair the documented model/wire contract,
+    including strict validation and v1 reads with canonical v2 writes. See the
+    repository's public contract. Add regression tests if useful and keep the
+    complete suite passing.
+evaluation:
+  command: "python -I -S -B .patchbench-eval/runner.py"
+  timeout_seconds: 120
+  frozen_unittest:
+    version: 1
+    test_files:
+      - test_msgcodec.py
+metadata:
+  language: python

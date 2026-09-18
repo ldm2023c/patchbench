@@ -1,0 +1,23 @@
+schema_version: 1
+id: byte_ranges
+repository:
+  type: local
+  path: ../../../fixtures/reliability/.prepared/byte_ranges
+  base_commit: fdabc4d24897f34f02629683e98502b887ab979c
+task:
+  prompt: |
+    Blob byte-range resolution works for simple inclusive requests but gives
+    inconsistent results for suffixes, clipping, empty objects, and malformed
+    headers. Repair the bounded documented contract, including ordered multiple
+    ranges and the syntax-versus-unsatisfiable distinction. See the repository's
+    public contract. Add regression tests if useful and keep the complete suite
+    passing.
+evaluation:
+  command: "python -I -S -B .patchbench-eval/runner.py"
+  timeout_seconds: 120
+  frozen_unittest:
+    version: 1
+    test_files:
+      - test_byterange.py
+metadata:
+  language: python
