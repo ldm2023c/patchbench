@@ -35,6 +35,41 @@ class DesignedDifficulty(str, Enum):
     HARD = "hard"
 
 
+class _StructuralDimension(str, Enum):
+    SYMPTOM_ROOT_CAUSE_DISTANCE = "symptom_root_cause_distance"
+    COORDINATED_EDIT_BREADTH = "coordinated_edit_breadth"
+    TEMPORAL_STATE_INTERACTION = "temporal_state_interaction"
+    INTERACTING_CONTRACT_EDGE_CASE_COUNT = "interacting_contract_edge_case_count"
+    REGRESSION_REPOSITORY_NAVIGATION_PRESSURE = "regression_repository_navigation_pressure"
+
+
+class _MethodologyDefinition(DomainModel):
+    model_config = ConfigDict(extra="forbid", frozen=True, str_strip_whitespace=False)
+
+    definition: Annotated[str, StringConstraints(strict=True, strip_whitespace=False,
+                                                 min_length=1, max_length=1000)]
+
+    @field_validator("definition")
+    @classmethod
+    def validate_definition(cls, value: str) -> str:
+        if value != value.strip() or not value.strip() or any(
+                ord(char) < 32 or ord(char) == 127 for char in value):
+            raise ValueError("methodology definition must be nonblank canonical text")
+        return value
+
+
+class _CapabilityDefinition(_MethodologyDefinition):
+    capability: BenchmarkCapability
+
+
+class _DifficultyDimension(_MethodologyDefinition):
+    dimension: _StructuralDimension
+
+
+class _DifficultyDefinition(_MethodologyDefinition):
+    difficulty: DesignedDifficulty
+
+
 class BenchmarkTaskProfile(DomainModel):
     """Design-time classification, never part of an Agent-visible TaskSpec."""
 
@@ -69,10 +104,19 @@ class BenchmarkDesignManifest(DomainModel):
     schema_version: Annotated[int, Field(strict=True, ge=1, le=1)]
     suite_id: CanonicalName
     difficulty_rubric_version: CanonicalName
+    capability_definitions: tuple[_CapabilityDefinition, ...]
+    structural_difficulty_dimensions: tuple[_DifficultyDimension, ...]
+    difficulty_definitions: tuple[_DifficultyDefinition, ...]
     tasks: tuple[BenchmarkTaskProfile, ...] = Field(min_length=1)
 
     @model_validator(mode="after")
     def validate_unique_tasks(self) -> Self:
+        if tuple(item.capability for item in self.capability_definitions) != tuple(BenchmarkCapability):
+            raise ValueError("capability definitions must cover all capabilities in canonical order")
+        if tuple(item.dimension for item in self.structural_difficulty_dimensions) != tuple(_StructuralDimension):
+            raise ValueError("structural dimensions must cover all five dimensions in canonical order")
+        if tuple(item.difficulty for item in self.difficulty_definitions) != tuple(DesignedDifficulty):
+            raise ValueError("difficulty definitions must cover all difficulties in canonical order")
         ids = [task.task_id for task in self.tasks]
         if len(ids) != len(set(ids)):
             raise ValueError("benchmark design task IDs must be unique")

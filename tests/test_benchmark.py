@@ -33,7 +33,7 @@ LOCKED_MATRIX = {
     "cache_revalidation": ("regression_robustness", "hard"),
 }
 # Anchored against a separate canonical JSON calculation of the validated artifact.
-EXPECTED_DESIGN_SHA256 = "7870dd4169d14bd21ed440970f7dfe2e7b02cce3d991a5e44d6254ccab05a9e2"
+EXPECTED_DESIGN_SHA256 = "dc48fdac627abe9fcd95303d3042b5f0c822abbb0bb53a4dfba17dcc2f99f931"
 
 
 def design_data() -> dict:
@@ -117,6 +117,22 @@ def test_checked_in_design_is_exact_locked_matrix():
     assert design.schema_version == 1
     assert design.suite_id == "patchbench-v1.3"
     assert design.difficulty_rubric_version == "structural-v1"
+    assert [item.capability.value for item in design.capability_definitions] == [
+        capability.value for capability in BenchmarkCapability]
+    assert [item.dimension.value for item in design.structural_difficulty_dimensions] == [
+        "symptom_root_cause_distance", "coordinated_edit_breadth",
+        "temporal_state_interaction", "interacting_contract_edge_case_count",
+        "regression_repository_navigation_pressure",
+    ]
+    assert [item.definition for item in design.structural_difficulty_dimensions] == [
+        "Symptom → root-cause distance.", "Coordinated edit breadth.",
+        "Temporal/state interaction.", "Interacting contract / edge-case count.",
+        "Regression / repository-navigation pressure.",
+    ]
+    assert [item.difficulty.value for item in design.difficulty_definitions] == [
+        difficulty.value for difficulty in DesignedDifficulty]
+    assert all(item.definition for item in (*design.capability_definitions,
+        *design.structural_difficulty_dimensions, *design.difficulty_definitions))
     assert len(design.tasks) == 12
     assert {task.task_id: (task.primary_capability.value, task.designed_difficulty.value)
             for task in design.tasks} == LOCKED_MATRIX
@@ -142,6 +158,13 @@ def test_checked_in_design_is_exact_locked_matrix():
     lambda d: d.update(tasks=[]),
     lambda d: d.update(extra="no"),
     lambda d: d["tasks"].append(d["tasks"][0]),
+    lambda d: d["capability_definitions"].pop(),
+    lambda d: d["capability_definitions"].append(d["capability_definitions"][0]),
+    lambda d: d["structural_difficulty_dimensions"].pop(),
+    lambda d: d["difficulty_definitions"].pop(),
+    lambda d: d["capability_definitions"][0].update(capability="unknown"),
+    lambda d: d["difficulty_definitions"][0].update(definition="  "),
+    lambda d: d["structural_difficulty_dimensions"][0].update(extra="no"),
 ])
 def test_design_rejects_malformed_manifest(mutation):
     data = design_data()
@@ -173,9 +196,24 @@ def test_design_hash_is_anchored_and_sensitive_to_complete_semantics():
             BenchmarkDesignManifest.model_validate(modified)) != expected
 
 
+@pytest.mark.parametrize("field,index", [
+    ("capability_definitions", 0),
+    ("structural_difficulty_dimensions", 2),
+    ("difficulty_definitions", 0),
+    ("difficulty_definitions", 1),
+    ("difficulty_definitions", 2),
+])
+def test_methodology_definition_changes_design_identity(field, index):
+    modified = design_data()
+    modified[field][index]["definition"] += " Revised."
+    assert compute_benchmark_design_sha256(
+        BenchmarkDesignManifest.model_validate(modified)) != EXPECTED_DESIGN_SHA256
+
+
 def test_canonical_hash_uses_compact_sorted_utf8_json():
-    data = {"schema_version": 1, "suite_id": "bench", "difficulty_rubric_version": "structural-v1",
-            "tasks": [profile_data(rationale="A café boundary.")]}
+    data = design_data()
+    data["suite_id"] = "bench"
+    data["tasks"] = [profile_data(rationale="A café boundary.")]
     design = BenchmarkDesignManifest.model_validate(data)
     expected = hashlib.sha256(json.dumps(design.model_dump(mode="json"),
         ensure_ascii=False, separators=(",", ":"), sort_keys=True).encode("utf-8")).hexdigest()

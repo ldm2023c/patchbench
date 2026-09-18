@@ -2,6 +2,60 @@
   "schema_version": 1,
   "suite_id": "patchbench-v1.3",
   "difficulty_rubric_version": "structural-v1",
+  "capability_definitions": [
+    {
+      "capability": "local_boundary",
+      "definition": "Local parsing, normalization, validation, encoding, protocol boundaries, and edge-condition reasoning where the main repair locus is relatively local."
+    },
+    {
+      "capability": "cross_file",
+      "definition": "Repair requiring coordinated understanding or changes across multiple modules or contracts, such as caller/callee, encoder/decoder, configuration loader/runtime, or persisted schema read/write paths."
+    },
+    {
+      "capability": "state_consistency",
+      "definition": "Temporal state, transactions, retries, idempotency, cache state, lifecycle, rollback, state transitions, or consistency across multiple operations."
+    },
+    {
+      "capability": "regression_robustness",
+      "definition": "Failure paths, fallbacks, cleanup, legacy compatibility, malformed input, regression constraints, or behavior that must remain safe under exceptional conditions."
+    }
+  ],
+  "structural_difficulty_dimensions": [
+    {
+      "dimension": "symptom_root_cause_distance",
+      "definition": "Symptom → root-cause distance."
+    },
+    {
+      "dimension": "coordinated_edit_breadth",
+      "definition": "Coordinated edit breadth."
+    },
+    {
+      "dimension": "temporal_state_interaction",
+      "definition": "Temporal/state interaction."
+    },
+    {
+      "dimension": "interacting_contract_edge_case_count",
+      "definition": "Interacting contract / edge-case count."
+    },
+    {
+      "dimension": "regression_repository_navigation_pressure",
+      "definition": "Regression / repository-navigation pressure."
+    }
+  ],
+  "difficulty_definitions": [
+    {
+      "difficulty": "easy",
+      "definition": "Structural difficulty: root cause relatively near the visible symptom, one principal repair locus, little complex state interaction, and limited interacting contracts or regression pressure. Easy does not mean trivial or one-line; it is not derived from observed pass rate."
+    },
+    {
+      "difficulty": "medium",
+      "definition": "Structural difficulty with at least two meaningful complexity sources, such as multiple functions or files, interacting boundary cases, lifecycle or state reasoning, plausible partial fixes, or compatibility constraints. It is not derived from observed pass rate."
+    },
+    {
+      "difficulty": "hard",
+      "definition": "Combined structural complexity, typically including several non-local or multiple repair loci, coordinated cross-file, state, or error-path reasoning, rollback, retry, migration or compatibility contracts, and partial repairs that easily violate another invariant. It is not derived from observed pass rate."
+    }
+  ],
   "tasks": [
     {
       "task_id": "env_config",
