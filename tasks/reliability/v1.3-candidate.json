@@ -1,0 +1,163 @@
+{
+  "schema_version": 1,
+  "suite_id": "patchbench-v1.3",
+  "design_sha256": "dc48fdac627abe9fcd95303d3042b5f0c822abbb0bb53a4dfba17dcc2f99f931",
+  "tasks": [
+    {
+      "task_id": "env_config",
+      "task_spec_path": "tasks/reliability/env_config/task.yaml",
+      "task_spec_sha256": "516368b7d4f1d580cabc73899b42f24b9fe77c40051728b6dac0f44a3a37ea78",
+      "task_fingerprint_sha256": "39f7aeb875172673a025a7d450213594d407bd4d8be1e38f9a9deb3991089ee4",
+      "resolved_base_commit": "cb27f12e22bdd6981ef7283c53cb84d177707e34",
+      "official_evaluator_files": [
+        {
+          "path": "test_envcfg.py",
+          "sha256": "bc3b0b06f56417517652117ce9767416e92324a2479cc88ced8b913f327fb827"
+        }
+      ]
+    },
+    {
+      "task_id": "request_signing",
+      "task_spec_path": "tasks/reliability/request_signing/task.yaml",
+      "task_spec_sha256": "5dec69e7e2b1f50570ee88ca3a5b7d68997317c5afeb23fdd2f7fff02b4d4f8c",
+      "task_fingerprint_sha256": "472026804e9e44c5d67c52a8ddcd525fe2ee18ec84c7f739496e4bd3b4cf1abd",
+      "resolved_base_commit": "b1331d203fa9643a5fdf6cf38e53101ecb56025b",
+      "official_evaluator_files": [
+        {
+          "path": "test_websign.py",
+          "sha256": "542ea7fba6a67a8866d1e6e64d7da47b422a07c9374072b4ee8e78f418c43f49"
+        }
+      ]
+    },
+    {
+      "task_id": "byte_ranges",
+      "task_spec_path": "tasks/reliability/byte_ranges/task.yaml",
+      "task_spec_sha256": "abb71c4da815e058f0f6ed099d04bca48dfcc05f2fda02954d05edf097988ef5",
+      "task_fingerprint_sha256": "a282de28b69feefba64b718045f39cfc0d174c81d943f994eab07c329dcab6bb",
+      "resolved_base_commit": "fdabc4d24897f34f02629683e98502b887ab979c",
+      "official_evaluator_files": [
+        {
+          "path": "test_byterange.py",
+          "sha256": "7e719d41f2dd7c204c9cc4a9172dbcd479b0a1f29578f33bc47148a7f2a474be"
+        }
+      ]
+    },
+    {
+      "task_id": "config_resolution",
+      "task_spec_path": "tasks/reliability/config_resolution/task.yaml",
+      "task_spec_sha256": "b0925e427f86cea2316599ff201bd4f8d858d93b837dc8e981feca42d0257c76",
+      "task_fingerprint_sha256": "e72c6f353e5832bedf5dc4523614985bafd600d989bd11a8b36398b4beb505ce",
+      "resolved_base_commit": "641d1c2b135b2d690af7d41c8fdef1699a94a907",
+      "official_evaluator_files": [
+        {
+          "path": "test_serviceconf.py",
+          "sha256": "4e6937d0f4005f5c979969fd267c72dd05a4239dfb20e072cc082a9caa7fbb5b"
+        }
+      ]
+    },
+    {
+      "task_id": "message_codec",
+      "task_spec_path": "tasks/reliability/message_codec/task.yaml",
+      "task_spec_sha256": "36ebf32816464cc6f8785db4625ebeb52a4e479f11dc18606bd500c93945ed95",
+      "task_fingerprint_sha256": "8e7b27be348b5f76940ef08e6725f2a35c30e6244595b5de3b160e1d6c0810eb",
+      "resolved_base_commit": "b15e2d7073674c4fab6424b38cd1132036085c6f",
+      "official_evaluator_files": [
+        {
+          "path": "test_msgcodec.py",
+          "sha256": "39a9788841e0590166d3e92398b16782f895483765273b220e9b1def864c07c4"
+        }
+      ]
+    },
+    {
+      "task_id": "schema_upgrade",
+      "task_spec_path": "tasks/reliability/schema_upgrade/task.yaml",
+      "task_spec_sha256": "9f6e432a88b155d81e918d4261e751bca8efdd71ff61444a73f9b38409377329",
+      "task_fingerprint_sha256": "ce6953360d38069d66e2f6bff015e9143b579bca16b18a04b293dff3cf390851",
+      "resolved_base_commit": "2dfa3cf819d02eefb8a3000ed2649e961aa05904",
+      "official_evaluator_files": [
+        {
+          "path": "test_schema_upgrade.py",
+          "sha256": "6a02f1c91dab16841cc4ab8d9f66ea6e66a73428c4bffa729813d33ede36cdac"
+        }
+      ]
+    },
+    {
+      "task_id": "resource_lifecycle",
+      "task_spec_path": "tasks/reliability/resource_lifecycle/task.yaml",
+      "task_spec_sha256": "6d1df2c3cb82f66c0ec0238e087be1691e561dfa53bde1a354bdc7139e2e7543",
+      "task_fingerprint_sha256": "36011d191f97cc3b968e13e6370ede2c976483b1abd80f1d8a5710f86ee73493",
+      "resolved_base_commit": "04894536b630ae99a9c64b62d1da5edd9b59ae1d",
+      "official_evaluator_files": [
+        {
+          "path": "test_resource_lifecycle.py",
+          "sha256": "b51c0d37477c33aa50c2954c288bcae9cd32814952c4b42ef1fc54ab3369bfe3"
+        }
+      ]
+    },
+    {
+      "task_id": "streaming_events",
+      "task_spec_path": "tasks/reliability/streaming_events/task.yaml",
+      "task_spec_sha256": "1a4d8040c5501cdd2dc49d0c9e836fb16973a8149f26c52231606d6208eb7528",
+      "task_fingerprint_sha256": "3da9a7806773a84c74d690e96ffe9bce164fee7329d2bbf1e848d6676034ec6c",
+      "resolved_base_commit": "08a5e4cc280d0da24c59cf86bd751b7d6a5baeaf",
+      "official_evaluator_files": [
+        {
+          "path": "test_eventstream.py",
+          "sha256": "8eba72a039da7bb289ce78b8185b181e6330305d20773186bb8875840a002e6f"
+        }
+      ]
+    },
+    {
+      "task_id": "atomic_batch",
+      "task_spec_path": "tasks/reliability/atomic_batch/task.yaml",
+      "task_spec_sha256": "4dbd970394c2cfe2430a8460629415648024594edd400a7d06c8afd724e20eae",
+      "task_fingerprint_sha256": "7093978c67a8a8574f137c49b63f829e90557b5f6d1cac2ad8825b62e63660b0",
+      "resolved_base_commit": "1ee42b7784c8ead2e22281865191f820b6dc86fb",
+      "official_evaluator_files": [
+        {
+          "path": "test_batchstore.py",
+          "sha256": "c0f6b516e6dae7e1ebdb574f06e62c0aa037cc50c8f081a50fe0f7d72f29f4f6"
+        }
+      ]
+    },
+    {
+      "task_id": "format_fallback",
+      "task_spec_path": "tasks/reliability/format_fallback/task.yaml",
+      "task_spec_sha256": "8b4326af2b6d744e76b788748aaf35091179a2843f6b0fd78335c9b34a97a205",
+      "task_fingerprint_sha256": "c23455b9a3171b39807654db78153cbbfd392d16cdb9da379a856e64052a1da2",
+      "resolved_base_commit": "259549e05b1566c22c83a3dbb38613859a708c96",
+      "official_evaluator_files": [
+        {
+          "path": "test_format_fallback.py",
+          "sha256": "c10739088af01578595a2e541ed64e8570705305fe866a99281ab3a0ff56a21b"
+        }
+      ]
+    },
+    {
+      "task_id": "atomic_writer",
+      "task_spec_path": "tasks/reliability/atomic_writer/task.yaml",
+      "task_spec_sha256": "b520339a6f3c5a94823adb6a4f983b842a63d81895c2178db12ab9faf7f73761",
+      "task_fingerprint_sha256": "2701a7835c3924e950325afe07ae958a63ee5e3a45190dedde3ebf3a964799d6",
+      "resolved_base_commit": "410ad03d317495065c277ed10dce8673b543cfba",
+      "official_evaluator_files": [
+        {
+          "path": "test_atomic_writer.py",
+          "sha256": "8189224d17f3910144037b1ca0581a61c3a3dae767d616a1df8be2776b8ea76d"
+        }
+      ]
+    },
+    {
+      "task_id": "cache_revalidation",
+      "task_spec_path": "tasks/reliability/cache_revalidation/task.yaml",
+      "task_spec_sha256": "5386fbe215273469c6b843fea694fc415dce431d3f429b5ee35b4dc96aa8b46a",
+      "task_fingerprint_sha256": "1e24114083f8916a7cf9e5b5ee450d847efe6459c41afc6944a560b11c3491fe",
+      "resolved_base_commit": "49d6f8f0c2547c5d0a9d45141a0f0e128e8ee3ca",
+      "official_evaluator_files": [
+        {
+          "path": "test_cacheclient.py",
+          "sha256": "c1e580885100d5121f1883d9b79dda6a8002850451af08f0571b296284303edf"
+        }
+      ]
+    }
+  ]
+}
