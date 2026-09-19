@@ -1,0 +1,33 @@
+{
+  "schema_version": 1,
+  "policy_id": "isolated-headless-v1",
+  "headless_execution": true,
+  "single_supplied_prompt": true,
+  "process_exits_after_run": true,
+  "explicit_patchbench_workspace": true,
+  "explicit_model": true,
+  "silent_model_fallback_forbidden": true,
+  "fresh_session": true,
+  "ambient_configuration_isolation": "required_where_supported",
+  "personal_instructions_excluded": true,
+  "cross_session_memory_isolation": "required_where_supported",
+  "extensions": {
+    "mcp": "required_where_supported",
+    "plugins": "required_where_supported",
+    "skills": "required_where_supported",
+    "subagents": "required_where_supported",
+    "web_search": "required_where_supported",
+    "other_external_context": "required_where_supported"
+  },
+  "repository_instruction_neutrality": true,
+  "authentication_preflight": true,
+  "credentials_excluded_from_identity": true,
+  "cli_version_runtime_provenance": true,
+  "full_invocation_timeout": true,
+  "process_tree_cleanup": true,
+  "auto_update_isolation": "required_where_supported",
+  "patchbench_owns_worktree": true,
+  "agent_git_lifecycle_forbidden": true,
+  "git_diff_canonical_patch_truth": true,
+  "natural_toolchain_differences_allowed": true
+}

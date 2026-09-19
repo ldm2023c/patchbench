@@ -46,6 +46,19 @@ from patchbench.domain.models import (
 
 from patchbench.domain.provenance import compute_task_fingerprint
 
+from patchbench.domain.agent_identity import (
+    AgentConfigurationIdentity,
+    AgentConfigurationManifest,
+    AgentConfigurationOption,
+    AgentExecutionPolicy,
+    AgentExtensionIsolationPolicy,
+    AgentRuntimeIdentity,
+    AgentToolchain,
+    IsolationRequirement,
+    compute_agent_configuration_sha256,
+    compute_agent_execution_policy_sha256,
+)
+
 from patchbench.domain.evidence_errors import EvidenceParsingError
 from patchbench.domain.patch_evidence import summarize_patch
 from patchbench.domain.evaluation_evidence import render_evaluation_log, summarize_evaluation_log
@@ -129,6 +142,16 @@ from patchbench.domain.diagnosis_validation_run import (
 )
 
 __all__ = [
+    "AgentConfigurationIdentity",
+    "AgentConfigurationManifest",
+    "AgentConfigurationOption",
+    "AgentExecutionPolicy",
+    "AgentExtensionIsolationPolicy",
+    "AgentRuntimeIdentity",
+    "AgentToolchain",
+    "IsolationRequirement",
+    "compute_agent_configuration_sha256",
+    "compute_agent_execution_policy_sha256",
     "BenchmarkCapability",
     "BenchmarkCandidateFile",
     "BenchmarkCandidateManifest",
