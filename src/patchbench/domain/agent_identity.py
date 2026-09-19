@@ -102,10 +102,16 @@ class AgentConfigurationOption(DomainModel):
     @field_validator("name")
     @classmethod
     def reject_credential_option_names(cls, value: str) -> str:
-        if value in {
-            "api_key", "api_token", "access_token", "password", "credential",
-            "credentials", "secret",
-        }:
+        normalized = value.replace("-", "_").replace(".", "_")
+        credential_terms = {
+            "api_key", "api_token", "access_token", "auth_token", "bearer_token",
+            "client_secret", "private_key", "password", "credential", "credentials",
+            "secret",
+        }
+        if any(
+            normalized == term or normalized.endswith(f"_{term}")
+            for term in credential_terms
+        ):
             raise ValueError("credentials and secrets are not Agent identity options")
         return value
 

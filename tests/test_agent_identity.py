@@ -2,7 +2,7 @@
 
 import hashlib
 import json
-from pathlib import Path
+from pathlib import Path, PurePosixPath
 
 import pytest
 from pydantic import ValidationError
@@ -24,6 +24,19 @@ from scripts.v13_candidate_manifest import load_candidate_manifest
 PROJECT_ROOT = Path(__file__).resolve().parents[1]
 POLICY_PATH = PROJECT_ROOT / "tasks/reliability/v1.3-agent-policy.json"
 EXPECTED_AGENT_POLICY_SHA256 = "c17f5e7ff825e8fbc455c3a649b1288083aea4580bcdccd1c78c8a707c50eb00"
+PROHIBITED_INSTRUCTION_COMPONENTS = {
+    "agents.md", "agents.override.md", "claude.md", ".claude", ".cursor",
+    ".grok", ".codex", ".mcp.json",
+}
+
+
+def assert_agent_visible_paths_are_neutral(paths):
+    for path_text in paths:
+        path = PurePosixPath(path_text)
+        assert not any(
+            component.casefold() in PROHIBITED_INSTRUCTION_COMPONENTS
+            for component in path.parts
+        ), path_text
 
 
 def policy_data():
@@ -162,6 +175,25 @@ def test_configuration_rejects_extra_fields_and_secret_options():
         config(toolchain_options=[{"name": "api_key", "value": "secret-value"}])
 
 
+@pytest.mark.parametrize(
+    "name",
+    [
+        "anthropic_api_key", "openai.api-key", "github_access_token", "auth_token",
+        "client_secret", "private_key", "service_password", "provider_credentials",
+        "provider_secret",
+    ],
+)
+def test_configuration_rejects_credential_shaped_option_names(name):
+    with pytest.raises(ValidationError, match="credentials and secrets"):
+        config(toolchain_options=[{"name": name, "value": "not-inspected"}])
+
+
+@pytest.mark.parametrize("name", ["max_tokens", "token_budget"])
+def test_configuration_accepts_noncredential_token_option_names(name):
+    identity = config(toolchain_options=[{"name": name, "value": 100}])
+    assert identity.toolchain_options == (AgentConfigurationOption(name=name, value=100),)
+
+
 def test_configuration_hash_is_stable_and_sensitive_to_all_semantics():
     baseline = config()
     baseline_hash = compute_agent_configuration_sha256(baseline)
@@ -242,10 +274,6 @@ def test_runtime_identity_validates_observed_cli_version_and_config_sha():
 
 
 def test_candidate_fixtures_have_no_tool_specific_instruction_paths():
-    prohibited = {
-        "agents.md", "agents.override.md", "claude.md", ".claude", ".cursor",
-        ".grok", ".codex", ".mcp.json",
-    }
     candidate = load_candidate_manifest(PROJECT_ROOT)
     assert len(candidate.tasks) == 12
     for task in candidate.tasks:
@@ -254,8 +282,19 @@ def test_candidate_fixtures_have_no_tool_specific_instruction_paths():
             path.relative_to(fixture).as_posix() for path in template_files(fixture)
         }
         assert tracked_template
-        for path in fixture.rglob("*"):
-            relative = path.relative_to(fixture)
-            assert not any(component.casefold() in prohibited for component in relative.parts), (
-                task.task_id, relative
-            )
+        assert_agent_visible_paths_are_neutral(tracked_template)
+
+
+def test_hygiene_audit_ignores_excluded_local_files_but_rejects_tracked_paths(tmp_path):
+    (tmp_path / ".gitignore").write_text("__pycache__/\n", encoding="utf-8")
+    (tmp_path / "README.md").write_text("fixture\n", encoding="utf-8")
+    local = tmp_path / ".claude/settings.json"
+    local.parent.mkdir()
+    local.write_text("{}\n", encoding="utf-8")
+    tracked_template = {
+        path.relative_to(tmp_path).as_posix() for path in template_files(tmp_path)
+    }
+    assert ".claude/settings.json" not in tracked_template
+    assert_agent_visible_paths_are_neutral(tracked_template)
+    with pytest.raises(AssertionError, match=r"\.claude/settings\.json"):
+        assert_agent_visible_paths_are_neutral({".claude/settings.json"})
