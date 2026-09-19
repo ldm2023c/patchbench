@@ -9,6 +9,7 @@ from patchbench.agents.base import (
     AgentSetupError,
 )
 from patchbench.agents.codex import CodexAdapter
+from patchbench.agents.claude_code import ClaudeCodeAdapter
 from patchbench.agents.fake import FakeAgent, FakeAgentError
 
 __all__ = [
@@ -19,6 +20,7 @@ __all__ = [
     "AgentRunStatus",
     "AgentSetupError",
     "CodexAdapter",
+    "ClaudeCodeAdapter",
     "FakeAgent",
     "FakeAgentError",
 ]
