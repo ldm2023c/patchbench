@@ -121,6 +121,13 @@ def build_candidate_manifest(
                     raise BenchmarkCandidateIntegrityError(
                         f"Task '{task_id}' TaskSpec ID mismatch: found '{task.id}'"
                     )
+                expected_repository = (fixture_root / ".prepared" / task_id).resolve()
+                actual_repository = Path(task.repository.path).resolve()
+                if actual_repository != expected_repository:
+                    raise BenchmarkCandidateIntegrityError(
+                        f"Task '{task_id}' repository path mismatch: expected "
+                        f"'{expected_repository}', found '{actual_repository}'"
+                    )
 
                 prepared = preparation_root / f"{index:02d}-{task_id}"
                 try:

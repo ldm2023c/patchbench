@@ -159,3 +159,25 @@ def test_leakage_audit_rejects_reserved_answer_path(monkeypatch, tmp_path):
     monkeypatch.setattr(builder, "git", injected_git)
     with pytest.raises(BenchmarkCandidateIntegrityError, match="reserved artifact path"):
         build_candidate_manifest(PROJECT_ROOT, temporary_root=tmp_path)
+
+
+def test_builder_rejects_task_repository_path_drift(monkeypatch, tmp_path):
+    from scripts import v13_candidate_manifest as builder
+
+    real_load_task = builder.load_task
+
+    def load_task_with_wrong_repository(path):
+        task = real_load_task(path)
+        if task.id != "env_config":
+            return task
+        repository = task.repository.model_copy(update={
+            "path": str(PROJECT_ROOT / "fixtures/reliability/.prepared/byte_ranges")
+        })
+        return task.model_copy(update={"repository": repository})
+
+    monkeypatch.setattr(builder, "load_task", load_task_with_wrong_repository)
+    with pytest.raises(
+        BenchmarkCandidateIntegrityError,
+        match=r"Task 'env_config' repository path mismatch",
+    ):
+        build_candidate_manifest(PROJECT_ROOT, temporary_root=tmp_path)
