@@ -29,41 +29,16 @@ class ClaudeCodeAdapter:
     _VERSION_PATTERN = re.compile(
         r"(?<![0-9])([0-9]+)\.([0-9]+)\.([0-9]+)(?![0-9])"
     )
-    _BEHAVIORAL_ENVIRONMENT_OVERRIDES = frozenset(
+    _TOOL_ENVIRONMENT_PREFIXES = ("CLAUDE_", "CLAUDE_CODE_", "ANTHROPIC_")
+    _GENERIC_BEHAVIORAL_ENVIRONMENT_OVERRIDES = frozenset(
         {
-            "ANTHROPIC_MODEL",
-            "ANTHROPIC_BETAS",
             "API_TIMEOUT_MS",
             "BASH_DEFAULT_TIMEOUT_MS",
             "BASH_MAX_OUTPUT_LENGTH",
             "BASH_MAX_TIMEOUT_MS",
-            "CLAUDE_CODE_ALWAYS_ENABLE_EFFORT",
-            "CLAUDE_CODE_EXTRA_BODY",
-            "CLAUDE_CODE_EFFORT_LEVEL",
             "MAX_THINKING_TOKENS",
-            "CLAUDE_CODE_AUTO_COMPACT_WINDOW",
-            "CLAUDE_AUTOCOMPACT_PCT_OVERRIDE",
-            "CLAUDE_CODE_SIMPLE_SYSTEM_PROMPT",
-            "CLAUDE_CODE_SHELL",
-            "CLAUDE_CODE_SHELL_PREFIX",
-            "CLAUDE_CODE_FILE_READ_MAX_OUTPUT_TOKENS",
-            "CLAUDE_CODE_MAX_OUTPUT_TOKENS",
-            "CLAUDE_CODE_MAX_TURNS",
             "CLAUDE_CODE_PRINT_BG_WAIT_CEILING_MS",
             "FALLBACK_FOR_ALL_PRIMARY_MODELS",
-        }
-    )
-    _NON_DIRECT_AUTHENTICATION_OVERRIDES = frozenset(
-        {
-            "ANTHROPIC_AUTH_TOKEN",
-            "ANTHROPIC_BASE_URL",
-            "ANTHROPIC_BEDROCK_BASE_URL",
-            "ANTHROPIC_CUSTOM_HEADERS",
-            "ANTHROPIC_FOUNDRY_BASE_URL",
-            "ANTHROPIC_VERTEX_BASE_URL",
-            "CLAUDE_CODE_USE_BEDROCK",
-            "CLAUDE_CODE_USE_FOUNDRY",
-            "CLAUDE_CODE_USE_VERTEX",
         }
     )
 
@@ -106,8 +81,9 @@ class ClaudeCodeAdapter:
         deadline = (
             None if timeout_seconds is None else started + timeout_seconds
         )
-        child_environment = self._build_child_environment()
-        self._preflight(deadline, child_environment)
+        api_key = self._capture_api_key()
+        preflight_environment = self._build_sanitized_environment()
+        self._preflight(deadline, preflight_environment)
         remaining = self._remaining_timeout(deadline)
         if remaining is not None and remaining <= 0:
             raise AgentSetupError(
@@ -132,6 +108,8 @@ class ClaudeCodeAdapter:
             "--permission-prompts",
             "none",
         ]
+        model_environment = preflight_environment.copy()
+        model_environment["ANTHROPIC_API_KEY"] = api_key
         try:
             process = subprocess.Popen(
                 arguments,
@@ -142,7 +120,7 @@ class ClaudeCodeAdapter:
                 text=True,
                 shell=False,
                 start_new_session=True,
-                env=child_environment,
+                env=model_environment,
             )
         except OSError as error:
             raise AgentInfrastructureError(
@@ -351,24 +329,27 @@ class ClaudeCodeAdapter:
                 f"Claude Code {minimum} or later is required by the fixed invocation"
             )
 
-        api_key = child_environment.get("ANTHROPIC_API_KEY")
+        self._cli_version = cli_version
+
+    @staticmethod
+    def _capture_api_key() -> str:
+        api_key = os.environ.get("ANTHROPIC_API_KEY")
         if api_key is None or not api_key.strip():
             raise AgentSetupError(
                 "Claude bare-mode Anthropic API authentication is unavailable"
             )
+        return api_key
 
-        self._cli_version = cli_version
-
-    def _build_child_environment(self) -> dict[str, str]:
+    def _build_sanitized_environment(self) -> dict[str, str]:
         child_environment = os.environ.copy()
-        removed_variables = (
-            self._BEHAVIORAL_ENVIRONMENT_OVERRIDES
-            | self._NON_DIRECT_AUTHENTICATION_OVERRIDES
-        )
-        for variable in removed_variables:
+        for variable in tuple(child_environment):
+            if variable.startswith(self._TOOL_ENVIRONMENT_PREFIXES):
+                child_environment.pop(variable)
+        for variable in self._GENERIC_BEHAVIORAL_ENVIRONMENT_OVERRIDES:
             child_environment.pop(variable, None)
         child_environment["CLAUDE_CODE_DISABLE_AUTO_MEMORY"] = "1"
         child_environment["CLAUDE_CODE_AUTO_CONNECT_IDE"] = "false"
+        child_environment["CLAUDE_CODE_SUBPROCESS_ENV_SCRUB"] = "1"
         child_environment["DISABLE_UPDATES"] = "1"
         return child_environment
 

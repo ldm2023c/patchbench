@@ -32,39 +32,27 @@ PRE_TIMEOUT_OUTPUT = "PATCHBENCH_TEST_CLAUDE_PRE_TIMEOUT_OUTPUT"
 CHILD_SENTINEL = "PATCHBENCH_TEST_CLAUDE_CHILD_SENTINEL"
 CHILD_STARTED = "PATCHBENCH_TEST_CLAUDE_CHILD_STARTED"
 API_KEY = "ANTHROPIC_API_KEY"
-DUMMY_API_KEY = "dummy-test-secret-never-log"
-BEHAVIORAL_OVERRIDES = {
-    "ANTHROPIC_MODEL",
-    "ANTHROPIC_BETAS",
+DUMMY_API_KEY = "  dummy-test-secret-never-log  "
+GENERIC_BEHAVIORAL_OVERRIDES = {
     "API_TIMEOUT_MS",
     "BASH_DEFAULT_TIMEOUT_MS",
     "BASH_MAX_OUTPUT_LENGTH",
     "BASH_MAX_TIMEOUT_MS",
-    "CLAUDE_CODE_ALWAYS_ENABLE_EFFORT",
-    "CLAUDE_CODE_EXTRA_BODY",
-    "CLAUDE_CODE_EFFORT_LEVEL",
     "MAX_THINKING_TOKENS",
-    "CLAUDE_CODE_AUTO_COMPACT_WINDOW",
-    "CLAUDE_AUTOCOMPACT_PCT_OVERRIDE",
-    "CLAUDE_CODE_SIMPLE_SYSTEM_PROMPT",
-    "CLAUDE_CODE_SHELL",
-    "CLAUDE_CODE_SHELL_PREFIX",
-    "CLAUDE_CODE_FILE_READ_MAX_OUTPUT_TOKENS",
-    "CLAUDE_CODE_MAX_OUTPUT_TOKENS",
-    "CLAUDE_CODE_MAX_TURNS",
     "CLAUDE_CODE_PRINT_BG_WAIT_CEILING_MS",
     "FALLBACK_FOR_ALL_PRIMARY_MODELS",
 }
-NON_DIRECT_AUTHENTICATION_OVERRIDES = {
-    "ANTHROPIC_AUTH_TOKEN",
+TOOL_NAMESPACE_OVERRIDES = {
+    "ANTHROPIC_DEFAULT_SONNET_MODEL",
+    "ANTHROPIC_PROFILE",
     "ANTHROPIC_BASE_URL",
-    "ANTHROPIC_BEDROCK_BASE_URL",
-    "ANTHROPIC_CUSTOM_HEADERS",
-    "ANTHROPIC_FOUNDRY_BASE_URL",
-    "ANTHROPIC_VERTEX_BASE_URL",
-    "CLAUDE_CODE_USE_BEDROCK",
-    "CLAUDE_CODE_USE_FOUNDRY",
-    "CLAUDE_CODE_USE_VERTEX",
+    "ANTHROPIC_MODEL",
+    "CLAUDE_CODE_DISABLE_ADAPTIVE_THINKING",
+    "CLAUDE_CODE_FORCE_SESSION_PERSISTENCE",
+    "CLAUDE_CODE_MAX_CONTEXT_TOKENS",
+    "CLAUDE_CODE_MAX_RETRIES",
+    "CLAUDE_CODE_RETRY_WATCHDOG",
+    "CLAUDE_ENV_FILE",
 }
 
 
@@ -88,17 +76,22 @@ def fake_claude(tmp_path, monkeypatch):
         record["environment"] = {{
             "api_key_present": bool(os.environ.get("{API_KEY}")),
             "path": os.environ.get("PATH"),
-            "behavioral_overrides_present": sorted(
-                name for name in {sorted(BEHAVIORAL_OVERRIDES)!r} if name in os.environ
-            ),
-            "non_direct_authentication_present": sorted(
+            "generic_overrides_present": sorted(
                 name
-                for name in {sorted(NON_DIRECT_AUTHENTICATION_OVERRIDES)!r}
+                for name in {sorted(GENERIC_BEHAVIORAL_OVERRIDES)!r}
+                if name in os.environ
+            ),
+            "tool_namespace_overrides_present": sorted(
+                name
+                for name in {sorted(TOOL_NAMESPACE_OVERRIDES)!r}
                 if name in os.environ
             ),
             "auto_connect_ide": os.environ.get("CLAUDE_CODE_AUTO_CONNECT_IDE"),
             "auto_memory": os.environ.get("CLAUDE_CODE_DISABLE_AUTO_MEMORY"),
             "disable_updates": os.environ.get("DISABLE_UPDATES"),
+            "subprocess_env_scrub": os.environ.get(
+                "CLAUDE_CODE_SUBPROCESS_ENV_SCRUB"
+            ),
         }}
         with Path(os.environ["{LOG}"]).open("a", encoding="utf-8") as stream:
             stream.write(json.dumps(record) + "\\n")
@@ -157,12 +150,13 @@ def test_claude_adapter_preserves_prompt_workspace_output_and_exact_policy(
     workspace.mkdir()
     prompt = "修复这个问题。\nKeep literal $HOME and `code`.\n"
     original_path = os.environ["PATH"]
-    for variable in BEHAVIORAL_OVERRIDES:
+    for variable in GENERIC_BEHAVIORAL_OVERRIDES:
         monkeypatch.setenv(variable, "ambient-override")
-    for variable in NON_DIRECT_AUTHENTICATION_OVERRIDES:
-        monkeypatch.setenv(variable, "ambient-route")
+    for variable in TOOL_NAMESPACE_OVERRIDES:
+        monkeypatch.setenv(variable, "ambient-tool-override")
     monkeypatch.setenv("CLAUDE_CODE_DISABLE_AUTO_MEMORY", "0")
     monkeypatch.setenv("CLAUDE_CODE_AUTO_CONNECT_IDE", "true")
+    monkeypatch.setenv("CLAUDE_CODE_SUBPROCESS_ENV_SCRUB", "0")
     monkeypatch.setenv("DISABLE_UPDATES", "0")
     observed_popen_environment = None
     original_popen = subprocess.Popen
@@ -190,34 +184,39 @@ def test_claude_adapter_preserves_prompt_workspace_output_and_exact_policy(
     assert API_KEY in observed_popen_environment
     assert secrets.compare_digest(observed_popen_environment[API_KEY], DUMMY_API_KEY)
     assert observed_popen_environment["PATH"] == original_path
-    assert BEHAVIORAL_OVERRIDES.isdisjoint(observed_popen_environment)
-    assert NON_DIRECT_AUTHENTICATION_OVERRIDES.isdisjoint(
+    assert GENERIC_BEHAVIORAL_OVERRIDES.isdisjoint(observed_popen_environment)
+    assert TOOL_NAMESPACE_OVERRIDES.isdisjoint(
         observed_popen_environment
     )
     assert observed_popen_environment["CLAUDE_CODE_DISABLE_AUTO_MEMORY"] == "1"
     assert observed_popen_environment["CLAUDE_CODE_AUTO_CONNECT_IDE"] == "false"
+    assert observed_popen_environment["CLAUDE_CODE_SUBPROCESS_ENV_SCRUB"] == "1"
     assert observed_popen_environment["DISABLE_UPDATES"] == "1"
     assert all(
-        os.environ[name] == "ambient-override" for name in BEHAVIORAL_OVERRIDES
+        os.environ[name] == "ambient-override"
+        for name in GENERIC_BEHAVIORAL_OVERRIDES
     )
     assert all(
-        os.environ[name] == "ambient-route"
-        for name in NON_DIRECT_AUTHENTICATION_OVERRIDES
+        os.environ[name] == "ambient-tool-override"
+        for name in TOOL_NAMESPACE_OVERRIDES
     )
     assert os.environ["CLAUDE_CODE_DISABLE_AUTO_MEMORY"] == "0"
     assert os.environ["CLAUDE_CODE_AUTO_CONNECT_IDE"] == "true"
+    assert os.environ["CLAUDE_CODE_SUBPROCESS_ENV_SCRUB"] == "0"
     assert os.environ["DISABLE_UPDATES"] == "0"
+    assert secrets.compare_digest(os.environ[API_KEY], DUMMY_API_KEY)
     records = invocations(log)
     assert DUMMY_API_KEY not in log.read_text()
     assert [record["arguments"] for record in records[:1]] == [["--version"]]
     assert records[0]["environment"] == {
-        "api_key_present": True,
+        "api_key_present": False,
         "path": original_path,
-        "behavioral_overrides_present": [],
-        "non_direct_authentication_present": [],
+        "generic_overrides_present": [],
+        "tool_namespace_overrides_present": [],
         "auto_connect_ide": "false",
         "auto_memory": "1",
         "disable_updates": "1",
+        "subprocess_env_scrub": "1",
     }
     execution = records[1]
     assert execution == {
@@ -232,11 +231,12 @@ def test_claude_adapter_preserves_prompt_workspace_output_and_exact_policy(
         "environment": {
             "api_key_present": True,
             "path": original_path,
-            "behavioral_overrides_present": [],
-            "non_direct_authentication_present": [],
+            "generic_overrides_present": [],
+            "tool_namespace_overrides_present": [],
             "auto_connect_ide": "false",
             "auto_memory": "1",
             "disable_updates": "1",
+            "subprocess_env_scrub": "1",
         },
     }
     forbidden = {
@@ -303,9 +303,10 @@ def test_claude_adapter_rejects_invalid_timeout_before_preflight(
     assert not log.exists()
 
 
-def test_missing_executable_is_setup_error(tmp_path):
+def test_missing_executable_is_setup_error(tmp_path, monkeypatch):
     workspace = tmp_path / "workspace"
     workspace.mkdir()
+    monkeypatch.setenv(API_KEY, DUMMY_API_KEY)
     adapter = ClaudeCodeAdapter(model="model-a", executable=tmp_path / "missing")
     with pytest.raises(AgentSetupError, match="version preflight"):
         adapter.run(AgentRunRequest(workspace, "prompt"))
@@ -346,7 +347,7 @@ def test_missing_or_blank_api_key_is_private_setup_error(
         adapter.run(AgentRunRequest(workspace, "prompt"))
     assert DUMMY_API_KEY not in str(raised.value)
     assert adapter.cli_version is None
-    assert [item["arguments"] for item in invocations(log)] == [["--version"]]
+    assert not log.exists()
 
 
 @pytest.mark.parametrize(
