@@ -23,6 +23,7 @@ from patchbench.agents.base import (
 LOG = "PATCHBENCH_TEST_CLAUDE_LOG"
 VERSION_MODE = "PATCHBENCH_TEST_CLAUDE_VERSION_MODE"
 VERSION_OUTPUT = "PATCHBENCH_TEST_CLAUDE_VERSION_OUTPUT"
+VERSION_SLEEP = "PATCHBENCH_TEST_CLAUDE_VERSION_SLEEP"
 DELETE_AFTER_VERSION = "PATCHBENCH_TEST_CLAUDE_DELETE_AFTER_VERSION"
 EXIT_CODE = "PATCHBENCH_TEST_CLAUDE_EXIT_CODE"
 SLEEP = "PATCHBENCH_TEST_CLAUDE_SLEEP"
@@ -34,7 +35,14 @@ API_KEY = "ANTHROPIC_API_KEY"
 DUMMY_API_KEY = "dummy-test-secret-never-log"
 BEHAVIORAL_OVERRIDES = {
     "ANTHROPIC_MODEL",
+    "ANTHROPIC_BETAS",
+    "API_TIMEOUT_MS",
+    "BASH_DEFAULT_TIMEOUT_MS",
+    "BASH_MAX_OUTPUT_LENGTH",
+    "BASH_MAX_TIMEOUT_MS",
+    "CLAUDE_CODE_ALWAYS_ENABLE_EFFORT",
     "CLAUDE_CODE_EXTRA_BODY",
+    "CLAUDE_CODE_EFFORT_LEVEL",
     "MAX_THINKING_TOKENS",
     "CLAUDE_CODE_AUTO_COMPACT_WINDOW",
     "CLAUDE_AUTOCOMPACT_PCT_OVERRIDE",
@@ -42,7 +50,9 @@ BEHAVIORAL_OVERRIDES = {
     "CLAUDE_CODE_SHELL",
     "CLAUDE_CODE_SHELL_PREFIX",
     "CLAUDE_CODE_FILE_READ_MAX_OUTPUT_TOKENS",
+    "CLAUDE_CODE_MAX_OUTPUT_TOKENS",
     "CLAUDE_CODE_MAX_TURNS",
+    "CLAUDE_CODE_PRINT_BG_WAIT_CEILING_MS",
     "FALLBACK_FOR_ALL_PRIMARY_MODELS",
 }
 NON_DIRECT_AUTHENTICATION_OVERRIDES = {
@@ -75,25 +85,26 @@ def fake_claude(tmp_path, monkeypatch):
         arguments = sys.argv[1:]
         prompt = sys.stdin.read() if "-p" in arguments else None
         record = {{"arguments": arguments, "prompt": prompt, "cwd": os.getcwd()}}
-        if "-p" in arguments:
-            record["environment"] = {{
-                "api_key_present": bool(os.environ.get("{API_KEY}")),
-                "path": os.environ.get("PATH"),
-                "behavioral_overrides_present": sorted(
-                    name for name in {sorted(BEHAVIORAL_OVERRIDES)!r} if name in os.environ
-                ),
-                "non_direct_authentication_present": sorted(
-                    name
-                    for name in {sorted(NON_DIRECT_AUTHENTICATION_OVERRIDES)!r}
-                    if name in os.environ
-                ),
-                "auto_memory": os.environ.get("CLAUDE_CODE_DISABLE_AUTO_MEMORY"),
-                "disable_updates": os.environ.get("DISABLE_UPDATES"),
-            }}
+        record["environment"] = {{
+            "api_key_present": bool(os.environ.get("{API_KEY}")),
+            "path": os.environ.get("PATH"),
+            "behavioral_overrides_present": sorted(
+                name for name in {sorted(BEHAVIORAL_OVERRIDES)!r} if name in os.environ
+            ),
+            "non_direct_authentication_present": sorted(
+                name
+                for name in {sorted(NON_DIRECT_AUTHENTICATION_OVERRIDES)!r}
+                if name in os.environ
+            ),
+            "auto_connect_ide": os.environ.get("CLAUDE_CODE_AUTO_CONNECT_IDE"),
+            "auto_memory": os.environ.get("CLAUDE_CODE_DISABLE_AUTO_MEMORY"),
+            "disable_updates": os.environ.get("DISABLE_UPDATES"),
+        }}
         with Path(os.environ["{LOG}"]).open("a", encoding="utf-8") as stream:
             stream.write(json.dumps(record) + "\\n")
 
         if arguments == ["--version"]:
+            time.sleep(float(os.environ.get("{VERSION_SLEEP}", "0")))
             mode = os.environ.get("{VERSION_MODE}")
             if mode == "nonzero":
                 print("version failed", file=sys.stderr)
@@ -151,6 +162,7 @@ def test_claude_adapter_preserves_prompt_workspace_output_and_exact_policy(
     for variable in NON_DIRECT_AUTHENTICATION_OVERRIDES:
         monkeypatch.setenv(variable, "ambient-route")
     monkeypatch.setenv("CLAUDE_CODE_DISABLE_AUTO_MEMORY", "0")
+    monkeypatch.setenv("CLAUDE_CODE_AUTO_CONNECT_IDE", "true")
     monkeypatch.setenv("DISABLE_UPDATES", "0")
     observed_popen_environment = None
     original_popen = subprocess.Popen
@@ -183,6 +195,7 @@ def test_claude_adapter_preserves_prompt_workspace_output_and_exact_policy(
         observed_popen_environment
     )
     assert observed_popen_environment["CLAUDE_CODE_DISABLE_AUTO_MEMORY"] == "1"
+    assert observed_popen_environment["CLAUDE_CODE_AUTO_CONNECT_IDE"] == "false"
     assert observed_popen_environment["DISABLE_UPDATES"] == "1"
     assert all(
         os.environ[name] == "ambient-override" for name in BEHAVIORAL_OVERRIDES
@@ -192,10 +205,20 @@ def test_claude_adapter_preserves_prompt_workspace_output_and_exact_policy(
         for name in NON_DIRECT_AUTHENTICATION_OVERRIDES
     )
     assert os.environ["CLAUDE_CODE_DISABLE_AUTO_MEMORY"] == "0"
+    assert os.environ["CLAUDE_CODE_AUTO_CONNECT_IDE"] == "true"
     assert os.environ["DISABLE_UPDATES"] == "0"
     records = invocations(log)
     assert DUMMY_API_KEY not in log.read_text()
     assert [record["arguments"] for record in records[:1]] == [["--version"]]
+    assert records[0]["environment"] == {
+        "api_key_present": True,
+        "path": original_path,
+        "behavioral_overrides_present": [],
+        "non_direct_authentication_present": [],
+        "auto_connect_ide": "false",
+        "auto_memory": "1",
+        "disable_updates": "1",
+    }
     execution = records[1]
     assert execution == {
         "arguments": [
@@ -211,6 +234,7 @@ def test_claude_adapter_preserves_prompt_workspace_output_and_exact_policy(
             "path": original_path,
             "behavioral_overrides_present": [],
             "non_direct_authentication_present": [],
+            "auto_connect_ide": "false",
             "auto_memory": "1",
             "disable_updates": "1",
         },
@@ -306,8 +330,8 @@ def test_version_preflight_failures_are_setup_errors(
     assert [item["arguments"] for item in invocations(log)] == [["--version"]]
 
 
-@pytest.mark.parametrize("value", [None, ""])
-def test_missing_or_empty_api_key_is_private_setup_error(
+@pytest.mark.parametrize("value", [None, "", "   "])
+def test_missing_or_blank_api_key_is_private_setup_error(
     tmp_path, monkeypatch, fake_claude, value
 ):
     executable, log = fake_claude
@@ -368,6 +392,69 @@ def test_execution_start_failure_after_preflight_is_infrastructure_error(
         adapter.run(AgentRunRequest(workspace, "prompt"))
     assert adapter.cli_version == "2.1.259 (Claude Code)"
     assert [item["arguments"] for item in invocations(log)] == [["--version"]]
+
+
+def test_version_preflight_is_bounded_by_agent_timeout(
+    tmp_path, monkeypatch, fake_claude
+):
+    executable, log = fake_claude
+    workspace = tmp_path / "workspace"
+    workspace.mkdir()
+    monkeypatch.setenv(VERSION_SLEEP, "0.2")
+    adapter = ClaudeCodeAdapter(model="model-a", executable=executable)
+
+    with pytest.raises(AgentSetupError, match="version preflight exceeded"):
+        adapter.run(
+            AgentRunRequest(workspace, "prompt", timeout_seconds=0.05)
+        )
+
+    assert adapter.cli_version is None
+    assert [item["arguments"] for item in invocations(log)] == [["--version"]]
+
+
+def test_version_preflight_consumes_model_timeout_budget(
+    tmp_path, monkeypatch, fake_claude
+):
+    executable, log = fake_claude
+    workspace = tmp_path / "workspace"
+    workspace.mkdir()
+    monkeypatch.setenv(VERSION_SLEEP, "0.12")
+    monkeypatch.setenv(SLEEP, "0.22")
+    monkeypatch.setenv(PRE_TIMEOUT_OUTPUT, "1")
+
+    result = ClaudeCodeAdapter(model="model-a", executable=executable).run(
+        AgentRunRequest(workspace, "prompt", timeout_seconds=0.27)
+    )
+
+    assert result.status is AgentRunStatus.TIMED_OUT
+    assert result.exit_code is None
+    assert result.stdout == '{"partial":true}\n'
+    assert [item["arguments"] for item in invocations(log)] == [
+        ["--version"],
+        [
+            "-p", "--bare", "--no-session-persistence", "--model", "model-a",
+            "--output-format", "json", "--no-chrome", "--tools", "Read,Edit,Bash",
+            "--disallowedTools", "mcp__*", "--permission-mode", "bypassPermissions",
+            "--permission-prompts", "none",
+        ],
+    ]
+
+
+def test_none_timeout_allows_preflight_and_execution_without_deadline(
+    tmp_path, monkeypatch, fake_claude
+):
+    executable, _ = fake_claude
+    workspace = tmp_path / "workspace"
+    workspace.mkdir()
+    monkeypatch.setenv(VERSION_SLEEP, "0.03")
+    monkeypatch.setenv(SLEEP, "0.03")
+
+    result = ClaudeCodeAdapter(model="model-a", executable=executable).run(
+        AgentRunRequest(workspace, "prompt", timeout_seconds=None)
+    )
+
+    assert result.status is AgentRunStatus.COMPLETED
+    assert result.duration_seconds >= 0.05
 
 
 def test_timeout_returns_output_and_terminates_process(

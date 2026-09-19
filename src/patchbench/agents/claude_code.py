@@ -32,7 +32,14 @@ class ClaudeCodeAdapter:
     _BEHAVIORAL_ENVIRONMENT_OVERRIDES = frozenset(
         {
             "ANTHROPIC_MODEL",
+            "ANTHROPIC_BETAS",
+            "API_TIMEOUT_MS",
+            "BASH_DEFAULT_TIMEOUT_MS",
+            "BASH_MAX_OUTPUT_LENGTH",
+            "BASH_MAX_TIMEOUT_MS",
+            "CLAUDE_CODE_ALWAYS_ENABLE_EFFORT",
             "CLAUDE_CODE_EXTRA_BODY",
+            "CLAUDE_CODE_EFFORT_LEVEL",
             "MAX_THINKING_TOKENS",
             "CLAUDE_CODE_AUTO_COMPACT_WINDOW",
             "CLAUDE_AUTOCOMPACT_PCT_OVERRIDE",
@@ -40,7 +47,9 @@ class ClaudeCodeAdapter:
             "CLAUDE_CODE_SHELL",
             "CLAUDE_CODE_SHELL_PREFIX",
             "CLAUDE_CODE_FILE_READ_MAX_OUTPUT_TOKENS",
+            "CLAUDE_CODE_MAX_OUTPUT_TOKENS",
             "CLAUDE_CODE_MAX_TURNS",
+            "CLAUDE_CODE_PRINT_BG_WAIT_CEILING_MS",
             "FALLBACK_FOR_ALL_PRIMARY_MODELS",
         }
     )
@@ -93,7 +102,17 @@ class ClaudeCodeAdapter:
         """Run Claude Code in the supplied PatchBench workspace."""
         timeout_seconds = self._validate_timeout(request.timeout_seconds)
         workspace = self._resolve_workspace(request.workspace)
-        child_environment = self._preflight()
+        started = perf_counter()
+        deadline = (
+            None if timeout_seconds is None else started + timeout_seconds
+        )
+        child_environment = self._build_child_environment()
+        self._preflight(deadline, child_environment)
+        remaining = self._remaining_timeout(deadline)
+        if remaining is not None and remaining <= 0:
+            raise AgentSetupError(
+                "Claude Code preflight exceeded the agent timeout"
+            )
         arguments = [
             self._executable,
             "-p",
@@ -113,7 +132,6 @@ class ClaudeCodeAdapter:
             "--permission-prompts",
             "none",
         ]
-        started = perf_counter()
         try:
             process = subprocess.Popen(
                 arguments,
@@ -131,10 +149,13 @@ class ClaudeCodeAdapter:
                 f"Unable to start Claude Code agent execution: {error}"
             ) from error
 
+        remaining = self._remaining_timeout(deadline)
+        if remaining is not None and remaining <= 0:
+            return self._handle_timeout(process, started)
         try:
             stdout, stderr = process.communicate(
                 input=request.prompt,
-                timeout=timeout_seconds,
+                timeout=remaining,
             )
         except subprocess.TimeoutExpired:
             return self._handle_timeout(process, started)
@@ -286,8 +307,22 @@ class ClaudeCodeAdapter:
             )
         return float(timeout_seconds)
 
-    def _preflight(self) -> dict[str, str]:
-        version = self._run_setup_command(["--version"], "version")
+    def _preflight(
+        self,
+        deadline: float | None,
+        child_environment: dict[str, str],
+    ) -> None:
+        remaining = self._remaining_timeout(deadline)
+        if remaining is not None and remaining <= 0:
+            raise AgentSetupError(
+                "Claude Code version preflight exceeded the agent timeout"
+            )
+        version = self._run_setup_command(
+            ["--version"],
+            "version",
+            timeout=remaining,
+            environment=child_environment,
+        )
         if version.returncode != 0:
             raise AgentSetupError(
                 f"Claude Code version preflight failed with exit code {version.returncode}"
@@ -316,11 +351,16 @@ class ClaudeCodeAdapter:
                 f"Claude Code {minimum} or later is required by the fixed invocation"
             )
 
-        child_environment = os.environ.copy()
-        if not child_environment.get("ANTHROPIC_API_KEY"):
+        api_key = child_environment.get("ANTHROPIC_API_KEY")
+        if api_key is None or not api_key.strip():
             raise AgentSetupError(
                 "Claude bare-mode Anthropic API authentication is unavailable"
             )
+
+        self._cli_version = cli_version
+
+    def _build_child_environment(self) -> dict[str, str]:
+        child_environment = os.environ.copy()
         removed_variables = (
             self._BEHAVIORAL_ENVIRONMENT_OVERRIDES
             | self._NON_DIRECT_AUTHENTICATION_OVERRIDES
@@ -328,12 +368,17 @@ class ClaudeCodeAdapter:
         for variable in removed_variables:
             child_environment.pop(variable, None)
         child_environment["CLAUDE_CODE_DISABLE_AUTO_MEMORY"] = "1"
+        child_environment["CLAUDE_CODE_AUTO_CONNECT_IDE"] = "false"
         child_environment["DISABLE_UPDATES"] = "1"
-        self._cli_version = cli_version
         return child_environment
 
     def _run_setup_command(
-        self, arguments: list[str], description: str
+        self,
+        arguments: list[str],
+        description: str,
+        *,
+        timeout: float | None,
+        environment: dict[str, str],
     ) -> subprocess.CompletedProcess[str]:
         try:
             return subprocess.run(
@@ -342,12 +387,24 @@ class ClaudeCodeAdapter:
                 text=True,
                 check=False,
                 shell=False,
+                timeout=timeout,
+                env=environment,
             )
+        except subprocess.TimeoutExpired as error:
+            raise AgentSetupError(
+                f"Claude Code {description} preflight exceeded the agent timeout"
+            ) from error
         except OSError as error:
             raise AgentSetupError(
                 f"Claude Code executable '{self._executable}' is unavailable during "
                 f"{description} preflight: {error}"
             ) from error
+
+    @staticmethod
+    def _remaining_timeout(deadline: float | None) -> float | None:
+        if deadline is None:
+            return None
+        return deadline - perf_counter()
 
     @staticmethod
     def _resolve_workspace(workspace: Path) -> Path:
