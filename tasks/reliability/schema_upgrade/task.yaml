@@ -3,7 +3,7 @@ id: schema_upgrade
 repository:
   type: local
   path: ../../../fixtures/reliability/.prepared/schema_upgrade
-  base_commit: 8a356c4f9fa918f916ab48ba8a767a8e72deba59
+  base_commit: 2dfa3cf819d02eefb8a3000ed2649e961aa05904
 task:
   prompt: |
     Persisted profiles can be read and saved inconsistently across schema

@@ -27,6 +27,14 @@ class SchemaUpgradeTests(unittest.TestCase):
     def read_json(self, name):
         return json.loads((self.root / name).read_text(encoding="utf-8"))
 
+    def assert_save_rejects_without_mutation(self):
+        before = {path.name: path.read_bytes() for path in self.root.iterdir()}
+        with self.assertRaises(SchemaError):
+            save(self.root, self.profile)
+        self.assertEqual(
+            {path.name: path.read_bytes() for path in self.root.iterdir()}, before
+        )
+
     def test_model_normalizes_list_tags(self):
         self.assertEqual(Profile("u1", "Ada", ["x"]).tags, ("x",))
 
@@ -178,6 +186,30 @@ class SchemaUpgradeTests(unittest.TestCase):
         (self.root / "profile.json").write_text("{bad", encoding="utf-8")
         with self.assertRaises(SchemaError):
             save(self.root, self.profile)
+
+    def test_save_rejects_v1_companion_conflict_unchanged(self):
+        self.v1()
+        self.write("tags.json", {"profile_id": "u1", "tags": ["other"]})
+        self.assert_save_rejects_without_mutation()
+
+    def test_save_rejects_v2_missing_companion_unchanged(self):
+        self.v2()
+        (self.root / "tags.json").unlink()
+        self.assert_save_rejects_without_mutation()
+
+    def test_save_rejects_v2_mismatched_companion_unchanged(self):
+        self.v2()
+        self.write("tags.json", {"profile_id": "other", "tags": ["other"]})
+        self.assert_save_rejects_without_mutation()
+
+    def test_save_rejects_v2_malformed_companion_unchanged(self):
+        self.v2()
+        (self.root / "tags.json").write_text("{bad", encoding="utf-8")
+        self.assert_save_rejects_without_mutation()
+
+    def test_save_rejects_orphan_companion_unchanged(self):
+        self.write("tags.json", {"profile_id": "u1", "tags": ["orphan"]})
+        self.assert_save_rejects_without_mutation()
 
 
 if __name__ == "__main__":
