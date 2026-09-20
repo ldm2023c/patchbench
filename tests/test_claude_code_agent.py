@@ -254,7 +254,7 @@ def test_claude_adapter_preserves_prompt_workspace_output_and_exact_policy(
         "arguments": [
             "-p", "--bare", "--no-session-persistence", "--model", "model-a",
             "--output-format", "json", "--no-chrome", "--tools", "Read,Edit,Bash",
-            "--allowedTools", "Read,Edit,Bash",
+            "--allowedTools", "Read", "Edit", "Bash",
             "--disallowedTools", "mcp__*", "--permission-mode", "default",
             "--permission-prompts", "none",
         ],
@@ -294,7 +294,14 @@ def test_claude_permission_contract_preapproves_only_bounded_tools(
     arguments = invocations(log)[-1]["arguments"]
 
     assert arguments[arguments.index("--tools") + 1] == "Read,Edit,Bash"
-    assert arguments[arguments.index("--allowedTools") + 1] == "Read,Edit,Bash"
+    allowed_tools_index = arguments.index("--allowedTools")
+    allowed_tools = []
+    for argument in arguments[allowed_tools_index + 1:]:
+        if argument.startswith("--"):
+            break
+        allowed_tools.append(argument)
+    assert allowed_tools == ["Read", "Edit", "Bash"]
+    assert "Read,Edit,Bash" not in allowed_tools
     assert arguments[arguments.index("--disallowedTools") + 1] == "mcp__*"
     assert arguments[arguments.index("--permission-mode") + 1] == "default"
     assert arguments[arguments.index("--permission-prompts") + 1] == "none"
@@ -408,7 +415,7 @@ def test_claude_relay_uses_explicit_endpoint_and_token_without_ambient_leakage(
     assert execution["arguments"] == [
         "-p", "--bare", "--no-session-persistence", "--model",
         "claude-sonnet-4-6", "--output-format", "json", "--no-chrome",
-        "--tools", "Read,Edit,Bash", "--allowedTools", "Read,Edit,Bash",
+        "--tools", "Read,Edit,Bash", "--allowedTools", "Read", "Edit", "Bash",
         "--disallowedTools", "mcp__*", "--permission-mode", "default",
         "--permission-prompts", "none",
     ]
@@ -683,7 +690,7 @@ def test_version_preflight_consumes_model_timeout_budget(
         [
             "-p", "--bare", "--no-session-persistence", "--model", "model-a",
             "--output-format", "json", "--no-chrome", "--tools", "Read,Edit,Bash",
-            "--allowedTools", "Read,Edit,Bash", "--disallowedTools", "mcp__*",
+            "--allowedTools", "Read", "Edit", "Bash", "--disallowedTools", "mcp__*",
             "--permission-mode", "default",
             "--permission-prompts", "none",
         ],

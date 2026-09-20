@@ -24,7 +24,7 @@ class ClaudeCodeAdapter:
     _TERMINATION_GRACE_SECONDS = 0.1
     _FORCE_KILL_WAIT_SECONDS = 1.0
     _GROUP_EXIT_POLL_SECONDS = 0.01
-    _ALLOWED_TOOLS = "Read,Edit,Bash"
+    _ALLOWED_TOOL_NAMES = ("Read", "Edit", "Bash")
     _DISALLOWED_MCP_TOOLS = "mcp__*"
     _REQUIRED_HELP_FLAGS = ("--allowedTools",)
     _MINIMUM_CLAUDE_CODE_VERSION = (2, 1, 259)
@@ -110,9 +110,9 @@ class ClaudeCodeAdapter:
             "json",
             "--no-chrome",
             "--tools",
-            self._ALLOWED_TOOLS,
+            ",".join(self._ALLOWED_TOOL_NAMES),
             "--allowedTools",
-            self._ALLOWED_TOOLS,
+            *self._ALLOWED_TOOL_NAMES,
             "--disallowedTools",
             self._DISALLOWED_MCP_TOOLS,
             "--permission-mode",
