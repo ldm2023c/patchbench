@@ -25,6 +25,9 @@ VERSION_MODE = "PATCHBENCH_TEST_CLAUDE_VERSION_MODE"
 VERSION_OUTPUT = "PATCHBENCH_TEST_CLAUDE_VERSION_OUTPUT"
 VERSION_SLEEP = "PATCHBENCH_TEST_CLAUDE_VERSION_SLEEP"
 DELETE_AFTER_VERSION = "PATCHBENCH_TEST_CLAUDE_DELETE_AFTER_VERSION"
+HELP_MODE = "PATCHBENCH_TEST_CLAUDE_HELP_MODE"
+HELP_SLEEP = "PATCHBENCH_TEST_CLAUDE_HELP_SLEEP"
+DELETE_AFTER_HELP = "PATCHBENCH_TEST_CLAUDE_DELETE_AFTER_HELP"
 EXIT_CODE = "PATCHBENCH_TEST_CLAUDE_EXIT_CODE"
 SLEEP = "PATCHBENCH_TEST_CLAUDE_SLEEP"
 IGNORE_TERM = "PATCHBENCH_TEST_CLAUDE_IGNORE_TERM"
@@ -117,6 +120,18 @@ def fake_claude(tmp_path, monkeypatch):
                 Path(sys.argv[0]).unlink()
             raise SystemExit(0)
 
+        if arguments == ["--help"]:
+            time.sleep(float(os.environ.get("{HELP_SLEEP}", "0")))
+            mode = os.environ.get("{HELP_MODE}")
+            if mode == "nonzero":
+                print("help failed", file=sys.stderr)
+                raise SystemExit(5)
+            if mode != "missing-allowed-tools":
+                print("--allowedTools, --allowed-tools <tools...>")
+            if os.environ.get("{DELETE_AFTER_HELP}") == "1":
+                Path(sys.argv[0]).unlink()
+            raise SystemExit(0)
+
         if "-p" in arguments:
             if os.environ.get("{IGNORE_TERM}") == "1":
                 signal.signal(signal.SIGTERM, signal.SIG_IGN)
@@ -124,7 +139,7 @@ def fake_claude(tmp_path, monkeypatch):
             if sentinel:
                 subprocess.Popen(
                     [sys.executable, "-c",
-                     "import sys,time; from pathlib import Path; time.sleep(.4); "
+                     "import sys,time; from pathlib import Path; time.sleep(1); "
                      "Path(sys.argv[1]).write_text('survived')", sentinel],
                     stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL,
                 )
@@ -216,7 +231,10 @@ def test_claude_adapter_preserves_prompt_workspace_output_and_exact_policy(
     assert secrets.compare_digest(os.environ[API_KEY], DUMMY_API_KEY)
     records = invocations(log)
     assert DUMMY_API_KEY not in log.read_text()
-    assert [record["arguments"] for record in records[:1]] == [["--version"]]
+    assert [record["arguments"] for record in records[:2]] == [
+        ["--version"],
+        ["--help"],
+    ]
     assert records[0]["environment"] == {
         "api_key_present": False,
         "auth_token_present": False,
@@ -230,12 +248,14 @@ def test_claude_adapter_preserves_prompt_workspace_output_and_exact_policy(
         "subprocess_env_scrub": "1",
         "nonessential_traffic": None,
     }
-    execution = records[1]
+    assert records[1]["environment"] == records[0]["environment"]
+    execution = records[2]
     assert execution == {
         "arguments": [
             "-p", "--bare", "--no-session-persistence", "--model", "model-a",
             "--output-format", "json", "--no-chrome", "--tools", "Read,Edit,Bash",
-            "--disallowedTools", "mcp__*", "--permission-mode", "bypassPermissions",
+            "--allowedTools", "Read,Edit,Bash",
+            "--disallowedTools", "mcp__*", "--permission-mode", "default",
             "--permission-prompts", "none",
         ],
         "prompt": prompt,
@@ -260,6 +280,26 @@ def test_claude_adapter_preserves_prompt_workspace_output_and_exact_policy(
     }
     assert forbidden.isdisjoint(execution["arguments"])
     assert DUMMY_API_KEY not in execution["arguments"]
+
+
+def test_claude_permission_contract_preapproves_only_bounded_tools(
+    tmp_path, fake_claude
+):
+    executable, log = fake_claude
+    workspace = tmp_path / "workspace"
+    workspace.mkdir()
+    ClaudeCodeAdapter(model="model-a", executable=executable).run(
+        AgentRunRequest(workspace, "prompt")
+    )
+    arguments = invocations(log)[-1]["arguments"]
+
+    assert arguments[arguments.index("--tools") + 1] == "Read,Edit,Bash"
+    assert arguments[arguments.index("--allowedTools") + 1] == "Read,Edit,Bash"
+    assert arguments[arguments.index("--disallowedTools") + 1] == "mcp__*"
+    assert arguments[arguments.index("--permission-mode") + 1] == "default"
+    assert arguments[arguments.index("--permission-prompts") + 1] == "none"
+    assert "bypassPermissions" not in arguments
+    assert "--dangerously-skip-permissions" not in arguments
 
 
 @pytest.mark.parametrize(
@@ -354,16 +394,23 @@ def test_claude_relay_uses_explicit_endpoint_and_token_without_ambient_leakage(
     assert os.environ == parent_environment
 
     records = invocations(log)
-    assert records[0]["arguments"] == ["--version"]
-    assert records[0]["environment"]["api_key_present"] is False
-    assert records[0]["environment"]["auth_token_present"] is False
-    assert records[0]["environment"]["base_url"] is None
-    execution = records[1]
+    assert [record["arguments"] for record in records[:2]] == [
+        ["--version"],
+        ["--help"],
+    ]
+    assert all(
+        record["environment"]["api_key_present"] is False
+        and record["environment"]["auth_token_present"] is False
+        and record["environment"]["base_url"] is None
+        for record in records[:2]
+    )
+    execution = records[2]
     assert execution["arguments"] == [
         "-p", "--bare", "--no-session-persistence", "--model",
         "claude-sonnet-4-6", "--output-format", "json", "--no-chrome",
-        "--tools", "Read,Edit,Bash", "--disallowedTools", "mcp__*",
-        "--permission-mode", "bypassPermissions", "--permission-prompts", "none",
+        "--tools", "Read,Edit,Bash", "--allowedTools", "Read,Edit,Bash",
+        "--disallowedTools", "mcp__*", "--permission-mode", "default",
+        "--permission-prompts", "none",
     ]
     assert execution["prompt"] == prompt
     assert execution["environment"]["api_key_present"] is False
@@ -386,7 +433,7 @@ def test_claude_relay_error_does_not_disclose_token(
     workspace = tmp_path / "workspace"
     workspace.mkdir()
     monkeypatch.setenv(AUTH_TOKEN, DUMMY_AUTH_TOKEN)
-    monkeypatch.setenv(DELETE_AFTER_VERSION, "1")
+    monkeypatch.setenv(DELETE_AFTER_HELP, "1")
     adapter = ClaudeCodeAdapter(
         model="claude-sonnet-4-6",
         executable=executable,
@@ -484,6 +531,49 @@ def test_version_preflight_failures_are_setup_errors(
     assert [item["arguments"] for item in invocations(log)] == [["--version"]]
 
 
+@pytest.mark.parametrize(
+    "mode,match",
+    [
+        ("nonzero", "help preflight failed with exit code 5"),
+        ("missing-allowed-tools", "required flags are unavailable"),
+    ],
+)
+def test_help_preflight_requires_allowed_tools_support(
+    tmp_path, monkeypatch, fake_claude, mode, match
+):
+    executable, log = fake_claude
+    workspace = tmp_path / "workspace"
+    workspace.mkdir()
+    monkeypatch.setenv(HELP_MODE, mode)
+    adapter = ClaudeCodeAdapter(model="model-a", executable=executable)
+    with pytest.raises(AgentSetupError, match=match):
+        adapter.run(AgentRunRequest(workspace, "prompt"))
+    assert adapter.cli_version is None
+    assert [item["arguments"] for item in invocations(log)] == [
+        ["--version"],
+        ["--help"],
+    ]
+
+
+def test_help_preflight_is_bounded_by_agent_timeout(
+    tmp_path, monkeypatch, fake_claude
+):
+    executable, log = fake_claude
+    workspace = tmp_path / "workspace"
+    workspace.mkdir()
+    monkeypatch.setenv(HELP_SLEEP, "1")
+    adapter = ClaudeCodeAdapter(model="model-a", executable=executable)
+    with pytest.raises(AgentSetupError, match="help preflight exceeded"):
+        adapter.run(
+            AgentRunRequest(workspace, "prompt", timeout_seconds=0.5)
+        )
+    assert adapter.cli_version is None
+    assert [item["arguments"] for item in invocations(log)] == [
+        ["--version"],
+        ["--help"],
+    ]
+
+
 @pytest.mark.parametrize("value", [None, "", "   "])
 def test_missing_or_blank_api_key_is_private_setup_error(
     tmp_path, monkeypatch, fake_claude, value
@@ -540,12 +630,15 @@ def test_execution_start_failure_after_preflight_is_infrastructure_error(
     executable, log = fake_claude
     workspace = tmp_path / "workspace"
     workspace.mkdir()
-    monkeypatch.setenv(DELETE_AFTER_VERSION, "1")
+    monkeypatch.setenv(DELETE_AFTER_HELP, "1")
     adapter = ClaudeCodeAdapter(model="model-a", executable=executable)
     with pytest.raises(AgentInfrastructureError, match="start Claude Code"):
         adapter.run(AgentRunRequest(workspace, "prompt"))
     assert adapter.cli_version == "2.1.259 (Claude Code)"
-    assert [item["arguments"] for item in invocations(log)] == [["--version"]]
+    assert [item["arguments"] for item in invocations(log)] == [
+        ["--version"],
+        ["--help"],
+    ]
 
 
 def test_version_preflight_is_bounded_by_agent_timeout(
@@ -572,12 +665,13 @@ def test_version_preflight_consumes_model_timeout_budget(
     executable, log = fake_claude
     workspace = tmp_path / "workspace"
     workspace.mkdir()
-    monkeypatch.setenv(VERSION_SLEEP, "0.12")
-    monkeypatch.setenv(SLEEP, "0.22")
+    monkeypatch.setenv(VERSION_SLEEP, "0.15")
+    monkeypatch.setenv(HELP_SLEEP, "0.15")
+    monkeypatch.setenv(SLEEP, "1")
     monkeypatch.setenv(PRE_TIMEOUT_OUTPUT, "1")
 
     result = ClaudeCodeAdapter(model="model-a", executable=executable).run(
-        AgentRunRequest(workspace, "prompt", timeout_seconds=0.27)
+        AgentRunRequest(workspace, "prompt", timeout_seconds=1.2)
     )
 
     assert result.status is AgentRunStatus.TIMED_OUT
@@ -585,10 +679,12 @@ def test_version_preflight_consumes_model_timeout_budget(
     assert result.stdout == '{"partial":true}\n'
     assert [item["arguments"] for item in invocations(log)] == [
         ["--version"],
+        ["--help"],
         [
             "-p", "--bare", "--no-session-persistence", "--model", "model-a",
             "--output-format", "json", "--no-chrome", "--tools", "Read,Edit,Bash",
-            "--disallowedTools", "mcp__*", "--permission-mode", "bypassPermissions",
+            "--allowedTools", "Read,Edit,Bash", "--disallowedTools", "mcp__*",
+            "--permission-mode", "default",
             "--permission-prompts", "none",
         ],
     ]
@@ -601,6 +697,7 @@ def test_none_timeout_allows_preflight_and_execution_without_deadline(
     workspace = tmp_path / "workspace"
     workspace.mkdir()
     monkeypatch.setenv(VERSION_SLEEP, "0.03")
+    monkeypatch.setenv(HELP_SLEEP, "0.03")
     monkeypatch.setenv(SLEEP, "0.03")
 
     result = ClaudeCodeAdapter(model="model-a", executable=executable).run(
@@ -608,7 +705,7 @@ def test_none_timeout_allows_preflight_and_execution_without_deadline(
     )
 
     assert result.status is AgentRunStatus.COMPLETED
-    assert result.duration_seconds >= 0.05
+    assert result.duration_seconds >= 0.08
 
 
 def test_timeout_returns_output_and_terminates_process(
@@ -620,7 +717,7 @@ def test_timeout_returns_output_and_terminates_process(
     monkeypatch.setenv(SLEEP, "1")
     monkeypatch.setenv(PRE_TIMEOUT_OUTPUT, "1")
     result = ClaudeCodeAdapter(model="model-a", executable=executable).run(
-        AgentRunRequest(workspace, "prompt", timeout_seconds=0.1)
+        AgentRunRequest(workspace, "prompt", timeout_seconds=0.7)
     )
     assert result.status is AgentRunStatus.TIMED_OUT
     assert result.exit_code is None
@@ -635,7 +732,7 @@ def test_timeout_uses_sigkill_fallback(tmp_path, monkeypatch, fake_claude):
     monkeypatch.setenv(SLEEP, "1")
     monkeypatch.setenv(IGNORE_TERM, "1")
     result = ClaudeCodeAdapter(model="model-a", executable=executable).run(
-        AgentRunRequest(workspace, "prompt", timeout_seconds=0.1)
+        AgentRunRequest(workspace, "prompt", timeout_seconds=0.7)
     )
     assert result.status is AgentRunStatus.TIMED_OUT
     assert result.exit_code is None
@@ -651,11 +748,11 @@ def test_timeout_stops_descendant_process(tmp_path, monkeypatch, fake_claude):
     monkeypatch.setenv(CHILD_SENTINEL, str(sentinel))
     monkeypatch.setenv(CHILD_STARTED, str(started))
     result = ClaudeCodeAdapter(model="model-a", executable=executable).run(
-        AgentRunRequest(workspace, "prompt", timeout_seconds=0.15)
+        AgentRunRequest(workspace, "prompt", timeout_seconds=0.7)
     )
     assert result.status is AgentRunStatus.TIMED_OUT
     assert started.read_text() == "started"
-    time.sleep(0.5)
+    time.sleep(1.1)
     assert not sentinel.exists()
 
 

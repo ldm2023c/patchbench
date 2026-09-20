@@ -26,6 +26,7 @@ class ClaudeCodeAdapter:
     _GROUP_EXIT_POLL_SECONDS = 0.01
     _ALLOWED_TOOLS = "Read,Edit,Bash"
     _DISALLOWED_MCP_TOOLS = "mcp__*"
+    _REQUIRED_HELP_FLAGS = ("--allowedTools",)
     _MINIMUM_CLAUDE_CODE_VERSION = (2, 1, 259)
     _VERSION_PATTERN = re.compile(
         r"(?<![0-9])([0-9]+)\.([0-9]+)\.([0-9]+)(?![0-9])"
@@ -110,10 +111,12 @@ class ClaudeCodeAdapter:
             "--no-chrome",
             "--tools",
             self._ALLOWED_TOOLS,
+            "--allowedTools",
+            self._ALLOWED_TOOLS,
             "--disallowedTools",
             self._DISALLOWED_MCP_TOOLS,
             "--permission-mode",
-            "bypassPermissions",
+            "default",
             "--permission-prompts",
             "none",
         ]
@@ -338,6 +341,33 @@ class ClaudeCodeAdapter:
             minimum = ".".join(map(str, self._MINIMUM_CLAUDE_CODE_VERSION))
             raise AgentSetupError(
                 f"Claude Code {minimum} or later is required by the fixed invocation"
+            )
+
+        remaining = self._remaining_timeout(deadline)
+        if remaining is not None and remaining <= 0:
+            raise AgentSetupError(
+                "Claude Code help preflight exceeded the agent timeout"
+            )
+        help_result = self._run_setup_command(
+            ["--help"],
+            "help",
+            timeout=remaining,
+            environment=child_environment,
+        )
+        if help_result.returncode != 0:
+            raise AgentSetupError(
+                "Claude Code help preflight failed with exit code "
+                f"{help_result.returncode}"
+            )
+        missing_flags = tuple(
+            flag
+            for flag in self._REQUIRED_HELP_FLAGS
+            if flag not in help_result.stdout
+        )
+        if missing_flags:
+            raise AgentSetupError(
+                "Claude Code required flags are unavailable: "
+                + ", ".join(missing_flags)
             )
 
         self._cli_version = cli_version
