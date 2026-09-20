@@ -5,6 +5,7 @@ import signal
 import secrets
 import subprocess
 import sys
+import tempfile
 from textwrap import dedent
 import time
 
@@ -80,11 +81,14 @@ def fake_claude(tmp_path, monkeypatch):
         arguments = sys.argv[1:]
         prompt = sys.stdin.read() if "-p" in arguments else None
         record = {{"arguments": arguments, "prompt": prompt, "cwd": os.getcwd()}}
+        home = Path(os.environ["HOME"])
         record["environment"] = {{
             "api_key_present": bool(os.environ.get("{API_KEY}")),
             "auth_token_present": bool(os.environ.get("{AUTH_TOKEN}")),
             "base_url": os.environ.get("ANTHROPIC_BASE_URL"),
             "path": os.environ.get("PATH"),
+            "home": str(home),
+            "home_entries": sorted(path.name for path in home.iterdir()),
             "generic_overrides_present": sorted(
                 name
                 for name in {sorted(GENERIC_BEHAVIORAL_OVERRIDES)!r}
@@ -166,6 +170,16 @@ def invocations(log):
     return [json.loads(line) for line in log.read_text().splitlines()]
 
 
+def invocation_homes(log):
+    return [Path(record["environment"]["home"]) for record in invocations(log)]
+
+
+def assert_invocation_homes_removed(log):
+    homes = invocation_homes(log)
+    assert homes
+    assert all(not home.exists() for home in homes)
+
+
 def test_claude_adapter_preserves_prompt_workspace_output_and_exact_policy(
     tmp_path, monkeypatch, fake_claude
 ):
@@ -230,6 +244,9 @@ def test_claude_adapter_preserves_prompt_workspace_output_and_exact_policy(
     assert os.environ["DISABLE_UPDATES"] == "0"
     assert secrets.compare_digest(os.environ[API_KEY], DUMMY_API_KEY)
     records = invocations(log)
+    fresh_home = records[0]["environment"]["home"]
+    assert {record["environment"]["home"] for record in records} == {fresh_home}
+    assert not Path(fresh_home).exists()
     assert DUMMY_API_KEY not in log.read_text()
     assert [record["arguments"] for record in records[:2]] == [
         ["--version"],
@@ -240,6 +257,8 @@ def test_claude_adapter_preserves_prompt_workspace_output_and_exact_policy(
         "auth_token_present": False,
         "base_url": None,
         "path": original_path,
+        "home": fresh_home,
+        "home_entries": [],
         "generic_overrides_present": [],
         "tool_namespace_overrides_present": [],
         "auto_connect_ide": "false",
@@ -265,6 +284,8 @@ def test_claude_adapter_preserves_prompt_workspace_output_and_exact_policy(
             "auth_token_present": False,
             "base_url": None,
             "path": original_path,
+            "home": fresh_home,
+            "home_entries": [],
             "generic_overrides_present": [],
             "tool_namespace_overrides_present": [],
             "auto_connect_ide": "false",
@@ -307,6 +328,118 @@ def test_claude_permission_contract_preapproves_only_bounded_tools(
     assert arguments[arguments.index("--permission-prompts") + 1] == "none"
     assert "bypassPermissions" not in arguments
     assert "--dangerously-skip-permissions" not in arguments
+
+
+@pytest.mark.parametrize("relay_mode", [False, True])
+def test_claude_uses_one_empty_fresh_home_for_every_subprocess(
+    tmp_path, monkeypatch, fake_claude, relay_mode
+):
+    executable, log = fake_claude
+    workspace = tmp_path / "workspace"
+    workspace.mkdir()
+    real_home = tmp_path / "operator-home"
+    real_home.mkdir()
+    (real_home / ".aws").symlink_to("/mnt/c/Users/LENOVO/.aws")
+    (real_home / ".azure").symlink_to("/mnt/c/Users/LENOVO/.azure")
+    (real_home / ".claude").mkdir()
+    (real_home / ".claude" / "settings.json").write_text("{}\n")
+    (real_home / ".claude.json").write_text("{}\n")
+    monkeypatch.setenv("HOME", str(real_home))
+
+    adapter_arguments = {}
+    if relay_mode:
+        monkeypatch.setenv(AUTH_TOKEN, DUMMY_AUTH_TOKEN)
+        adapter_arguments["relay_base_url"] = RELAY_BASE_URL
+    adapter = ClaudeCodeAdapter(
+        model="model-a", executable=executable, **adapter_arguments
+    )
+    result = adapter.run(AgentRunRequest(workspace, "prompt"))
+
+    assert result.status is AgentRunStatus.COMPLETED
+    records = invocations(log)
+    homes = [Path(record["environment"]["home"]) for record in records]
+    assert len(records) == 3
+    assert len(set(homes)) == 1
+    fresh_home = homes[0]
+    assert fresh_home != real_home
+    assert workspace.resolve() not in fresh_home.parents
+    assert all(record["environment"]["home_entries"] == [] for record in records)
+    assert not fresh_home.exists()
+    assert (real_home / ".aws").is_symlink()
+    assert (real_home / ".azure").is_symlink()
+    assert (real_home / ".claude" / "settings.json").exists()
+    assert (real_home / ".claude.json").exists()
+    assert os.environ["HOME"] == str(real_home)
+
+
+def test_claude_uses_a_different_fresh_home_for_each_run(
+    tmp_path, fake_claude
+):
+    executable, log = fake_claude
+    workspace = tmp_path / "workspace"
+    workspace.mkdir()
+    adapter = ClaudeCodeAdapter(model="model-a", executable=executable)
+
+    first = adapter.run(AgentRunRequest(workspace, "first"))
+    second = adapter.run(AgentRunRequest(workspace, "second"))
+
+    assert first.status is AgentRunStatus.COMPLETED
+    assert second.status is AgentRunStatus.COMPLETED
+    homes = invocation_homes(log)
+    assert len(homes) == 6
+    assert len(set(homes[:3])) == 1
+    assert len(set(homes[3:])) == 1
+    assert homes[0] != homes[3]
+    assert all(not home.exists() for home in homes)
+
+
+def test_temporary_home_creation_failure_is_infrastructure_error(
+    tmp_path, monkeypatch, fake_claude
+):
+    executable, log = fake_claude
+    workspace = tmp_path / "workspace"
+    workspace.mkdir()
+
+    def fail_creation(**kwargs):
+        raise OSError("simulated temporary home failure")
+
+    monkeypatch.setattr(
+        "patchbench.agents.claude_code.TemporaryDirectory", fail_creation
+    )
+    with pytest.raises(AgentInfrastructureError, match="isolated Claude Code home"):
+        ClaudeCodeAdapter(model="model-a", executable=executable).run(
+            AgentRunRequest(workspace, "prompt")
+        )
+    assert not log.exists()
+
+
+def test_temporary_home_inside_workspace_is_rejected_and_removed(
+    tmp_path, monkeypatch, fake_claude
+):
+    executable, log = fake_claude
+    workspace = tmp_path / "workspace"
+    workspace.mkdir()
+    created_home = None
+
+    def create_inside_workspace(**kwargs):
+        nonlocal created_home
+        temporary_directory = tempfile.TemporaryDirectory(
+            dir=workspace, **kwargs
+        )
+        created_home = Path(temporary_directory.name)
+        return temporary_directory
+
+    monkeypatch.setattr(
+        "patchbench.agents.claude_code.TemporaryDirectory",
+        create_inside_workspace,
+    )
+    with pytest.raises(AgentInfrastructureError, match="outside the workspace"):
+        ClaudeCodeAdapter(model="model-a", executable=executable).run(
+            AgentRunRequest(workspace, "prompt")
+        )
+    assert created_home is not None
+    assert not created_home.exists()
+    assert not log.exists()
 
 
 @pytest.mark.parametrize(
@@ -452,12 +585,13 @@ def test_claude_relay_error_does_not_disclose_token(
 
     assert DUMMY_AUTH_TOKEN not in str(raised.value)
     assert DUMMY_AUTH_TOKEN not in log.read_text(encoding="utf-8")
+    assert_invocation_homes_removed(log)
 
 
 def test_claude_adapter_maps_nonzero_execution_to_command_failed(
     tmp_path, monkeypatch, fake_claude
 ):
-    executable, _ = fake_claude
+    executable, log = fake_claude
     workspace = tmp_path / "workspace"
     workspace.mkdir()
     monkeypatch.setenv(EXIT_CODE, "7")
@@ -468,6 +602,7 @@ def test_claude_adapter_maps_nonzero_execution_to_command_failed(
     assert result.exit_code == 7
     assert result.stdout == '{"result":"done"}\n'
     assert result.stderr == "claude diagnostic\n"
+    assert_invocation_homes_removed(log)
 
 
 @pytest.mark.parametrize("model", ["", "   ", " model", "model ", "two words", 1])
@@ -536,6 +671,7 @@ def test_version_preflight_failures_are_setup_errors(
         adapter.run(AgentRunRequest(workspace, "prompt"))
     assert adapter.cli_version is None
     assert [item["arguments"] for item in invocations(log)] == [["--version"]]
+    assert_invocation_homes_removed(log)
 
 
 @pytest.mark.parametrize(
@@ -560,6 +696,7 @@ def test_help_preflight_requires_allowed_tools_support(
         ["--version"],
         ["--help"],
     ]
+    assert_invocation_homes_removed(log)
 
 
 def test_help_preflight_is_bounded_by_agent_timeout(
@@ -579,6 +716,7 @@ def test_help_preflight_is_bounded_by_agent_timeout(
         ["--version"],
         ["--help"],
     ]
+    assert_invocation_homes_removed(log)
 
 
 @pytest.mark.parametrize("value", [None, "", "   "])
@@ -646,6 +784,7 @@ def test_execution_start_failure_after_preflight_is_infrastructure_error(
         ["--version"],
         ["--help"],
     ]
+    assert_invocation_homes_removed(log)
 
 
 def test_version_preflight_is_bounded_by_agent_timeout(
@@ -664,6 +803,7 @@ def test_version_preflight_is_bounded_by_agent_timeout(
 
     assert adapter.cli_version is None
     assert [item["arguments"] for item in invocations(log)] == [["--version"]]
+    assert_invocation_homes_removed(log)
 
 
 def test_version_preflight_consumes_model_timeout_budget(
@@ -695,6 +835,7 @@ def test_version_preflight_consumes_model_timeout_budget(
             "--permission-prompts", "none",
         ],
     ]
+    assert_invocation_homes_removed(log)
 
 
 def test_none_timeout_allows_preflight_and_execution_without_deadline(
@@ -718,7 +859,7 @@ def test_none_timeout_allows_preflight_and_execution_without_deadline(
 def test_timeout_returns_output_and_terminates_process(
     tmp_path, monkeypatch, fake_claude
 ):
-    executable, _ = fake_claude
+    executable, log = fake_claude
     workspace = tmp_path / "workspace"
     workspace.mkdir()
     monkeypatch.setenv(SLEEP, "1")
@@ -730,6 +871,7 @@ def test_timeout_returns_output_and_terminates_process(
     assert result.exit_code is None
     assert result.stdout == '{"partial":true}\n'
     assert result.stderr == "diagnostic before timeout\n"
+    assert_invocation_homes_removed(log)
 
 
 def test_timeout_uses_sigkill_fallback(tmp_path, monkeypatch, fake_claude):
@@ -766,7 +908,7 @@ def test_timeout_stops_descendant_process(tmp_path, monkeypatch, fake_claude):
 def test_cleanup_failure_is_infrastructure_error(
     tmp_path, monkeypatch, fake_claude
 ):
-    executable, _ = fake_claude
+    executable, log = fake_claude
     workspace = tmp_path / "workspace"
     workspace.mkdir()
     adapter = ClaudeCodeAdapter(model="model-a", executable=executable)
@@ -779,3 +921,4 @@ def test_cleanup_failure_is_infrastructure_error(
     monkeypatch.setattr(adapter, "_force_cleanup", lambda process: "forced cleanup failed")
     with pytest.raises(AgentInfrastructureError, match="clean up Claude Code process group"):
         adapter.run(AgentRunRequest(workspace, "prompt"))
+    assert_invocation_homes_removed(log)

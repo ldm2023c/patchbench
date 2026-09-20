@@ -1,11 +1,14 @@
 """Agent adapter for isolated non-interactive Claude Code CLI execution."""
 
+from collections.abc import Iterator
+from contextlib import contextmanager
 from math import isfinite
 import os
 from pathlib import Path
 import re
 import signal
 import subprocess
+from tempfile import TemporaryDirectory
 from time import perf_counter, sleep
 from urllib.parse import urlsplit
 
@@ -90,8 +93,31 @@ class ClaudeCodeAdapter:
             None if timeout_seconds is None else started + timeout_seconds
         )
         credential_name, credential = self._capture_credential()
+        with self._temporary_home(workspace) as temporary_home:
+            return self._run_with_home(
+                request=request,
+                workspace=workspace,
+                started=started,
+                deadline=deadline,
+                credential_name=credential_name,
+                credential=credential,
+                temporary_home=temporary_home,
+            )
+
+    def _run_with_home(
+        self,
+        *,
+        request: AgentRunRequest,
+        workspace: Path,
+        started: float,
+        deadline: float | None,
+        credential_name: str,
+        credential: str,
+        temporary_home: Path,
+    ) -> AgentRunResult:
         preflight_environment = self._build_sanitized_environment(
             relay_mode=self._relay_base_url is not None,
+            home=temporary_home,
         )
         self._preflight(deadline, preflight_environment)
         remaining = self._remaining_timeout(deadline)
@@ -387,7 +413,7 @@ class ClaudeCodeAdapter:
         return credential_name, credential
 
     def _build_sanitized_environment(
-        self, *, relay_mode: bool
+        self, *, relay_mode: bool, home: Path
     ) -> dict[str, str]:
         child_environment = os.environ.copy()
         for variable in tuple(child_environment):
@@ -395,6 +421,7 @@ class ClaudeCodeAdapter:
                 child_environment.pop(variable)
         for variable in self._GENERIC_BEHAVIORAL_ENVIRONMENT_OVERRIDES:
             child_environment.pop(variable, None)
+        child_environment["HOME"] = str(home)
         child_environment["CLAUDE_CODE_DISABLE_AUTO_MEMORY"] = "1"
         child_environment["CLAUDE_CODE_AUTO_CONNECT_IDE"] = "false"
         child_environment["CLAUDE_CODE_SUBPROCESS_ENV_SCRUB"] = "1"
@@ -402,6 +429,38 @@ class ClaudeCodeAdapter:
         if relay_mode:
             child_environment["CLAUDE_CODE_DISABLE_NONESSENTIAL_TRAFFIC"] = "1"
         return child_environment
+
+    @staticmethod
+    @contextmanager
+    def _temporary_home(workspace: Path) -> Iterator[Path]:
+        try:
+            temporary_directory = TemporaryDirectory(
+                prefix="patchbench-claude-home-"
+            )
+        except OSError as error:
+            raise AgentInfrastructureError(
+                "Unable to create isolated Claude Code home"
+            ) from error
+
+        try:
+            try:
+                temporary_home = Path(temporary_directory.name).resolve(strict=True)
+            except OSError as error:
+                raise AgentInfrastructureError(
+                    "Unable to resolve isolated Claude Code home"
+                ) from error
+            if temporary_home == workspace or workspace in temporary_home.parents:
+                raise AgentInfrastructureError(
+                    "Isolated Claude Code home must be outside the workspace"
+                )
+            yield temporary_home
+        finally:
+            try:
+                temporary_directory.cleanup()
+            except OSError as error:
+                raise AgentInfrastructureError(
+                    "Unable to remove isolated Claude Code home"
+                ) from error
 
     @staticmethod
     def _validate_relay_base_url(value: str | None) -> str | None:
