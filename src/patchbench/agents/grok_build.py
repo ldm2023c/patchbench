@@ -35,6 +35,7 @@ class GrokBuildAdapter:
         "--always-approve",
         "--tools",
         "--disallowed-tools",
+        "--verbatim",
         "--no-plan",
         "--no-subagents",
         "--no-memory",
@@ -43,6 +44,9 @@ class GrokBuildAdapter:
     )
     _SHELL_ENVIRONMENT_POLICY = json.dumps(
         {
+            "features": {
+                "remote_fetch": False,
+            },
             "shell_environment_policy": {
                 "ignore_default_excludes": False,
                 "inherit": "core",
@@ -139,6 +143,7 @@ class GrokBuildAdapter:
             "--no-auto-update",
             "-p",
             request.prompt,
+            "--verbatim",
             "--cwd",
             str(workspace),
             "--model",
@@ -410,6 +415,7 @@ class GrokBuildAdapter:
             {
                 "HOME": str(isolated_home),
                 "GROK_CONFIG": self._SHELL_ENVIRONMENT_POLICY,
+                "GROK_DISABLE_AUTOUPDATER": "1",
                 "GROK_FEEDBACK_ENABLED": "0",
                 "GROK_HOME": str(grok_home),
                 "GROK_MEMORY": "0",

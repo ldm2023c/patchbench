@@ -46,6 +46,7 @@ GROK_PROJECT_RULE_COMPONENTS = {
     ".grok",
     ".claude",
     ".cursor",
+    ".envrc",
     ".mcp.json",
 }
 AMBIENT_TOOL_VARIABLES = {
@@ -56,6 +57,7 @@ AMBIENT_TOOL_VARIABLES = {
     "XAI_MODEL",
 }
 CONTROL_VALUES = {
+    "GROK_DISABLE_AUTOUPDATER": "1",
     "GROK_FEEDBACK_ENABLED": "0",
     "GROK_MEMORY": "0",
     "GROK_SUBAGENTS": "0",
@@ -73,6 +75,7 @@ REQUIRED_HELP_FLAGS = (
     "--always-approve",
     "--tools",
     "--disallowed-tools",
+    "--verbatim",
     "--no-plan",
     "--no-subagents",
     "--no-memory",
@@ -139,6 +142,8 @@ def fake_grok(tmp_path, monkeypatch):
             flags = list({list(REQUIRED_HELP_FLAGS)!r})
             if mode == "missing":
                 flags.remove("--no-memory")
+            if mode == "missing-verbatim":
+                flags.remove("--verbatim")
             print("\\n".join(flags))
             if os.environ.get("{DELETE_AFTER_HELP}") == "1":
                 Path(sys.argv[0]).unlink()
@@ -151,7 +156,7 @@ def fake_grok(tmp_path, monkeypatch):
             if sentinel:
                 subprocess.Popen(
                     [sys.executable, "-c",
-                     "import sys,time; from pathlib import Path; time.sleep(.4); "
+                     "import sys,time; from pathlib import Path; time.sleep(1); "
                      "Path(sys.argv[1]).write_text('survived')", sentinel],
                     stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL,
                 )
@@ -192,6 +197,7 @@ def model_arguments(workspace, prompt="修复这个问题。\nKeep $HOME and `co
         "--no-auto-update",
         "-p",
         prompt,
+        "--verbatim",
         "--cwd",
         str(workspace.resolve()),
         "--model",
@@ -251,13 +257,23 @@ def test_grok_adapter_exact_invocation_and_isolated_environment(
     assert observed_model_environment is not None
     assert secrets.compare_digest(observed_model_environment[API_KEY], DUMMY_API_KEY)
     assert DUMMY_API_KEY not in observed_model_environment["GROK_CONFIG"]
-    policy = json.loads(observed_model_environment["GROK_CONFIG"])
-    assert policy == {
+    expected_policy = {
+        "features": {
+            "remote_fetch": False,
+        },
         "shell_environment_policy": {
             "ignore_default_excludes": False,
             "inherit": "core",
         }
     }
+    policy_text = observed_model_environment["GROK_CONFIG"]
+    policy = json.loads(policy_text)
+    assert policy == expected_policy
+    assert policy_text == json.dumps(
+        expected_policy,
+        sort_keys=True,
+        separators=(",", ":"),
+    )
     assert observed_model_environment["PATH"] == original_path
     assert AMBIENT_TOOL_VARIABLES.isdisjoint(observed_model_environment)
     assert {name: observed_model_environment[name] for name in CONTROL_VALUES} == (
@@ -267,6 +283,7 @@ def test_grok_adapter_exact_invocation_and_isolated_environment(
     assert os.environ["GROK_HOME"] == str(real_grok_home)
     assert os.environ["GROK_CONFIG"] == "ambient-config"
     assert secrets.compare_digest(os.environ[API_KEY], DUMMY_API_KEY)
+    assert os.environ["GROK_DISABLE_AUTOUPDATER"] == "ambient-control-value"
     assert all(
         os.environ[name] == "ambient-tool-value"
         for name in AMBIENT_TOOL_VARIABLES
@@ -297,6 +314,7 @@ def test_grok_adapter_exact_invocation_and_isolated_environment(
     execution = records[2]
     assert execution["environment"]["api_key_present"] is True
     assert execution["cwd"] == str(workspace.resolve())
+    assert execution["arguments"][2] == prompt
     isolated_home = Path(execution["environment"]["home"])
     grok_home = Path(execution["environment"]["grok_home"])
     assert isolated_home != real_home
@@ -327,7 +345,12 @@ def test_candidate_fixtures_have_no_grok_project_rule_paths():
 
 @pytest.mark.parametrize(
     "path",
-    ["src/agent.py", "docs/claude_notes.md", "README.md"],
+    [
+        "src/agent.py",
+        "docs/claude_notes.md",
+        "docs/envrc_notes.md",
+        "README.md",
+    ],
 )
 def test_grok_project_rule_hygiene_allows_non_rule_paths(path):
     assert_grok_project_rules_are_neutral({path})
@@ -343,6 +366,7 @@ def test_grok_project_rule_hygiene_allows_non_rule_paths(path):
         ".grok/config.toml",
         ".claude/settings.json",
         ".cursor/rules/example.mdc",
+        ".envrc",
         ".mcp.json",
     ],
 )
@@ -494,7 +518,11 @@ def test_version_preflight_failures_are_setup_errors(
 
 @pytest.mark.parametrize(
     "mode,match",
-    [("nonzero", "exit code 5"), ("missing", "required flags")],
+    [
+        ("nonzero", "exit code 5"),
+        ("missing", "required flags"),
+        ("missing-verbatim", "required flags"),
+    ],
 )
 def test_help_preflight_failures_are_setup_errors(
     tmp_path, monkeypatch, fake_grok, mode, match
@@ -593,7 +621,7 @@ def test_timeout_returns_output_and_removes_temporary_home(
     monkeypatch.setenv(SLEEP, "1")
     monkeypatch.setenv(PRE_TIMEOUT_OUTPUT, "1")
     result = GrokBuildAdapter(model="model-a", executable=executable).run(
-        AgentRunRequest(workspace, "prompt", timeout_seconds=0.15)
+        AgentRunRequest(workspace, "prompt", timeout_seconds=0.5)
     )
     assert result.status is AgentRunStatus.TIMED_OUT
     assert result.exit_code is None
@@ -609,7 +637,7 @@ def test_timeout_uses_sigkill_fallback(tmp_path, monkeypatch, fake_grok):
     monkeypatch.setenv(SLEEP, "1")
     monkeypatch.setenv(IGNORE_TERM, "1")
     result = GrokBuildAdapter(model="model-a", executable=executable).run(
-        AgentRunRequest(workspace, "prompt", timeout_seconds=0.15)
+        AgentRunRequest(workspace, "prompt", timeout_seconds=0.5)
     )
     assert result.status is AgentRunStatus.TIMED_OUT
 
@@ -624,11 +652,11 @@ def test_timeout_stops_descendant_process(tmp_path, monkeypatch, fake_grok):
     monkeypatch.setenv(CHILD_SENTINEL, str(sentinel))
     monkeypatch.setenv(CHILD_STARTED, str(started))
     result = GrokBuildAdapter(model="model-a", executable=executable).run(
-        AgentRunRequest(workspace, "prompt", timeout_seconds=0.2)
+        AgentRunRequest(workspace, "prompt", timeout_seconds=0.5)
     )
     assert result.status is AgentRunStatus.TIMED_OUT
     assert started.read_text() == "started"
-    time.sleep(0.5)
+    time.sleep(1.1)
     assert not sentinel.exists()
 
 
@@ -645,7 +673,7 @@ def test_normal_exit_stops_leftover_descendant(tmp_path, monkeypatch, fake_grok)
     )
     assert result.status is AgentRunStatus.COMPLETED
     assert started.read_text() == "started"
-    time.sleep(0.5)
+    time.sleep(1.1)
     assert not sentinel.exists()
 
 
