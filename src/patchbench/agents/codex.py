@@ -105,12 +105,17 @@ class CodexAdapter:
         api_key = self._capture_relay_api_key()
         try:
             with TemporaryDirectory(prefix="patchbench-codex-") as temporary:
-                codex_home = Path(temporary).resolve()
-                if codex_home.is_relative_to(workspace):
+                isolated_home = Path(temporary).resolve()
+                if isolated_home.is_relative_to(workspace):
                     raise AgentInfrastructureError(
                         "Isolated Codex home was created inside the workspace"
                     )
-                preflight_environment = self._build_relay_environment(codex_home)
+                codex_home = isolated_home / ".codex"
+                codex_home.mkdir()
+                preflight_environment = self._build_relay_environment(
+                    isolated_home,
+                    codex_home,
+                )
                 self._preflight(
                     deadline,
                     environment=preflight_environment,
@@ -442,6 +447,7 @@ class CodexAdapter:
             "features.multi_agent=false",
             "features.remote_plugin=false",
             "features.shell_snapshot=false",
+            "features.skill_mcp_dependency_install=false",
             "check_for_update_on_startup=false",
             'shell_environment_policy.inherit="core"',
             "shell_environment_policy.ignore_default_excludes=false",
@@ -458,11 +464,16 @@ class CodexAdapter:
             raise AgentSetupError("Codex relay authentication is unavailable")
         return api_key
 
-    def _build_relay_environment(self, codex_home: Path) -> dict[str, str]:
+    def _build_relay_environment(
+        self,
+        isolated_home: Path,
+        codex_home: Path,
+    ) -> dict[str, str]:
         environment = os.environ.copy()
         for variable in tuple(environment):
             if variable.startswith(self._RELAY_ENVIRONMENT_PREFIXES):
                 environment.pop(variable)
+        environment["HOME"] = str(isolated_home)
         environment["CODEX_HOME"] = str(codex_home)
         return environment
 

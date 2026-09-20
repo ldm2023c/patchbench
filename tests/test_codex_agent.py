@@ -1,6 +1,6 @@
 import json
 import os
-from pathlib import Path
+from pathlib import Path, PurePosixPath
 import secrets
 import signal
 import subprocess
@@ -19,6 +19,8 @@ from patchbench.agents.base import (
     AgentSetupError,
 )
 from patchbench.agents.codex import CodexAdapter
+from scripts.prepare_pilot_fixtures import template_files
+from scripts.v13_candidate_manifest import load_candidate_manifest
 
 
 _LOG_ENVIRONMENT_VARIABLE = "PATCHBENCH_TEST_CODEX_LOG"
@@ -44,6 +46,12 @@ _DELETE_AFTER_HELP_ENVIRONMENT_VARIABLE = "PATCHBENCH_TEST_CODEX_DELETE_AFTER_HE
 _API_KEY = "OPENAI_API_KEY"
 _DUMMY_API_KEY = "  dummy-codex-relay-secret-never-log  "
 _RELAY_BASE_URL = "https://ai.ailink1.com/v1"
+_PROJECT_ROOT = Path(__file__).resolve().parents[1]
+_CODEX_EXTERNAL_CONTEXT_COMPONENTS = {
+    ".agents",
+    ".claude-plugin",
+    ".codex-plugin",
+}
 _AMBIENT_RELAY_VARIABLES = {
     "CODEX_CONFIG",
     "CODEX_PROFILE",
@@ -90,6 +98,11 @@ def fake_codex(tmp_path, monkeypatch) -> tuple[Path, Path]:
             if codex_home is not None:
                 record["relay_environment"] = {{
                     "api_key_present": bool(os.environ.get("{_API_KEY}")),
+                    "home": os.environ.get("HOME"),
+                    "home_exists": Path(os.environ["HOME"]).is_dir(),
+                    "home_entries": sorted(
+                        path.name for path in Path(os.environ["HOME"]).iterdir()
+                    ),
                     "codex_home": codex_home,
                     "codex_home_exists": Path(codex_home).is_dir(),
                     "codex_home_entries": sorted(
@@ -224,6 +237,15 @@ def _read_invocations(invocation_log: Path) -> list[dict[str, object]]:
     ]
 
 
+def _assert_codex_external_context_paths_are_neutral(paths) -> None:
+    for path_text in paths:
+        path = PurePosixPath(path_text)
+        assert not any(
+            component.casefold() in _CODEX_EXTERNAL_CONTEXT_COMPONENTS
+            for component in path.parts
+        ), path_text
+
+
 def _relay_overrides() -> list[str]:
     return [
         'model_provider="patchbench_relay"',
@@ -241,6 +263,7 @@ def _relay_overrides() -> list[str]:
         "features.multi_agent=false",
         "features.remote_plugin=false",
         "features.shell_snapshot=false",
+        "features.skill_mcp_dependency_install=false",
         "check_for_update_on_startup=false",
         'shell_environment_policy.inherit="core"',
         "shell_environment_policy.ignore_default_excludes=false",
@@ -416,18 +439,121 @@ def test_codex_relay_exact_invocation_and_isolated_environment(
     assert records[2]["prompt"] == prompt
     assert all(record["relay_environment"]["codex_home_exists"] for record in records)
     assert all(record["relay_environment"]["codex_home_entries"] == [] for record in records)
+    assert all(record["relay_environment"]["home_exists"] for record in records)
+    assert all(
+        record["relay_environment"]["home_entries"] == [".codex"]
+        for record in records
+    )
     assert all(record["relay_environment"]["ambient_present"] == [] for record in records)
     assert records[0]["relay_environment"]["api_key_present"] is False
     assert records[1]["relay_environment"]["api_key_present"] is False
     assert records[2]["relay_environment"]["api_key_present"] is True
-    isolated_home = Path(records[0]["relay_environment"]["codex_home"])
-    assert isolated_home != real_codex_home
+    isolated_home = Path(records[0]["relay_environment"]["home"])
+    codex_home = Path(records[0]["relay_environment"]["codex_home"])
+    assert codex_home != real_codex_home
+    assert codex_home.parent == isolated_home
     assert not isolated_home.is_relative_to(workspace.resolve())
     assert not isolated_home.exists()
     serialized = invocation_log.read_text(encoding="utf-8")
     assert _DUMMY_API_KEY not in serialized
     assert _DUMMY_API_KEY not in result.stdout + result.stderr
     assert _DUMMY_API_KEY not in records[2]["arguments"]
+
+
+def test_codex_relay_isolates_real_user_discovery_roots(
+    tmp_path, monkeypatch, fake_codex
+) -> None:
+    executable, invocation_log = fake_codex
+    workspace = tmp_path / "workspace"
+    workspace.mkdir()
+    real_home = tmp_path / "real-home"
+    personal_files = {
+        ".agents/skills/example/SKILL.md": "personal skill",
+        ".agents/plugins/marketplace.json": "{}",
+        ".claude-plugin/marketplace.json": "{}",
+        ".codex/config.toml": 'model = "personal-model"',
+    }
+    for relative_path, content in personal_files.items():
+        path = real_home / relative_path
+        path.parent.mkdir(parents=True, exist_ok=True)
+        path.write_text(content, encoding="utf-8")
+    monkeypatch.setenv("HOME", str(real_home))
+    monkeypatch.setenv("CODEX_HOME", str(real_home / ".codex"))
+    monkeypatch.setenv(_API_KEY, _DUMMY_API_KEY)
+
+    result = CodexAdapter(
+        model="gpt-5.5",
+        executable=executable,
+        relay_base_url=_RELAY_BASE_URL,
+    ).run(AgentRunRequest(workspace, "prompt"))
+
+    assert result.status is AgentRunStatus.COMPLETED
+    records = _read_invocations(invocation_log)
+    temporary_homes = {
+        record["relay_environment"]["home"] for record in records
+    }
+    assert len(temporary_homes) == 1
+    temporary_home = Path(temporary_homes.pop())
+    assert temporary_home != real_home
+    assert all(
+        Path(record["relay_environment"]["codex_home"]).parent == temporary_home
+        for record in records
+    )
+    assert all(
+        record["relay_environment"]["home_entries"] == [".codex"]
+        for record in records
+    )
+    assert all(
+        record["relay_environment"]["codex_home_entries"] == []
+        for record in records
+    )
+    assert not (temporary_home / ".agents").exists()
+    assert not (temporary_home / ".claude-plugin").exists()
+    assert not temporary_home.exists()
+    assert os.environ["HOME"] == str(real_home)
+    assert os.environ["CODEX_HOME"] == str(real_home / ".codex")
+    assert all((real_home / path).is_file() for path in personal_files)
+
+
+def test_candidate_fixtures_have_no_codex_external_context_paths() -> None:
+    candidate = load_candidate_manifest(_PROJECT_ROOT)
+    assert len(candidate.tasks) == 12
+    for task in candidate.tasks:
+        fixture = _PROJECT_ROOT / "fixtures/reliability" / task.task_id
+        tracked_template = {
+            path.relative_to(fixture).as_posix()
+            for path in template_files(fixture)
+        }
+        assert tracked_template
+        _assert_codex_external_context_paths_are_neutral(tracked_template)
+
+
+@pytest.mark.parametrize(
+    "path",
+    [
+        "src/agents.py",
+        "docs/skills_notes.md",
+        "docs/plugin_notes.md",
+        "README.md",
+    ],
+)
+def test_codex_external_context_hygiene_allows_ordinary_paths(path) -> None:
+    _assert_codex_external_context_paths_are_neutral({path})
+
+
+@pytest.mark.parametrize(
+    "path",
+    [
+        ".agents/skills/test/SKILL.md",
+        ".agents/plugins/marketplace.json",
+        ".claude-plugin/marketplace.json",
+        ".claude-plugin/plugin.json",
+        ".codex-plugin/plugin.json",
+    ],
+)
+def test_codex_external_context_hygiene_rejects_discovery_roots(path) -> None:
+    with pytest.raises(AssertionError, match=path.split("/")[0]):
+        _assert_codex_external_context_paths_are_neutral({path})
 
 
 def test_codex_relay_removes_temporary_home_after_command_failure(
@@ -603,15 +729,15 @@ def test_codex_relay_preflight_consumes_model_timeout_budget(
     workspace = tmp_path / "workspace"
     workspace.mkdir()
     monkeypatch.setenv(_API_KEY, _DUMMY_API_KEY)
-    monkeypatch.setenv(_VERSION_SLEEP_ENVIRONMENT_VARIABLE, "0.08")
-    monkeypatch.setenv(_HELP_SLEEP_ENVIRONMENT_VARIABLE, "0.08")
-    monkeypatch.setenv(_EXEC_SLEEP_ENVIRONMENT_VARIABLE, "0.3")
+    monkeypatch.setenv(_VERSION_SLEEP_ENVIRONMENT_VARIABLE, "0.15")
+    monkeypatch.setenv(_HELP_SLEEP_ENVIRONMENT_VARIABLE, "0.15")
+    monkeypatch.setenv(_EXEC_SLEEP_ENVIRONMENT_VARIABLE, "1")
     monkeypatch.setenv(_PRE_TIMEOUT_OUTPUT_ENVIRONMENT_VARIABLE, "1")
     result = CodexAdapter(
         model="gpt-5.5",
         executable=executable,
         relay_base_url=_RELAY_BASE_URL,
-    ).run(AgentRunRequest(workspace, "prompt", timeout_seconds=0.35))
+    ).run(AgentRunRequest(workspace, "prompt", timeout_seconds=1.2))
 
     assert result.status is AgentRunStatus.TIMED_OUT
     assert result.exit_code is None
