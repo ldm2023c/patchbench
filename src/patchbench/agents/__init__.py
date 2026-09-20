@@ -11,6 +11,7 @@ from patchbench.agents.base import (
 from patchbench.agents.codex import CodexAdapter
 from patchbench.agents.claude_code import ClaudeCodeAdapter
 from patchbench.agents.fake import FakeAgent, FakeAgentError
+from patchbench.agents.grok_build import GrokBuildAdapter
 
 __all__ = [
     "Agent",
@@ -21,6 +22,7 @@ __all__ = [
     "AgentSetupError",
     "CodexAdapter",
     "ClaudeCodeAdapter",
+    "GrokBuildAdapter",
     "FakeAgent",
     "FakeAgentError",
 ]
