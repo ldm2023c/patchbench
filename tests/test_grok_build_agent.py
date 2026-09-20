@@ -7,6 +7,7 @@ import subprocess
 import sys
 from textwrap import dedent
 import time
+import tomllib
 
 import pytest
 
@@ -52,6 +53,9 @@ GROK_PROJECT_RULE_COMPONENTS = {
 AMBIENT_TOOL_VARIABLES = {
     "GROK_CONFIG_FILE",
     "GROK_MODEL",
+    "GROK_MODELS_BASE_URL",
+    "GROK_MODELS_LIST_URL",
+    "GROK_CLI_CHAT_PROXY_BASE_URL",
     "GROK_RULES",
     "XAI_BASE_URL",
     "XAI_MODEL",
@@ -78,10 +82,9 @@ REQUIRED_HELP_FLAGS = (
     "--verbatim",
     "--no-plan",
     "--no-subagents",
-    "--no-memory",
     "--disable-web-search",
-    "--no-auto-update",
 )
+VERSION_ARGUMENTS = ["--no-auto-update", "--no-memory", "--version"]
 
 
 @pytest.fixture
@@ -99,6 +102,7 @@ def fake_grok(tmp_path, monkeypatch):
         import time
 
         arguments = sys.argv[1:]
+        model_config_path = Path(os.environ["GROK_HOME"]) / "config.toml"
         record = {{
             "arguments": arguments,
             "cwd": os.getcwd(),
@@ -109,6 +113,11 @@ def fake_grok(tmp_path, monkeypatch):
                 "grok_home": os.environ.get("GROK_HOME"),
                 "grok_home_exists": Path(os.environ["GROK_HOME"]).is_dir(),
                 "grok_config": os.environ.get("GROK_CONFIG"),
+                "model_config_exists": model_config_path.is_file(),
+                "model_config": (
+                    model_config_path.read_text(encoding="utf-8")
+                    if model_config_path.is_file() else None
+                ),
                 "ambient_present": sorted(
                     name for name in {sorted(AMBIENT_TOOL_VARIABLES)!r}
                     if name in os.environ
@@ -123,10 +132,10 @@ def fake_grok(tmp_path, monkeypatch):
         with Path(os.environ["{LOG}"]).open("a", encoding="utf-8") as stream:
             stream.write(json.dumps(record) + "\\n")
 
-        if arguments == ["--version"]:
+        if arguments == {VERSION_ARGUMENTS!r}:
             time.sleep(float(os.environ.get("{VERSION_SLEEP}", "0")))
             mode = os.environ.get("{VERSION_MODE}")
-            if mode == "nonzero":
+            if mode in {{"nonzero", "reject-no-auto-update", "reject-no-memory"}}:
                 print("version failed", file=sys.stderr)
                 raise SystemExit(4)
             if mode != "blank":
@@ -141,7 +150,7 @@ def fake_grok(tmp_path, monkeypatch):
                 raise SystemExit(5)
             flags = list({list(REQUIRED_HELP_FLAGS)!r})
             if mode == "missing":
-                flags.remove("--no-memory")
+                flags.remove("--disable-web-search")
             if mode == "missing-verbatim":
                 flags.remove("--verbatim")
             print("\\n".join(flags))
@@ -192,7 +201,11 @@ def assert_grok_project_rules_are_neutral(paths):
         ), path_text
 
 
-def model_arguments(workspace, prompt="修复这个问题。\nKeep $HOME and `code`.\n"):
+def model_arguments(
+    workspace,
+    prompt="修复这个问题。\nKeep $HOME and `code`.\n",
+    model="model-a",
+):
     return [
         "--no-auto-update",
         "-p",
@@ -201,7 +214,7 @@ def model_arguments(workspace, prompt="修复这个问题。\nKeep $HOME and `co
         "--cwd",
         str(workspace.resolve()),
         "--model",
-        "model-a",
+        model,
         "--output-format",
         "json",
         "--always-approve",
@@ -214,6 +227,23 @@ def model_arguments(workspace, prompt="修复这个问题。\nKeep $HOME and `co
         "--no-memory",
         "--disable-web-search",
     ]
+
+
+def relay_config_text(context_window=500000):
+    lines = [
+        "[models]",
+        'default = "grok-4.5"',
+        "",
+        '[model."grok-4.5"]',
+        'model = "grok-4.5"',
+        'base_url = "https://ai.ailink1.com/v1"',
+        'env_key = "XAI_API_KEY"',
+        'api_backend = "responses"',
+        "supports_backend_search = false",
+    ]
+    if context_window is not None:
+        lines.append(f"context_window = {context_window}")
+    return "\n".join(lines) + "\n"
 
 
 def test_grok_adapter_exact_invocation_and_isolated_environment(
@@ -291,7 +321,7 @@ def test_grok_adapter_exact_invocation_and_isolated_environment(
 
     records = invocations(log)
     assert [record["arguments"] for record in records] == [
-        ["--version"],
+        VERSION_ARGUMENTS,
         ["--help"],
         model_arguments(workspace, prompt),
     ]
@@ -305,6 +335,13 @@ def test_grok_adapter_exact_invocation_and_isolated_environment(
     )
     assert all(record["environment"]["home_exists"] for record in records)
     assert all(record["environment"]["grok_home_exists"] for record in records)
+    assert all(
+        record["environment"]["model_config_exists"] is False
+        for record in records
+    )
+    assert all(
+        record["environment"]["model_config"] is None for record in records
+    )
     assert all(
         json.loads(record["environment"]["grok_config"]) == policy
         for record in records
@@ -328,6 +365,190 @@ def test_grok_adapter_exact_invocation_and_isolated_environment(
         "--rules", "--system-prompt-override", "--plugin-dir",
     }
     assert forbidden.isdisjoint(execution["arguments"])
+
+
+@pytest.mark.parametrize(
+    "relay_base_url",
+    [
+        "",
+        "   ",
+        " https://ai.ailink1.com/v1",
+        "https://ai.ailink1.com/v1 ",
+        "http://ai.ailink1.com/v1",
+        "HTTPS://ai.ailink1.com/v1",
+        "https://ai.ailink1.com/v1/",
+        "https://ai.ailink1.com/v1?",
+        "https://ai.ailink1.com/v1#",
+        "https://ai.ailink1.com/v1?model=grok",
+        "https://ai.ailink1.com/v1#fragment",
+        "https://user@ai.ailink1.com/v1",
+        1,
+    ],
+)
+def test_rejects_noncanonical_relay_base_url(relay_base_url):
+    with pytest.raises(AgentSetupError, match="relay base URL"):
+        GrokBuildAdapter(model="model-a", relay_base_url=relay_base_url)
+
+
+@pytest.mark.parametrize("context_window", [0, -1, True, 1.5, "500000"])
+def test_rejects_invalid_relay_context_window(context_window):
+    with pytest.raises(AgentSetupError, match="context window"):
+        GrokBuildAdapter(
+            model="model-a",
+            relay_base_url="https://ai.ailink1.com/v1",
+            relay_context_window=context_window,
+        )
+
+
+def test_rejects_relay_context_window_without_relay_base_url():
+    with pytest.raises(AgentSetupError, match="requires a relay base URL"):
+        GrokBuildAdapter(model="model-a", relay_context_window=500000)
+
+
+def test_grok_relay_uses_owned_config_and_ignores_ambient_routes(
+    tmp_path, monkeypatch, fake_grok
+):
+    executable, log = fake_grok
+    workspace = tmp_path / "workspace"
+    workspace.mkdir()
+    real_home = tmp_path / "real-home"
+    real_grok_home = tmp_path / "real-grok-home"
+    monkeypatch.setenv("HOME", str(real_home))
+    monkeypatch.setenv("GROK_HOME", str(real_grok_home))
+    monkeypatch.setenv("GROK_CONFIG", "ambient-config")
+    for name in AMBIENT_TOOL_VARIABLES:
+        monkeypatch.setenv(name, "https://ambient.invalid")
+    monkeypatch.setenv(API_KEY, DUMMY_API_KEY)
+    parent_environment = os.environ.copy()
+    observed_model_environment = None
+    original_popen = subprocess.Popen
+
+    def inspect_popen(*args, **kwargs):
+        nonlocal observed_model_environment
+        if "-p" in args[0]:
+            observed_model_environment = kwargs.get("env")
+        return original_popen(*args, **kwargs)
+
+    monkeypatch.setattr(subprocess, "Popen", inspect_popen)
+    adapter = GrokBuildAdapter(
+        model="grok-4.5",
+        executable=executable,
+        relay_base_url="https://ai.ailink1.com/v1",
+        relay_context_window=500000,
+    )
+    result = adapter.run(AgentRunRequest(workspace, "relay prompt"))
+
+    assert result.status is AgentRunStatus.COMPLETED
+    assert adapter.relay_base_url == "https://ai.ailink1.com/v1"
+    assert adapter.relay_context_window == 500000
+    assert observed_model_environment is not None
+    assert secrets.compare_digest(observed_model_environment[API_KEY], DUMMY_API_KEY)
+    assert AMBIENT_TOOL_VARIABLES.isdisjoint(observed_model_environment)
+    assert json.loads(observed_model_environment["GROK_CONFIG"]) == {
+        "features": {"remote_fetch": False},
+        "shell_environment_policy": {
+            "ignore_default_excludes": False,
+            "inherit": "core",
+        },
+    }
+    assert os.environ == parent_environment
+
+    records = invocations(log)
+    assert [record["arguments"] for record in records] == [
+        VERSION_ARGUMENTS,
+        ["--help"],
+        model_arguments(workspace, "relay prompt", model="grok-4.5"),
+    ]
+    expected_config = relay_config_text()
+    assert all(
+        record["environment"]["model_config_exists"] is True
+        for record in records
+    )
+    assert all(
+        record["environment"]["model_config"] == expected_config
+        for record in records
+    )
+    parsed = tomllib.loads(expected_config)
+    assert parsed == {
+        "models": {"default": "grok-4.5"},
+        "model": {
+            "grok-4.5": {
+                "model": "grok-4.5",
+                "base_url": "https://ai.ailink1.com/v1",
+                "env_key": "XAI_API_KEY",
+                "api_backend": "responses",
+                "supports_backend_search": False,
+                "context_window": 500000,
+            }
+        },
+    }
+    assert DUMMY_API_KEY not in expected_config
+    assert DUMMY_API_KEY not in log.read_text(encoding="utf-8")
+    isolated_home = Path(records[0]["environment"]["home"])
+    assert not isolated_home.exists()
+
+
+def test_grok_relay_omits_context_window_unless_configured(
+    tmp_path, monkeypatch, fake_grok
+):
+    executable, log = fake_grok
+    workspace = tmp_path / "workspace"
+    workspace.mkdir()
+    monkeypatch.setenv(EXIT_CODE, "7")
+    result = GrokBuildAdapter(
+        model="grok-4.5",
+        executable=executable,
+        relay_base_url="https://ai.ailink1.com/v1",
+    ).run(AgentRunRequest(workspace, "prompt"))
+
+    assert result.status is AgentRunStatus.COMMAND_FAILED
+    records = invocations(log)
+    assert all(
+        record["environment"]["model_config"] == relay_config_text(None)
+        for record in records
+    )
+    assert "context_window" not in tomllib.loads(relay_config_text(None))["model"][
+        "grok-4.5"
+    ]
+    assert not Path(records[0]["environment"]["home"]).exists()
+
+
+def test_grok_relay_removes_temporary_config_after_preflight_error(
+    tmp_path, monkeypatch, fake_grok
+):
+    executable, log = fake_grok
+    workspace = tmp_path / "workspace"
+    workspace.mkdir()
+    monkeypatch.setenv(HELP_MODE, "nonzero")
+    with pytest.raises(AgentSetupError, match="help preflight"):
+        GrokBuildAdapter(
+            model="grok-4.5",
+            executable=executable,
+            relay_base_url="https://ai.ailink1.com/v1",
+        ).run(AgentRunRequest(workspace, "prompt"))
+
+    records = invocations(log)
+    assert all(record["environment"]["model_config_exists"] for record in records)
+    assert not Path(records[0]["environment"]["home"]).exists()
+
+
+def test_grok_relay_removes_temporary_config_after_timeout(
+    tmp_path, monkeypatch, fake_grok
+):
+    executable, log = fake_grok
+    workspace = tmp_path / "workspace"
+    workspace.mkdir()
+    monkeypatch.setenv(SLEEP, "1")
+    result = GrokBuildAdapter(
+        model="grok-4.5",
+        executable=executable,
+        relay_base_url="https://ai.ailink1.com/v1",
+    ).run(AgentRunRequest(workspace, "prompt", timeout_seconds=0.5))
+
+    assert result.status is AgentRunStatus.TIMED_OUT
+    records = invocations(log)
+    assert records[-1]["environment"]["model_config_exists"] is True
+    assert not Path(records[-1]["environment"]["home"]).exists()
 
 
 def test_candidate_fixtures_have_no_grok_project_rule_paths():
@@ -499,7 +720,12 @@ def test_temporary_home_creation_failure_is_infrastructure_error(
 
 @pytest.mark.parametrize(
     "mode,match",
-    [("nonzero", "exit code 4"), ("blank", "canonical version")],
+    [
+        ("nonzero", "exit code 4"),
+        ("reject-no-auto-update", "exit code 4"),
+        ("reject-no-memory", "exit code 4"),
+        ("blank", "canonical version"),
+    ],
 )
 def test_version_preflight_failures_are_setup_errors(
     tmp_path, monkeypatch, fake_grok, mode, match
@@ -512,7 +738,7 @@ def test_version_preflight_failures_are_setup_errors(
     with pytest.raises(AgentSetupError, match=match):
         adapter.run(AgentRunRequest(workspace, "prompt"))
     assert adapter.cli_version is None
-    assert [item["arguments"] for item in invocations(log)] == [["--version"]]
+    assert [item["arguments"] for item in invocations(log)] == [VERSION_ARGUMENTS]
     assert not Path(invocations(log)[0]["environment"]["home"]).exists()
 
 
@@ -536,7 +762,10 @@ def test_help_preflight_failures_are_setup_errors(
         adapter.run(AgentRunRequest(workspace, "prompt"))
     assert adapter.cli_version is None
     records = invocations(log)
-    assert [item["arguments"] for item in records] == [["--version"], ["--help"]]
+    assert [item["arguments"] for item in records] == [
+        VERSION_ARGUMENTS,
+        ["--help"],
+    ]
     assert not Path(records[0]["environment"]["home"]).exists()
 
 
@@ -552,15 +781,23 @@ def test_execution_start_failure_after_preflight_is_infrastructure_error(
         adapter.run(AgentRunRequest(workspace, "prompt"))
     assert adapter.cli_version == "grok build 0.9.0 (test)"
     records = invocations(log)
-    assert [item["arguments"] for item in records] == [["--version"], ["--help"]]
+    assert [item["arguments"] for item in records] == [
+        VERSION_ARGUMENTS,
+        ["--help"],
+    ]
     assert not Path(records[0]["environment"]["home"]).exists()
 
 
 @pytest.mark.parametrize(
     "sleep_variable,timeout_seconds,expected_invocations,match",
     [
-        (VERSION_SLEEP, 0.05, [["--version"]], "version preflight exceeded"),
-        (HELP_SLEEP, 0.15, [["--version"], ["--help"]], "help preflight exceeded"),
+        (VERSION_SLEEP, 0.05, [VERSION_ARGUMENTS], "version preflight exceeded"),
+        (
+            HELP_SLEEP,
+            0.15,
+            [VERSION_ARGUMENTS, ["--help"]],
+            "help preflight exceeded",
+        ),
     ],
 )
 def test_preflight_is_bounded_by_agent_timeout(

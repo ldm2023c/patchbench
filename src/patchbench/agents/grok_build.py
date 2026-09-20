@@ -8,6 +8,7 @@ import signal
 import subprocess
 from tempfile import TemporaryDirectory
 from time import perf_counter, sleep
+from urllib.parse import urlsplit
 
 from patchbench.agents.base import (
     AgentInfrastructureError,
@@ -27,6 +28,7 @@ class GrokBuildAdapter:
     _ALLOWED_TOOLS = "read_file,grep,list_dir,search_replace,run_terminal_cmd"
     _DISALLOWED_TOOLS = "search_tool,use_tool,Agent,web_search,web_fetch"
     _TOOL_ENVIRONMENT_PREFIXES = ("GROK_", "XAI_")
+    _PARSER_VERIFIED_FLAGS = ("--no-auto-update", "--no-memory")
     _REQUIRED_HELP_FLAGS = (
         "-p",
         "--cwd",
@@ -38,9 +40,7 @@ class GrokBuildAdapter:
         "--verbatim",
         "--no-plan",
         "--no-subagents",
-        "--no-memory",
         "--disable-web-search",
-        "--no-auto-update",
     )
     _SHELL_ENVIRONMENT_POLICY = json.dumps(
         {
@@ -61,6 +61,8 @@ class GrokBuildAdapter:
         *,
         model: str,
         executable: str | Path = "grok",
+        relay_base_url: str | None = None,
+        relay_context_window: int | None = None,
     ) -> None:
         if (
             not isinstance(model, str)
@@ -73,6 +75,11 @@ class GrokBuildAdapter:
             raise AgentSetupError("Grok Build executable must not be empty")
         self._model = model
         self._executable = executable_text
+        self._relay_base_url = self._validate_relay_base_url(relay_base_url)
+        self._relay_context_window = self._validate_relay_context_window(
+            relay_context_window,
+            relay_enabled=self._relay_base_url is not None,
+        )
         self._cli_version: str | None = None
 
     @property
@@ -86,6 +93,14 @@ class GrokBuildAdapter:
     @property
     def cli_version(self) -> str | None:
         return self._cli_version
+
+    @property
+    def relay_base_url(self) -> str | None:
+        return self._relay_base_url
+
+    @property
+    def relay_context_window(self) -> int | None:
+        return self._relay_context_window
 
     def run(self, request: AgentRunRequest) -> AgentRunResult:
         """Run Grok Build in the supplied PatchBench workspace."""
@@ -105,6 +120,8 @@ class GrokBuildAdapter:
                     )
                 grok_home = isolated_home / ".grok"
                 grok_home.mkdir()
+                if self._relay_base_url is not None:
+                    self._write_relay_config(grok_home / "config.toml")
                 preflight_environment = self._build_sanitized_environment(
                     isolated_home,
                     grok_home,
@@ -345,7 +362,7 @@ class GrokBuildAdapter:
                 "Grok Build version preflight exceeded the agent timeout"
             )
         version = self._run_setup_command(
-            ["--version"],
+            [*self._PARSER_VERIFIED_FLAGS, "--version"],
             "version",
             timeout=remaining,
             environment=child_environment,
@@ -401,6 +418,78 @@ class GrokBuildAdapter:
                 "Grok Build direct xAI API authentication is unavailable"
             )
         return api_key
+
+    def _write_relay_config(self, path: Path) -> None:
+        assert self._relay_base_url is not None
+        model = json.dumps(self._model, ensure_ascii=False)
+        base_url = json.dumps(self._relay_base_url, ensure_ascii=False)
+        lines = [
+            "[models]",
+            f"default = {model}",
+            "",
+            f"[model.{model}]",
+            f"model = {model}",
+            f"base_url = {base_url}",
+            'env_key = "XAI_API_KEY"',
+            'api_backend = "responses"',
+            "supports_backend_search = false",
+        ]
+        if self._relay_context_window is not None:
+            lines.append(f"context_window = {self._relay_context_window}")
+        path.write_text("\n".join(lines) + "\n", encoding="utf-8")
+
+    @staticmethod
+    def _validate_relay_base_url(value: str | None) -> str | None:
+        if value is None:
+            return None
+        if (
+            not isinstance(value, str)
+            or not value
+            or value != value.strip()
+            or any(character.isspace() for character in value)
+            or not value.startswith("https://")
+            or value.endswith("/")
+            or "?" in value
+            or "#" in value
+        ):
+            raise AgentSetupError(
+                "Grok Build relay base URL must be canonical HTTPS without a trailing slash"
+            )
+        try:
+            parsed = urlsplit(value)
+            port = parsed.port
+        except ValueError as error:
+            raise AgentSetupError("Grok Build relay base URL is invalid") from error
+        if (
+            parsed.scheme != "https"
+            or not parsed.netloc
+            or not parsed.hostname
+            or parsed.username is not None
+            or parsed.password is not None
+            or parsed.query
+            or parsed.fragment
+            or (port is not None and not 1 <= port <= 65535)
+        ):
+            raise AgentSetupError(
+                "Grok Build relay base URL must be canonical HTTPS without query or fragment"
+            )
+        return value
+
+    @staticmethod
+    def _validate_relay_context_window(
+        value: int | None, *, relay_enabled: bool
+    ) -> int | None:
+        if value is None:
+            return None
+        if isinstance(value, bool) or not isinstance(value, int) or value <= 0:
+            raise AgentSetupError(
+                "Grok Build relay context window must be a positive integer"
+            )
+        if not relay_enabled:
+            raise AgentSetupError(
+                "Grok Build relay context window requires a relay base URL"
+            )
+        return value
 
     def _build_sanitized_environment(
         self,

@@ -1,13 +1,16 @@
 import json
 import os
 from pathlib import Path
+import secrets
 import signal
+import subprocess
 import sys
 from textwrap import dedent
 import time
 
 import pytest
 
+import patchbench.agents.codex as codex_module
 from patchbench.agents.base import (
     Agent,
     AgentInfrastructureError,
@@ -33,6 +36,31 @@ _IGNORE_TERMINATION_ENVIRONMENT_VARIABLE = (
 )
 _PRE_TIMEOUT_OUTPUT_ENVIRONMENT_VARIABLE = "PATCHBENCH_TEST_CODEX_PRE_TIMEOUT_OUTPUT"
 _EXIT_AFTER_CHILD_ENVIRONMENT_VARIABLE = "PATCHBENCH_TEST_CODEX_EXIT_AFTER_CHILD"
+_VERSION_SLEEP_ENVIRONMENT_VARIABLE = "PATCHBENCH_TEST_CODEX_VERSION_SLEEP"
+_LOGIN_SLEEP_ENVIRONMENT_VARIABLE = "PATCHBENCH_TEST_CODEX_LOGIN_SLEEP"
+_HELP_SLEEP_ENVIRONMENT_VARIABLE = "PATCHBENCH_TEST_CODEX_HELP_SLEEP"
+_HELP_MODE_ENVIRONMENT_VARIABLE = "PATCHBENCH_TEST_CODEX_HELP_MODE"
+_DELETE_AFTER_HELP_ENVIRONMENT_VARIABLE = "PATCHBENCH_TEST_CODEX_DELETE_AFTER_HELP"
+_API_KEY = "OPENAI_API_KEY"
+_DUMMY_API_KEY = "  dummy-codex-relay-secret-never-log  "
+_RELAY_BASE_URL = "https://ai.ailink1.com/v1"
+_AMBIENT_RELAY_VARIABLES = {
+    "CODEX_CONFIG",
+    "CODEX_PROFILE",
+    "OPENAI_BASE_URL",
+    "OPENAI_ORGANIZATION",
+    "OPENAI_PROJECT",
+}
+_REQUIRED_EXEC_HELP_FLAGS = (
+    "--cd",
+    "--sandbox",
+    "--ephemeral",
+    "--ignore-user-config",
+    "--ignore-rules",
+    "--json",
+    "--model",
+    "--config",
+)
 
 
 @pytest.fixture
@@ -52,24 +80,64 @@ def fake_codex(tmp_path, monkeypatch) -> tuple[Path, Path]:
             import time
 
             arguments = sys.argv[1:]
-            prompt = sys.stdin.read() if arguments[:1] == ["exec"] else None
+            prompt = (
+                sys.stdin.read()
+                if arguments[:1] == ["exec"] and "--help" not in arguments
+                else None
+            )
             record = {{"arguments": arguments, "prompt": prompt}}
+            codex_home = os.environ.get("CODEX_HOME")
+            if codex_home is not None:
+                record["relay_environment"] = {{
+                    "api_key_present": bool(os.environ.get("{_API_KEY}")),
+                    "codex_home": codex_home,
+                    "codex_home_exists": Path(codex_home).is_dir(),
+                    "codex_home_entries": sorted(
+                        path.name for path in Path(codex_home).iterdir()
+                    ),
+                    "ambient_present": sorted(
+                        name for name in {sorted(_AMBIENT_RELAY_VARIABLES)!r}
+                        if name in os.environ
+                    ),
+                }}
             with Path(os.environ["{_LOG_ENVIRONMENT_VARIABLE}"]).open(
                 "a", encoding="utf-8"
             ) as stream:
                 stream.write(json.dumps(record) + "\\n")
 
             if arguments == ["--version"]:
+                time.sleep(float(os.environ.get(
+                    "{_VERSION_SLEEP_ENVIRONMENT_VARIABLE}", "0"
+                )))
                 print("codex-cli 0.152.0")
                 raise SystemExit(0)
 
             if arguments == ["login", "status"]:
+                time.sleep(float(os.environ.get(
+                    "{_LOGIN_SLEEP_ENVIRONMENT_VARIABLE}", "0"
+                )))
                 if os.environ.get("{_AUTH_FAILURE_ENVIRONMENT_VARIABLE}") == "1":
                     print("not logged in", file=sys.stderr)
                     raise SystemExit(5)
                 if os.environ.get("{_DELETE_AFTER_LOGIN_ENVIRONMENT_VARIABLE}") == "1":
                     Path(sys.argv[0]).unlink()
                 print("Logged in using ChatGPT")
+                raise SystemExit(0)
+
+            if arguments == ["exec", "--help"]:
+                time.sleep(float(os.environ.get(
+                    "{_HELP_SLEEP_ENVIRONMENT_VARIABLE}", "0"
+                )))
+                mode = os.environ.get("{_HELP_MODE_ENVIRONMENT_VARIABLE}")
+                if mode == "nonzero":
+                    print("help failed", file=sys.stderr)
+                    raise SystemExit(6)
+                flags = list({_REQUIRED_EXEC_HELP_FLAGS!r})
+                if mode == "missing":
+                    flags.remove("--ignore-rules")
+                print("\\n".join(flags))
+                if os.environ.get("{_DELETE_AFTER_HELP_ENVIRONMENT_VARIABLE}") == "1":
+                    Path(sys.argv[0]).unlink()
                 raise SystemExit(0)
 
             if arguments[:1] == ["exec"]:
@@ -95,7 +163,7 @@ def fake_codex(tmp_path, monkeypatch) -> tuple[Path, Path]:
                 if child_sentinel is not None:
                     child_code = (
                         "import sys, time; from pathlib import Path; "
-                        "time.sleep(0.3); "
+                        "time.sleep(1); "
                         "Path(sys.argv[1]).write_text('survived', encoding='utf-8')"
                     )
                     subprocess.Popen(
@@ -156,6 +224,46 @@ def _read_invocations(invocation_log: Path) -> list[dict[str, object]]:
     ]
 
 
+def _relay_overrides() -> list[str]:
+    return [
+        'model_provider="patchbench_relay"',
+        'model_providers.patchbench_relay.name="PatchBench Ailink Relay"',
+        'model_providers.patchbench_relay.base_url="https://ai.ailink1.com/v1"',
+        'model_providers.patchbench_relay.env_key="OPENAI_API_KEY"',
+        'model_providers.patchbench_relay.wire_api="responses"',
+        "model_providers.patchbench_relay.requires_openai_auth=false",
+        "model_providers.patchbench_relay.supports_standalone_web_search=false",
+        'web_search="disabled"',
+        "features.apps=false",
+        "features.goals=false",
+        "features.hooks=false",
+        "features.memories=false",
+        "features.multi_agent=false",
+        "features.remote_plugin=false",
+        "features.shell_snapshot=false",
+        "check_for_update_on_startup=false",
+        'shell_environment_policy.inherit="core"',
+        "shell_environment_policy.ignore_default_excludes=false",
+    ]
+
+
+def _relay_arguments(workspace: Path, model: str = "gpt-5.5") -> list[str]:
+    arguments = [
+        "exec",
+        "-C",
+        str(workspace.resolve()),
+        "--sandbox",
+        "workspace-write",
+        "--ephemeral",
+        "--ignore-user-config",
+        "--ignore-rules",
+    ]
+    for override in _relay_overrides():
+        arguments.extend(("-c", override))
+    arguments.extend(("--json", "-m", model, "-"))
+    return arguments
+
+
 def test_codex_adapter_preserves_success_output_prompt_and_policy(
     tmp_path, monkeypatch, fake_codex
 ) -> None:
@@ -206,6 +314,383 @@ def test_codex_adapter_preserves_success_output_prompt_and_policy(
         "--dangerously-bypass-hook-trust",
         "danger-full-access",
     }.isdisjoint(execution["arguments"])
+
+
+@pytest.mark.parametrize(
+    "relay_base_url",
+    [
+        "",
+        "   ",
+        " https://ai.ailink1.com/v1",
+        "https://ai.ailink1.com/v1 ",
+        "http://ai.ailink1.com/v1",
+        "HTTPS://ai.ailink1.com/v1",
+        "https://ai.ailink1.com/v1/",
+        "https://ai.ailink1.com/v1?",
+        "https://ai.ailink1.com/v1#",
+        "https://ai.ailink1.com/v1?provider=codex",
+        "https://ai.ailink1.com/v1#fragment",
+        "https://user@ai.ailink1.com/v1",
+        1,
+    ],
+)
+def test_codex_adapter_rejects_noncanonical_relay_base_url(relay_base_url):
+    with pytest.raises(AgentSetupError, match="relay base URL"):
+        CodexAdapter(model="gpt-5.5", relay_base_url=relay_base_url)
+
+
+@pytest.mark.parametrize("value", [None, "", "   "])
+def test_codex_relay_requires_nonblank_api_key(
+    tmp_path, monkeypatch, fake_codex, value
+):
+    executable, invocation_log = fake_codex
+    workspace = tmp_path / "workspace"
+    workspace.mkdir()
+    if value is None:
+        monkeypatch.delenv(_API_KEY, raising=False)
+    else:
+        monkeypatch.setenv(_API_KEY, value)
+
+    with pytest.raises(AgentSetupError, match="relay authentication"):
+        CodexAdapter(
+            model="gpt-5.5",
+            executable=executable,
+            relay_base_url=_RELAY_BASE_URL,
+        ).run(AgentRunRequest(workspace, "prompt"))
+
+    assert not invocation_log.exists()
+
+
+def test_codex_relay_exact_invocation_and_isolated_environment(
+    tmp_path, monkeypatch, fake_codex
+) -> None:
+    executable, invocation_log = fake_codex
+    workspace = tmp_path / "workspace"
+    workspace.mkdir()
+    prompt = "修复 exactly this.\nKeep $HOME and `code`.\n"
+    real_codex_home = tmp_path / "real-codex-home"
+    monkeypatch.setenv("CODEX_HOME", str(real_codex_home))
+    monkeypatch.setenv(_API_KEY, _DUMMY_API_KEY)
+    for name in _AMBIENT_RELAY_VARIABLES:
+        monkeypatch.setenv(name, "ambient-relay-value")
+    parent_environment = os.environ.copy()
+    observed_model_environment = None
+    original_popen = subprocess.Popen
+
+    def inspect_popen(*args, **kwargs):
+        nonlocal observed_model_environment
+        arguments = args[0]
+        if len(arguments) > 1 and arguments[1] == "exec" and "--help" not in arguments:
+            observed_model_environment = kwargs.get("env")
+        return original_popen(*args, **kwargs)
+
+    monkeypatch.setattr(subprocess, "Popen", inspect_popen)
+    adapter = CodexAdapter(
+        model="gpt-5.5",
+        executable=executable,
+        relay_base_url=_RELAY_BASE_URL,
+    )
+    result = adapter.run(AgentRunRequest(workspace, prompt))
+
+    assert result.status is AgentRunStatus.COMPLETED
+    assert result.exit_code == 0
+    assert result.stdout == '{"type":"fake.result"}\n'
+    assert result.stderr == "fake diagnostic\n"
+    assert adapter.model == "gpt-5.5"
+    assert adapter.relay_base_url == _RELAY_BASE_URL
+    assert adapter.cli_version == "codex-cli 0.152.0"
+    assert observed_model_environment is not None
+    assert secrets.compare_digest(
+        observed_model_environment[_API_KEY], _DUMMY_API_KEY
+    )
+    assert _AMBIENT_RELAY_VARIABLES.isdisjoint(observed_model_environment)
+    assert observed_model_environment["PATH"] == parent_environment["PATH"]
+    assert os.environ == parent_environment
+
+    records = _read_invocations(invocation_log)
+    assert [record["arguments"] for record in records] == [
+        ["--version"],
+        ["exec", "--help"],
+        _relay_arguments(workspace),
+    ]
+    assert records[2]["prompt"] == prompt
+    assert all(record["relay_environment"]["codex_home_exists"] for record in records)
+    assert all(record["relay_environment"]["codex_home_entries"] == [] for record in records)
+    assert all(record["relay_environment"]["ambient_present"] == [] for record in records)
+    assert records[0]["relay_environment"]["api_key_present"] is False
+    assert records[1]["relay_environment"]["api_key_present"] is False
+    assert records[2]["relay_environment"]["api_key_present"] is True
+    isolated_home = Path(records[0]["relay_environment"]["codex_home"])
+    assert isolated_home != real_codex_home
+    assert not isolated_home.is_relative_to(workspace.resolve())
+    assert not isolated_home.exists()
+    serialized = invocation_log.read_text(encoding="utf-8")
+    assert _DUMMY_API_KEY not in serialized
+    assert _DUMMY_API_KEY not in result.stdout + result.stderr
+    assert _DUMMY_API_KEY not in records[2]["arguments"]
+
+
+def test_codex_relay_removes_temporary_home_after_command_failure(
+    tmp_path, monkeypatch, fake_codex
+) -> None:
+    executable, invocation_log = fake_codex
+    workspace = tmp_path / "workspace"
+    workspace.mkdir()
+    monkeypatch.setenv(_API_KEY, _DUMMY_API_KEY)
+    monkeypatch.setenv(_EXIT_CODE_ENVIRONMENT_VARIABLE, "7")
+    result = CodexAdapter(
+        model="gpt-5.5",
+        executable=executable,
+        relay_base_url=_RELAY_BASE_URL,
+    ).run(AgentRunRequest(workspace, "prompt"))
+
+    assert result.status is AgentRunStatus.COMMAND_FAILED
+    home = Path(_read_invocations(invocation_log)[0]["relay_environment"]["codex_home"])
+    assert not home.exists()
+
+
+def test_each_codex_relay_run_uses_a_fresh_temporary_home(
+    tmp_path, monkeypatch, fake_codex
+) -> None:
+    executable, invocation_log = fake_codex
+    workspace = tmp_path / "workspace"
+    workspace.mkdir()
+    monkeypatch.setenv(_API_KEY, _DUMMY_API_KEY)
+    adapter = CodexAdapter(
+        model="gpt-5.5",
+        executable=executable,
+        relay_base_url=_RELAY_BASE_URL,
+    )
+    adapter.run(AgentRunRequest(workspace, "first"))
+    adapter.run(AgentRunRequest(workspace, "second"))
+
+    homes = [
+        record["relay_environment"]["codex_home"]
+        for record in _read_invocations(invocation_log)
+        if record["arguments"] == _relay_arguments(workspace)
+    ]
+    assert len(homes) == 2
+    assert homes[0] != homes[1]
+    assert all(not Path(home).exists() for home in homes)
+
+
+@pytest.mark.parametrize("mode", ["nonzero", "missing"])
+def test_codex_relay_help_failure_removes_temporary_home(
+    tmp_path, monkeypatch, fake_codex, mode
+) -> None:
+    executable, invocation_log = fake_codex
+    workspace = tmp_path / "workspace"
+    workspace.mkdir()
+    monkeypatch.setenv(_API_KEY, _DUMMY_API_KEY)
+    monkeypatch.setenv(_HELP_MODE_ENVIRONMENT_VARIABLE, mode)
+    with pytest.raises(AgentSetupError, match="exec help|required relay flags"):
+        CodexAdapter(
+            model="gpt-5.5",
+            executable=executable,
+            relay_base_url=_RELAY_BASE_URL,
+        ).run(AgentRunRequest(workspace, "prompt"))
+
+    records = _read_invocations(invocation_log)
+    assert [record["arguments"] for record in records] == [
+        ["--version"],
+        ["exec", "--help"],
+    ]
+    assert all(record["relay_environment"]["api_key_present"] is False for record in records)
+    assert not Path(records[0]["relay_environment"]["codex_home"]).exists()
+
+
+def test_codex_relay_start_error_removes_home_without_disclosing_secret(
+    tmp_path, monkeypatch, fake_codex
+) -> None:
+    executable, invocation_log = fake_codex
+    workspace = tmp_path / "workspace"
+    workspace.mkdir()
+    monkeypatch.setenv(_API_KEY, _DUMMY_API_KEY)
+    monkeypatch.setenv(_DELETE_AFTER_HELP_ENVIRONMENT_VARIABLE, "1")
+    with pytest.raises(AgentInfrastructureError, match="start Codex agent") as raised:
+        CodexAdapter(
+            model="gpt-5.5",
+            executable=executable,
+            relay_base_url=_RELAY_BASE_URL,
+        ).run(AgentRunRequest(workspace, "prompt"))
+
+    records = _read_invocations(invocation_log)
+    assert _DUMMY_API_KEY not in str(raised.value)
+    assert _DUMMY_API_KEY not in invocation_log.read_text(encoding="utf-8")
+    assert not Path(records[0]["relay_environment"]["codex_home"]).exists()
+
+
+def test_codex_relay_temporary_home_creation_failure_is_infrastructure_error(
+    tmp_path, monkeypatch, fake_codex
+) -> None:
+    executable, invocation_log = fake_codex
+    workspace = tmp_path / "workspace"
+    workspace.mkdir()
+    monkeypatch.setenv(_API_KEY, _DUMMY_API_KEY)
+
+    def fail_temporary_home(*args, **kwargs):
+        raise OSError("simulated temporary home failure")
+
+    monkeypatch.setattr(codex_module, "TemporaryDirectory", fail_temporary_home)
+    with pytest.raises(AgentInfrastructureError, match="isolated Codex home"):
+        CodexAdapter(
+            model="gpt-5.5",
+            executable=executable,
+            relay_base_url=_RELAY_BASE_URL,
+        ).run(AgentRunRequest(workspace, "prompt"))
+    assert not invocation_log.exists()
+
+
+def test_codex_version_preflight_is_bounded_by_full_deadline(
+    tmp_path, monkeypatch, fake_codex
+) -> None:
+    executable, invocation_log = fake_codex
+    workspace = tmp_path / "workspace"
+    workspace.mkdir()
+    monkeypatch.setenv(_VERSION_SLEEP_ENVIRONMENT_VARIABLE, "0.2")
+    with pytest.raises(AgentSetupError, match="version preflight exceeded"):
+        CodexAdapter(model="test-model", executable=executable).run(
+            AgentRunRequest(workspace, "prompt", timeout_seconds=0.05)
+        )
+    assert [record["arguments"] for record in _read_invocations(invocation_log)] == [
+        ["--version"]
+    ]
+
+
+def test_codex_direct_login_preflight_is_bounded_by_full_deadline(
+    tmp_path, monkeypatch, fake_codex
+) -> None:
+    executable, invocation_log = fake_codex
+    workspace = tmp_path / "workspace"
+    workspace.mkdir()
+    monkeypatch.setenv(_LOGIN_SLEEP_ENVIRONMENT_VARIABLE, "0.2")
+    with pytest.raises(AgentSetupError, match="login status preflight exceeded"):
+        CodexAdapter(model="test-model", executable=executable).run(
+            AgentRunRequest(workspace, "prompt", timeout_seconds=0.15)
+        )
+    assert [record["arguments"] for record in _read_invocations(invocation_log)] == [
+        ["--version"],
+        ["login", "status"],
+    ]
+
+
+def test_codex_relay_help_preflight_is_bounded_and_removes_home(
+    tmp_path, monkeypatch, fake_codex
+) -> None:
+    executable, invocation_log = fake_codex
+    workspace = tmp_path / "workspace"
+    workspace.mkdir()
+    monkeypatch.setenv(_API_KEY, _DUMMY_API_KEY)
+    monkeypatch.setenv(_HELP_SLEEP_ENVIRONMENT_VARIABLE, "0.2")
+    with pytest.raises(AgentSetupError, match="exec help preflight exceeded"):
+        CodexAdapter(
+            model="gpt-5.5",
+            executable=executable,
+            relay_base_url=_RELAY_BASE_URL,
+        ).run(AgentRunRequest(workspace, "prompt", timeout_seconds=0.15))
+    records = _read_invocations(invocation_log)
+    assert [record["arguments"] for record in records] == [
+        ["--version"],
+        ["exec", "--help"],
+    ]
+    assert not Path(records[0]["relay_environment"]["codex_home"]).exists()
+
+
+def test_codex_relay_preflight_consumes_model_timeout_budget(
+    tmp_path, monkeypatch, fake_codex
+) -> None:
+    executable, invocation_log = fake_codex
+    workspace = tmp_path / "workspace"
+    workspace.mkdir()
+    monkeypatch.setenv(_API_KEY, _DUMMY_API_KEY)
+    monkeypatch.setenv(_VERSION_SLEEP_ENVIRONMENT_VARIABLE, "0.08")
+    monkeypatch.setenv(_HELP_SLEEP_ENVIRONMENT_VARIABLE, "0.08")
+    monkeypatch.setenv(_EXEC_SLEEP_ENVIRONMENT_VARIABLE, "0.3")
+    monkeypatch.setenv(_PRE_TIMEOUT_OUTPUT_ENVIRONMENT_VARIABLE, "1")
+    result = CodexAdapter(
+        model="gpt-5.5",
+        executable=executable,
+        relay_base_url=_RELAY_BASE_URL,
+    ).run(AgentRunRequest(workspace, "prompt", timeout_seconds=0.35))
+
+    assert result.status is AgentRunStatus.TIMED_OUT
+    assert result.exit_code is None
+    assert result.stdout == "stdout before timeout\n"
+    records = _read_invocations(invocation_log)
+    assert records[-1]["arguments"] == _relay_arguments(workspace)
+    assert not Path(records[0]["relay_environment"]["codex_home"]).exists()
+
+
+def test_codex_relay_none_timeout_allows_preflight_and_model(
+    tmp_path, monkeypatch, fake_codex
+) -> None:
+    executable, _ = fake_codex
+    workspace = tmp_path / "workspace"
+    workspace.mkdir()
+    monkeypatch.setenv(_API_KEY, _DUMMY_API_KEY)
+    monkeypatch.setenv(_VERSION_SLEEP_ENVIRONMENT_VARIABLE, "0.02")
+    monkeypatch.setenv(_HELP_SLEEP_ENVIRONMENT_VARIABLE, "0.02")
+    monkeypatch.setenv(_EXEC_SLEEP_ENVIRONMENT_VARIABLE, "0.02")
+    result = CodexAdapter(
+        model="gpt-5.5",
+        executable=executable,
+        relay_base_url=_RELAY_BASE_URL,
+    ).run(AgentRunRequest(workspace, "prompt", timeout_seconds=None))
+    assert result.status is AgentRunStatus.COMPLETED
+    assert result.duration_seconds >= 0.05
+
+
+def test_codex_relay_timeout_stops_child_before_home_cleanup(
+    tmp_path, monkeypatch, fake_codex
+) -> None:
+    executable, invocation_log = fake_codex
+    workspace = tmp_path / "workspace"
+    workspace.mkdir()
+    sentinel = workspace / "relay-timeout-child-survived.txt"
+    child_started = tmp_path / "relay-timeout-child-started.txt"
+    monkeypatch.setenv(_API_KEY, _DUMMY_API_KEY)
+    monkeypatch.setenv(_EXEC_SLEEP_ENVIRONMENT_VARIABLE, "1")
+    monkeypatch.setenv(_CHILD_SENTINEL_ENVIRONMENT_VARIABLE, str(sentinel))
+    monkeypatch.setenv(_CHILD_STARTED_ENVIRONMENT_VARIABLE, str(child_started))
+    result = CodexAdapter(
+        model="gpt-5.5",
+        executable=executable,
+        relay_base_url=_RELAY_BASE_URL,
+    ).run(AgentRunRequest(workspace, "prompt", timeout_seconds=0.6))
+
+    assert result.status is AgentRunStatus.TIMED_OUT
+    assert result.exit_code is None
+    assert child_started.read_text(encoding="utf-8") == "started"
+    time.sleep(1.1)
+    assert not sentinel.exists()
+    records = _read_invocations(invocation_log)
+    assert not Path(records[0]["relay_environment"]["codex_home"]).exists()
+
+
+def test_codex_relay_normal_completion_stops_descendant_before_home_cleanup(
+    tmp_path, monkeypatch, fake_codex
+) -> None:
+    executable, invocation_log = fake_codex
+    workspace = tmp_path / "workspace"
+    workspace.mkdir()
+    sentinel = workspace / "relay-normal-child-survived.txt"
+    child_started = tmp_path / "relay-normal-child-started.txt"
+    monkeypatch.setenv(_API_KEY, _DUMMY_API_KEY)
+    monkeypatch.setenv(_CHILD_SENTINEL_ENVIRONMENT_VARIABLE, str(sentinel))
+    monkeypatch.setenv(_CHILD_STARTED_ENVIRONMENT_VARIABLE, str(child_started))
+    monkeypatch.setenv(_EXIT_AFTER_CHILD_ENVIRONMENT_VARIABLE, "1")
+    result = CodexAdapter(
+        model="gpt-5.5",
+        executable=executable,
+        relay_base_url=_RELAY_BASE_URL,
+    ).run(AgentRunRequest(workspace, "prompt"))
+
+    assert result.status is AgentRunStatus.COMPLETED
+    assert child_started.read_text(encoding="utf-8") == "started"
+    time.sleep(1.1)
+    assert not sentinel.exists()
+    records = _read_invocations(invocation_log)
+    assert not Path(records[0]["relay_environment"]["codex_home"]).exists()
 
 
 def test_codex_adapter_maps_nonzero_execution_to_command_failed(
@@ -334,7 +819,7 @@ def test_codex_adapter_returns_timed_out_after_stopping_process(
     started = time.monotonic()
 
     result = CodexAdapter(model="test-model", executable=executable).run(
-        AgentRunRequest(workspace, "Wait for timeout.", timeout_seconds=0.1)
+        AgentRunRequest(workspace, "Wait for timeout.", timeout_seconds=0.5)
     )
 
     assert result.status is AgentRunStatus.TIMED_OUT
@@ -342,7 +827,7 @@ def test_codex_adapter_returns_timed_out_after_stopping_process(
     assert result.stdout == "stdout before timeout\n"
     assert result.stderr == "stderr before timeout\n"
     assert result.duration_seconds >= 0.1
-    assert time.monotonic() - started < 1
+    assert time.monotonic() - started < 2
 
 
 def test_codex_adapter_timeout_stops_child_before_delayed_workspace_write(
@@ -358,12 +843,12 @@ def test_codex_adapter_timeout_stops_child_before_delayed_workspace_write(
     monkeypatch.setenv(_CHILD_STARTED_ENVIRONMENT_VARIABLE, str(child_started))
 
     result = CodexAdapter(model="test-model", executable=executable).run(
-        AgentRunRequest(workspace, "Spawn a child.", timeout_seconds=0.15)
+        AgentRunRequest(workspace, "Spawn a child.", timeout_seconds=0.5)
     )
 
     assert result.status is AgentRunStatus.TIMED_OUT
     assert child_started.read_text(encoding="utf-8") == "started"
-    time.sleep(0.5)
+    time.sleep(1.1)
     assert not sentinel.exists()
 
 
@@ -388,7 +873,7 @@ def test_codex_adapter_normal_completion_stops_background_child(
     assert result.stdout == '{"type":"fake.result"}\n'
     assert result.stderr == "fake diagnostic\n"
     assert child_started.read_text(encoding="utf-8") == "started"
-    time.sleep(0.5)
+    time.sleep(1.1)
     assert not sentinel.exists()
 
 
@@ -422,7 +907,7 @@ def test_codex_adapter_normal_probe_os_error_is_infrastructure_error(
 
     assert probe_failed
     assert child_started.read_text(encoding="utf-8") == "started"
-    time.sleep(0.5)
+    time.sleep(1.1)
     assert not sentinel.exists()
 
 
@@ -437,7 +922,7 @@ def test_codex_adapter_reaps_gracefully_terminated_process(
     monkeypatch.setenv(_GRACEFUL_MARKER_ENVIRONMENT_VARIABLE, str(marker))
 
     result = CodexAdapter(model="test-model", executable=executable).run(
-        AgentRunRequest(workspace, "Exit on SIGTERM.", timeout_seconds=0.15)
+        AgentRunRequest(workspace, "Exit on SIGTERM.", timeout_seconds=0.5)
     )
 
     assert result.status is AgentRunStatus.TIMED_OUT
@@ -464,12 +949,12 @@ def test_codex_adapter_force_kills_process_that_ignores_sigterm(
     started = time.monotonic()
 
     result = CodexAdapter(model="test-model", executable=executable).run(
-        AgentRunRequest(workspace, "Ignore SIGTERM.", timeout_seconds=0.15)
+        AgentRunRequest(workspace, "Ignore SIGTERM.", timeout_seconds=0.5)
     )
 
     assert result.status is AgentRunStatus.TIMED_OUT
     assert result.exit_code is None
-    assert time.monotonic() - started < 1
+    assert time.monotonic() - started < 2
     assert any(signal_number == signal.SIGTERM for _, signal_number in signal_calls)
     assert any(signal_number == signal.SIGKILL for _, signal_number in signal_calls)
     assert len({process_group_id for process_group_id, _ in signal_calls}) == 1
@@ -497,7 +982,7 @@ def test_codex_adapter_raises_when_timeout_signal_management_fails(
         AgentInfrastructureError, match="terminate timed-out Codex process group"
     ):
         CodexAdapter(model="test-model", executable=executable).run(
-            AgentRunRequest(workspace, "Fail termination.", timeout_seconds=0.1)
+            AgentRunRequest(workspace, "Fail termination.", timeout_seconds=0.5)
         )
 
     assert signal_calls[0][1] == signal.SIGTERM

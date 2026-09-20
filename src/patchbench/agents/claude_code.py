@@ -7,6 +7,7 @@ import re
 import signal
 import subprocess
 from time import perf_counter, sleep
+from urllib.parse import urlsplit
 
 from patchbench.agents.base import (
     AgentInfrastructureError,
@@ -47,6 +48,7 @@ class ClaudeCodeAdapter:
         *,
         model: str,
         executable: str | Path = "claude",
+        relay_base_url: str | None = None,
     ) -> None:
         if (
             not isinstance(model, str)
@@ -59,6 +61,7 @@ class ClaudeCodeAdapter:
             raise AgentSetupError("Claude Code executable must not be empty")
         self._model = model
         self._executable = executable_text
+        self._relay_base_url = self._validate_relay_base_url(relay_base_url)
         self._cli_version: str | None = None
 
     @property
@@ -73,6 +76,10 @@ class ClaudeCodeAdapter:
     def cli_version(self) -> str | None:
         return self._cli_version
 
+    @property
+    def relay_base_url(self) -> str | None:
+        return self._relay_base_url
+
     def run(self, request: AgentRunRequest) -> AgentRunResult:
         """Run Claude Code in the supplied PatchBench workspace."""
         timeout_seconds = self._validate_timeout(request.timeout_seconds)
@@ -81,8 +88,10 @@ class ClaudeCodeAdapter:
         deadline = (
             None if timeout_seconds is None else started + timeout_seconds
         )
-        api_key = self._capture_api_key()
-        preflight_environment = self._build_sanitized_environment()
+        credential_name, credential = self._capture_credential()
+        preflight_environment = self._build_sanitized_environment(
+            relay_mode=self._relay_base_url is not None,
+        )
         self._preflight(deadline, preflight_environment)
         remaining = self._remaining_timeout(deadline)
         if remaining is not None and remaining <= 0:
@@ -109,7 +118,9 @@ class ClaudeCodeAdapter:
             "none",
         ]
         model_environment = preflight_environment.copy()
-        model_environment["ANTHROPIC_API_KEY"] = api_key
+        model_environment[credential_name] = credential
+        if self._relay_base_url is not None:
+            model_environment["ANTHROPIC_BASE_URL"] = self._relay_base_url
         try:
             process = subprocess.Popen(
                 arguments,
@@ -331,16 +342,23 @@ class ClaudeCodeAdapter:
 
         self._cli_version = cli_version
 
-    @staticmethod
-    def _capture_api_key() -> str:
-        api_key = os.environ.get("ANTHROPIC_API_KEY")
-        if api_key is None or not api_key.strip():
+    def _capture_credential(self) -> tuple[str, str]:
+        credential_name = (
+            "ANTHROPIC_AUTH_TOKEN"
+            if self._relay_base_url is not None
+            else "ANTHROPIC_API_KEY"
+        )
+        credential = os.environ.get(credential_name)
+        if credential is None or not credential.strip():
+            mode = "relay" if self._relay_base_url is not None else "bare-mode"
             raise AgentSetupError(
-                "Claude bare-mode Anthropic API authentication is unavailable"
+                f"Claude {mode} Anthropic authentication is unavailable"
             )
-        return api_key
+        return credential_name, credential
 
-    def _build_sanitized_environment(self) -> dict[str, str]:
+    def _build_sanitized_environment(
+        self, *, relay_mode: bool
+    ) -> dict[str, str]:
         child_environment = os.environ.copy()
         for variable in tuple(child_environment):
             if variable.startswith(self._TOOL_ENVIRONMENT_PREFIXES):
@@ -351,7 +369,46 @@ class ClaudeCodeAdapter:
         child_environment["CLAUDE_CODE_AUTO_CONNECT_IDE"] = "false"
         child_environment["CLAUDE_CODE_SUBPROCESS_ENV_SCRUB"] = "1"
         child_environment["DISABLE_UPDATES"] = "1"
+        if relay_mode:
+            child_environment["CLAUDE_CODE_DISABLE_NONESSENTIAL_TRAFFIC"] = "1"
         return child_environment
+
+    @staticmethod
+    def _validate_relay_base_url(value: str | None) -> str | None:
+        if value is None:
+            return None
+        if (
+            not isinstance(value, str)
+            or not value
+            or value != value.strip()
+            or any(character.isspace() for character in value)
+            or not value.startswith("https://")
+            or value.endswith("/")
+            or "?" in value
+            or "#" in value
+        ):
+            raise AgentSetupError(
+                "Claude relay base URL must be canonical HTTPS without a trailing slash"
+            )
+        try:
+            parsed = urlsplit(value)
+            port = parsed.port
+        except ValueError as error:
+            raise AgentSetupError("Claude relay base URL is invalid") from error
+        if (
+            parsed.scheme != "https"
+            or not parsed.netloc
+            or not parsed.hostname
+            or parsed.username is not None
+            or parsed.password is not None
+            or parsed.query
+            or parsed.fragment
+            or (port is not None and not 1 <= port <= 65535)
+        ):
+            raise AgentSetupError(
+                "Claude relay base URL must be canonical HTTPS without query or fragment"
+            )
+        return value
 
     def _run_setup_command(
         self,

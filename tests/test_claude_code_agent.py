@@ -33,6 +33,9 @@ CHILD_SENTINEL = "PATCHBENCH_TEST_CLAUDE_CHILD_SENTINEL"
 CHILD_STARTED = "PATCHBENCH_TEST_CLAUDE_CHILD_STARTED"
 API_KEY = "ANTHROPIC_API_KEY"
 DUMMY_API_KEY = "  dummy-test-secret-never-log  "
+AUTH_TOKEN = "ANTHROPIC_AUTH_TOKEN"
+DUMMY_AUTH_TOKEN = "  dummy-relay-token-never-log  "
+RELAY_BASE_URL = "https://ai.ailink1.com"
 GENERIC_BEHAVIORAL_OVERRIDES = {
     "API_TIMEOUT_MS",
     "BASH_DEFAULT_TIMEOUT_MS",
@@ -43,6 +46,7 @@ GENERIC_BEHAVIORAL_OVERRIDES = {
     "FALLBACK_FOR_ALL_PRIMARY_MODELS",
 }
 TOOL_NAMESPACE_OVERRIDES = {
+    "ANTHROPIC_AUTH_TOKEN",
     "ANTHROPIC_DEFAULT_SONNET_MODEL",
     "ANTHROPIC_PROFILE",
     "ANTHROPIC_BASE_URL",
@@ -75,6 +79,8 @@ def fake_claude(tmp_path, monkeypatch):
         record = {{"arguments": arguments, "prompt": prompt, "cwd": os.getcwd()}}
         record["environment"] = {{
             "api_key_present": bool(os.environ.get("{API_KEY}")),
+            "auth_token_present": bool(os.environ.get("{AUTH_TOKEN}")),
+            "base_url": os.environ.get("ANTHROPIC_BASE_URL"),
             "path": os.environ.get("PATH"),
             "generic_overrides_present": sorted(
                 name
@@ -91,6 +97,9 @@ def fake_claude(tmp_path, monkeypatch):
             "disable_updates": os.environ.get("DISABLE_UPDATES"),
             "subprocess_env_scrub": os.environ.get(
                 "CLAUDE_CODE_SUBPROCESS_ENV_SCRUB"
+            ),
+            "nonessential_traffic": os.environ.get(
+                "CLAUDE_CODE_DISABLE_NONESSENTIAL_TRAFFIC"
             ),
         }}
         with Path(os.environ["{LOG}"]).open("a", encoding="utf-8") as stream:
@@ -210,6 +219,8 @@ def test_claude_adapter_preserves_prompt_workspace_output_and_exact_policy(
     assert [record["arguments"] for record in records[:1]] == [["--version"]]
     assert records[0]["environment"] == {
         "api_key_present": False,
+        "auth_token_present": False,
+        "base_url": None,
         "path": original_path,
         "generic_overrides_present": [],
         "tool_namespace_overrides_present": [],
@@ -217,6 +228,7 @@ def test_claude_adapter_preserves_prompt_workspace_output_and_exact_policy(
         "auto_memory": "1",
         "disable_updates": "1",
         "subprocess_env_scrub": "1",
+        "nonessential_traffic": None,
     }
     execution = records[1]
     assert execution == {
@@ -230,6 +242,8 @@ def test_claude_adapter_preserves_prompt_workspace_output_and_exact_policy(
         "cwd": str(workspace.resolve()),
         "environment": {
             "api_key_present": True,
+            "auth_token_present": False,
+            "base_url": None,
             "path": original_path,
             "generic_overrides_present": [],
             "tool_namespace_overrides_present": [],
@@ -237,6 +251,7 @@ def test_claude_adapter_preserves_prompt_workspace_output_and_exact_policy(
             "auto_memory": "1",
             "disable_updates": "1",
             "subprocess_env_scrub": "1",
+            "nonessential_traffic": None,
         },
     }
     forbidden = {
@@ -245,6 +260,144 @@ def test_claude_adapter_preserves_prompt_workspace_output_and_exact_policy(
     }
     assert forbidden.isdisjoint(execution["arguments"])
     assert DUMMY_API_KEY not in execution["arguments"]
+
+
+@pytest.mark.parametrize(
+    "relay_base_url",
+    [
+        "",
+        "   ",
+        " https://ai.ailink1.com",
+        "https://ai.ailink1.com ",
+        "http://ai.ailink1.com",
+        "HTTPS://ai.ailink1.com",
+        "https://ai.ailink1.com/",
+        "https://ai.ailink1.com?",
+        "https://ai.ailink1.com#",
+        "https://ai.ailink1.com?route=claude",
+        "https://ai.ailink1.com#fragment",
+        "https://user@ai.ailink1.com",
+        1,
+    ],
+)
+def test_claude_adapter_rejects_noncanonical_relay_base_url(relay_base_url):
+    with pytest.raises(AgentSetupError, match="relay base URL"):
+        ClaudeCodeAdapter(model="model-a", relay_base_url=relay_base_url)
+
+
+@pytest.mark.parametrize("value", [None, "", "   "])
+def test_claude_relay_requires_nonblank_auth_token(
+    tmp_path, monkeypatch, fake_claude, value
+):
+    executable, log = fake_claude
+    workspace = tmp_path / "workspace"
+    workspace.mkdir()
+    monkeypatch.setenv(API_KEY, DUMMY_API_KEY)
+    if value is None:
+        monkeypatch.delenv(AUTH_TOKEN, raising=False)
+    else:
+        monkeypatch.setenv(AUTH_TOKEN, value)
+
+    with pytest.raises(AgentSetupError, match="relay.*authentication") as raised:
+        ClaudeCodeAdapter(
+            model="claude-sonnet-4-6",
+            executable=executable,
+            relay_base_url=RELAY_BASE_URL,
+        ).run(AgentRunRequest(workspace, "prompt"))
+
+    assert DUMMY_API_KEY not in str(raised.value)
+    assert not log.exists()
+
+
+def test_claude_relay_uses_explicit_endpoint_and_token_without_ambient_leakage(
+    tmp_path, monkeypatch, fake_claude
+):
+    executable, log = fake_claude
+    workspace = tmp_path / "workspace"
+    workspace.mkdir()
+    prompt = "Relay prompt: 修复。\nKeep $HOME literal.\n"
+    monkeypatch.setenv(API_KEY, DUMMY_API_KEY)
+    monkeypatch.setenv(AUTH_TOKEN, DUMMY_AUTH_TOKEN)
+    monkeypatch.setenv("ANTHROPIC_BASE_URL", "https://ambient.invalid")
+    monkeypatch.setenv("ANTHROPIC_MODEL", "ambient-model")
+    monkeypatch.setenv("CLAUDE_CODE_DISABLE_NONESSENTIAL_TRAFFIC", "0")
+    parent_environment = os.environ.copy()
+    observed_model_environment = None
+    original_popen = subprocess.Popen
+
+    def inspect_popen(*args, **kwargs):
+        nonlocal observed_model_environment
+        observed_model_environment = kwargs.get("env")
+        return original_popen(*args, **kwargs)
+
+    monkeypatch.setattr(subprocess, "Popen", inspect_popen)
+    adapter = ClaudeCodeAdapter(
+        model="claude-sonnet-4-6",
+        executable=executable,
+        relay_base_url=RELAY_BASE_URL,
+    )
+    result = adapter.run(AgentRunRequest(workspace, prompt))
+
+    assert result.status is AgentRunStatus.COMPLETED
+    assert adapter.relay_base_url == RELAY_BASE_URL
+    assert observed_model_environment is not None
+    assert API_KEY not in observed_model_environment
+    assert secrets.compare_digest(
+        observed_model_environment[AUTH_TOKEN], DUMMY_AUTH_TOKEN
+    )
+    assert observed_model_environment["ANTHROPIC_BASE_URL"] == RELAY_BASE_URL
+    assert observed_model_environment[
+        "CLAUDE_CODE_DISABLE_NONESSENTIAL_TRAFFIC"
+    ] == "1"
+    assert observed_model_environment["CLAUDE_CODE_SUBPROCESS_ENV_SCRUB"] == "1"
+    assert "ANTHROPIC_MODEL" not in observed_model_environment
+    assert os.environ == parent_environment
+
+    records = invocations(log)
+    assert records[0]["arguments"] == ["--version"]
+    assert records[0]["environment"]["api_key_present"] is False
+    assert records[0]["environment"]["auth_token_present"] is False
+    assert records[0]["environment"]["base_url"] is None
+    execution = records[1]
+    assert execution["arguments"] == [
+        "-p", "--bare", "--no-session-persistence", "--model",
+        "claude-sonnet-4-6", "--output-format", "json", "--no-chrome",
+        "--tools", "Read,Edit,Bash", "--disallowedTools", "mcp__*",
+        "--permission-mode", "bypassPermissions", "--permission-prompts", "none",
+    ]
+    assert execution["prompt"] == prompt
+    assert execution["environment"]["api_key_present"] is False
+    assert execution["environment"]["auth_token_present"] is True
+    assert execution["environment"]["base_url"] == RELAY_BASE_URL
+    assert execution["environment"]["nonessential_traffic"] == "1"
+    serialized = log.read_text(encoding="utf-8")
+    assert DUMMY_API_KEY not in serialized
+    assert DUMMY_AUTH_TOKEN not in serialized
+    assert DUMMY_API_KEY not in result.stdout + result.stderr
+    assert DUMMY_AUTH_TOKEN not in result.stdout + result.stderr
+    assert DUMMY_API_KEY not in execution["arguments"]
+    assert DUMMY_AUTH_TOKEN not in execution["arguments"]
+
+
+def test_claude_relay_error_does_not_disclose_token(
+    tmp_path, monkeypatch, fake_claude
+):
+    executable, log = fake_claude
+    workspace = tmp_path / "workspace"
+    workspace.mkdir()
+    monkeypatch.setenv(AUTH_TOKEN, DUMMY_AUTH_TOKEN)
+    monkeypatch.setenv(DELETE_AFTER_VERSION, "1")
+    adapter = ClaudeCodeAdapter(
+        model="claude-sonnet-4-6",
+        executable=executable,
+        relay_base_url=RELAY_BASE_URL,
+    )
+
+    with pytest.raises(AgentInfrastructureError, match="start Claude Code") as raised:
+        adapter.run(AgentRunRequest(workspace, "prompt"))
+
+    assert DUMMY_AUTH_TOKEN not in str(raised.value)
+    assert DUMMY_AUTH_TOKEN not in log.read_text(encoding="utf-8")
 
 
 def test_claude_adapter_maps_nonzero_execution_to_command_failed(
