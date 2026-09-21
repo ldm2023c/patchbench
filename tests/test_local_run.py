@@ -13,7 +13,7 @@ from patchbench.agents.base import (
 )
 from patchbench.agents.fake import FakeAgent
 from patchbench.application.local_run import run_task
-from patchbench.domain.models import RunStatus
+from patchbench.domain.models import AgentIdentityBinding, RunStatus
 from patchbench.sandbox.base import (
     SandboxExecResult,
     SandboxHandle,
@@ -355,6 +355,29 @@ def test_local_run_supplies_workspace_and_effective_prompt_to_agent(tmp_path) ->
     patch = record.artifacts.patch.read_text(encoding="utf-8")
     assert "-    return a - b" in patch
     assert "+    return a + b" in patch
+
+
+def test_local_run_persists_exact_agent_identity_binding(tmp_path) -> None:
+    source, base_commit = create_fixture_repository(tmp_path)
+    task_path = write_run_task(tmp_path, source, base_commit)
+    binding = AgentIdentityBinding(
+        manifest_sha256="a" * 64,
+        config_id="codex-gpt-5.5-relay",
+        config_sha256="b" * 64,
+    )
+
+    record = run_task(
+        task_path,
+        agent=FakeAgent(),
+        agent_name="fake",
+        agent_identity_binding=binding,
+        workspace_root=tmp_path / "workspaces",
+        results_root=tmp_path / "results",
+    )
+
+    assert record.agent.identity_binding == binding
+    metadata = json.loads(record.artifacts.metadata.read_text(encoding="utf-8"))
+    assert metadata["agent"]["identity_binding"] == binding.model_dump(mode="json")
 
 
 @pytest.mark.parametrize(

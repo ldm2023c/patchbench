@@ -52,6 +52,7 @@ def run_experiment(
                     frozen_configuration.agent_timeout_seconds
                 ),
                 requested_model=frozen_configuration.requested_model,
+                agent_identity_binding=frozen_configuration.identity_binding,
                 workspace_root=workspace_root,
                 results_root=results_root,
                 sandbox=sandbox,

@@ -1,0 +1,113 @@
+{
+  "schema_version": 2,
+  "policy_sha256": "c17f5e7ff825e8fbc455c3a649b1288083aea4580bcdccd1c78c8a707c50eb00",
+  "configurations": [
+    {
+      "schema_version": 1,
+      "config_id": "codex-gpt-5.5-relay",
+      "toolchain": "codex",
+      "requested_model": "gpt-5.5",
+      "agent_timeout_seconds": 600,
+      "execution_policy_sha256": "c17f5e7ff825e8fbc455c3a649b1288083aea4580bcdccd1c78c8a707c50eb00",
+      "toolchain_options": [
+        {
+          "name": "relay_base_url",
+          "value": "https://ai.ailink1.com/v1"
+        }
+      ]
+    },
+    {
+      "schema_version": 1,
+      "config_id": "cursor-claude-4.6-sonnet-medium",
+      "toolchain": "cursor_cli",
+      "requested_model": "claude-4.6-sonnet-medium",
+      "agent_timeout_seconds": 600,
+      "execution_policy_sha256": "c17f5e7ff825e8fbc455c3a649b1288083aea4580bcdccd1c78c8a707c50eb00",
+      "toolchain_options": [
+        {
+          "name": "endpoint",
+          "value": "https://api2.cursor.sh"
+        }
+      ]
+    },
+    {
+      "schema_version": 1,
+      "config_id": "grok-build-grok-4.5-relay",
+      "toolchain": "grok_build",
+      "requested_model": "grok-4.5",
+      "agent_timeout_seconds": 600,
+      "execution_policy_sha256": "c17f5e7ff825e8fbc455c3a649b1288083aea4580bcdccd1c78c8a707c50eb00",
+      "toolchain_options": [
+        {
+          "name": "relay_base_url",
+          "value": "https://ai.ailink1.com/v1"
+        },
+        {
+          "name": "relay_context_window",
+          "value": 500000
+        }
+      ]
+    }
+  ],
+  "runtime_identities": [
+    {
+      "schema_version": 1,
+      "agent_config_id": "codex-gpt-5.5-relay",
+      "agent_config_sha256": "36e25acabc2589ac75c80f514ff9066274751584f425c9c5b3f85e994a090cb0",
+      "toolchain": "codex",
+      "cli_version": "codex-cli 0.153.4"
+    },
+    {
+      "schema_version": 1,
+      "agent_config_id": "cursor-claude-4.6-sonnet-medium",
+      "agent_config_sha256": "04db98cadc7b642bd85b4fdac1d19901f38b91cde9835c319b014203c47f5a21",
+      "toolchain": "cursor_cli",
+      "cli_version": "2026.09.18-9a7762b"
+    },
+    {
+      "schema_version": 1,
+      "agent_config_id": "grok-build-grok-4.5-relay",
+      "agent_config_sha256": "e30b70a175e20fd893fd1ea8689a35339d3bd795ba2e2bb271979ed111e5a838",
+      "toolchain": "grok_build",
+      "cli_version": "grok 1.0.34 (3736acbc8658)"
+    }
+  ],
+  "fallback_provenance": [
+    {
+      "originally_intended_toolchain": "claude_code",
+      "intended_model": "claude-sonnet-4-6",
+      "status": "runtime_inadmissible_on_this_host",
+      "reason": "upstream_environment_sandbox_incompatibility",
+      "selected_replacement_config_id": "cursor-claude-4.6-sonnet-medium",
+      "replacement_mechanism": "preregistered_fallback"
+    }
+  ],
+  "runtime_limitations": [
+    {
+      "config_id": "cursor-claude-4.6-sonnet-medium",
+      "limitation": "Cursor CLI production preToolUse enforcement was runtime-validated through the Shell credential-scrub branch; WebSearch and Task denial branches were statically validated against the same active hook and Cursor's documented hook semantics, but could not be individually observed through the CLI's structured runtime audit stream.",
+      "websearch_runtime_denial_individually_observed": false,
+      "task_runtime_denial_individually_observed": false
+    }
+  ],
+  "provider_claim_boundaries": [
+    {
+      "config_id": "codex-gpt-5.5-relay",
+      "provider_facing_route": "Ailink relay",
+      "physical_upstream_independently_verified": false,
+      "physical_upstream_equivalence_claimed": false
+    },
+    {
+      "config_id": "cursor-claude-4.6-sonnet-medium",
+      "provider_facing_route": "https://api2.cursor.sh",
+      "physical_upstream_independently_verified": false,
+      "physical_upstream_equivalence_claimed": false
+    },
+    {
+      "config_id": "grok-build-grok-4.5-relay",
+      "provider_facing_route": "Ailink relay",
+      "physical_upstream_independently_verified": false,
+      "physical_upstream_equivalence_claimed": false
+    }
+  ]
+}

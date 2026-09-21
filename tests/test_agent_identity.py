@@ -14,6 +14,7 @@ from patchbench.domain import (
     AgentExecutionPolicy,
     AgentRuntimeIdentity,
     AgentToolchain,
+    compute_agent_configuration_manifest_sha256,
     compute_agent_configuration_sha256,
     compute_agent_execution_policy_sha256,
 )
@@ -251,6 +252,65 @@ def test_configuration_manifest_requires_one_policy_and_canonical_unique_ids():
             policy_sha256=EXPECTED_AGENT_POLICY_SHA256,
             configurations=(wrong_policy,),
         )
+
+
+def test_configuration_manifest_hash_is_stable_and_sensitive_to_semantics():
+    first = config(config_id="claude-primary", toolchain="claude_code", toolchain_options=[])
+    second = config()
+    baseline = AgentConfigurationManifest(
+        schema_version=1,
+        policy_sha256=EXPECTED_AGENT_POLICY_SHA256,
+        configurations=(first, second),
+    )
+    baseline_hash = compute_agent_configuration_manifest_sha256(baseline)
+    assert compute_agent_configuration_manifest_sha256(
+        AgentConfigurationManifest.model_validate(baseline.model_dump(mode="json"))
+    ) == baseline_hash
+    canonical = json.dumps(
+        baseline.model_dump(mode="json"), sort_keys=True, separators=(",", ":"),
+        ensure_ascii=False, allow_nan=False,
+    ).encode("utf-8")
+    assert hashlib.sha256(canonical).hexdigest() == baseline_hash
+
+    changed_model = config(config_id="claude-primary", toolchain="claude_code",
+                           requested_model="model-b", toolchain_options=[])
+    changed_timeout = config(config_id="claude-primary", toolchain="claude_code",
+                             agent_timeout_seconds=601, toolchain_options=[])
+    changed_option_value = config(config_id="claude-primary", toolchain="claude_code",
+                                  toolchain_options=[{"name": "endpoint", "value": "https://example.com/v1"}])
+    changed_policy = AgentConfigurationManifest(
+        schema_version=1,
+        policy_sha256="b" * 64,
+        configurations=(config(config_id="only", execution_policy_sha256="b" * 64),),
+    )
+    changed_set = AgentConfigurationManifest(
+        schema_version=1,
+        policy_sha256=EXPECTED_AGENT_POLICY_SHA256,
+        configurations=(first,),
+    )
+    changed_manifests = [
+        AgentConfigurationManifest(
+            schema_version=1,
+            policy_sha256=EXPECTED_AGENT_POLICY_SHA256,
+            configurations=(changed_model, second),
+        ),
+        AgentConfigurationManifest(
+            schema_version=1,
+            policy_sha256=EXPECTED_AGENT_POLICY_SHA256,
+            configurations=(changed_timeout, second),
+        ),
+        AgentConfigurationManifest(
+            schema_version=1,
+            policy_sha256=EXPECTED_AGENT_POLICY_SHA256,
+            configurations=(changed_option_value, second),
+        ),
+        changed_policy,
+        changed_set,
+    ]
+    assert all(
+        compute_agent_configuration_manifest_sha256(changed) != baseline_hash
+        for changed in changed_manifests
+    )
 
 
 def test_runtime_identity_validates_observed_cli_version_and_config_sha():

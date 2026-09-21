@@ -16,7 +16,7 @@ from patchbench.application.experiment import (
     ExperimentOrchestrationError,
     run_experiment,
 )
-from patchbench.domain import ExperimentConfiguration
+from patchbench.domain import AgentIdentityBinding, ExperimentConfiguration
 from patchbench.sandbox.base import SandboxExecResult, SandboxHandle
 from tests.helpers import create_fixture_repository, git, write_run_task
 
@@ -107,6 +107,14 @@ def configuration(backend: str = "host") -> ExperimentConfiguration:
         requested_model="test-model",
         agent_timeout_seconds=12.5,
         evaluation_backend=backend,
+    )
+
+
+def frozen_binding() -> AgentIdentityBinding:
+    return AgentIdentityBinding(
+        manifest_sha256="a" * 64,
+        config_id="codex-gpt-5.5-relay",
+        config_sha256="b" * 64,
     )
 
 
@@ -296,6 +304,33 @@ def test_experiment_runs_sequentially_with_frozen_task_and_fresh_workspaces(
     assert git(source, "status", "--porcelain") == ""
     assert git(source, "worktree", "list", "--porcelain").count("worktree ") == 1
     assert not any(workspace_root.iterdir())
+
+
+def test_experiment_copies_identity_binding_to_every_child_run(tmp_path: Path) -> None:
+    source, base_commit = create_fixture_repository(tmp_path)
+    task_path = write_run_task(tmp_path, source, base_commit)
+    results_root = tmp_path / "results"
+    binding = frozen_binding()
+
+    record = run_experiment(
+        task_path,
+        requested_runs=2,
+        configuration=ExperimentConfiguration(
+            agent_name="fake",
+            requested_model=None,
+            agent_timeout_seconds=None,
+            evaluation_backend="host",
+            identity_binding=binding,
+        ),
+        agent_factory=lambda: FakeAgent(),
+        workspace_root=tmp_path / "workspaces",
+        results_root=results_root,
+    )
+
+    assert record.configuration.identity_binding == binding
+    for run_id in record.run_ids:
+        metadata = json.loads((results_root / run_id / "metadata.json").read_text())
+        assert metadata["agent"]["identity_binding"] == binding.model_dump(mode="json")
 
 
 def test_hard_failure_aborts_without_starting_later_runs(tmp_path: Path) -> None:

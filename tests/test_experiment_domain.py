@@ -1,3 +1,4 @@
+import json
 from pathlib import Path
 
 import pytest
@@ -6,6 +7,7 @@ from pydantic import ValidationError
 from patchbench.agents.base import AgentRunStatus
 from patchbench.domain import (
     AgentExecutionMetadata,
+    AgentIdentityBinding,
     ArtifactPaths,
     ExperimentAggregate,
     ExperimentAggregationError,
@@ -74,6 +76,70 @@ def make_configuration() -> ExperimentConfiguration:
         agent_timeout_seconds=30,
         evaluation_backend="docker",
     )
+
+
+def test_agent_metadata_identity_binding_is_optional_and_strict() -> None:
+    historical = AgentExecutionMetadata(
+        name="codex",
+        backend="host",
+        status=AgentRunStatus.COMPLETED,
+        exit_code=0,
+        duration_seconds=1.0,
+        timeout_seconds=30,
+        requested_model="test-model",
+    )
+    assert historical.identity_binding is None
+    historical_dump = historical.model_dump(mode="json")
+    assert "identity_binding" not in historical_dump
+    assert "identity_binding" not in RunRecord(
+        run_id="run-historical",
+        task_id="example_bug",
+        status=RunStatus.PASSED,
+        evaluation_passed=True,
+        duration_seconds=1.0,
+        agent=historical,
+        artifacts=ArtifactPaths(**{
+            name: Path("/results/run-historical") / name
+            for name in ArtifactPaths.model_fields
+        }),
+    ).model_dump(mode="json")["agent"]
+    assert "identity_binding" not in json.dumps(historical_dump)
+    binding = AgentIdentityBinding(
+        manifest_sha256="a" * 64,
+        config_id="codex-gpt-5.5-relay",
+        config_sha256="b" * 64,
+    )
+    bound = historical.model_copy(update={"identity_binding": binding})
+    assert bound.identity_binding == binding
+    assert bound.model_dump(mode="json")["identity_binding"] == {
+        "manifest_sha256": "a" * 64,
+        "config_id": "codex-gpt-5.5-relay",
+        "config_sha256": "b" * 64,
+    }
+    with pytest.raises(ValidationError):
+        AgentExecutionMetadata.model_validate(
+            historical.model_dump(mode="json")
+            | {"identity_binding": {"manifest_sha256": "bad"}}
+        )
+
+
+def test_experiment_configuration_identity_binding_is_optional_and_strict() -> None:
+    historical = make_configuration()
+    assert historical.identity_binding is None
+    data = historical.model_dump(mode="json")
+    assert "identity_binding" not in data
+    assert "identity_binding" not in json.dumps(data)
+    data["identity_binding"] = {
+        "manifest_sha256": "a" * 64,
+        "config_id": "codex-gpt-5.5-relay",
+        "config_sha256": "b" * 64,
+    }
+    bound = ExperimentConfiguration.model_validate(data)
+    assert bound.identity_binding is not None
+    assert bound.model_dump(mode="json")["identity_binding"] == data["identity_binding"]
+    data["identity_binding"]["config_sha256"] = "bad"
+    with pytest.raises(ValidationError):
+        ExperimentConfiguration.model_validate(data)
 
 
 def test_aggregate_single_all_pass_run() -> None:

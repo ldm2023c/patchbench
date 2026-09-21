@@ -15,6 +15,12 @@ Sha256Hex = Annotated[
     StringConstraints(strict=True, strip_whitespace=False,
                       min_length=64, max_length=64, pattern=r"^[0-9a-f]{64}$"),
 ]
+CanonicalAgentConfigId = Annotated[
+    str,
+    StringConstraints(
+        strict=True, strip_whitespace=False, pattern=r"^[a-z][a-z0-9_.-]*$"
+    ),
+]
 
 
 class DomainModel(BaseModel):
@@ -115,6 +121,14 @@ class RunStatus(str, Enum):
     FAILED = "failed"
 
 
+class AgentIdentityBinding(DomainModel):
+    """Binding from a Run or Experiment to a frozen Agent configuration manifest."""
+
+    manifest_sha256: Sha256Hex
+    config_id: CanonicalAgentConfigId
+    config_sha256: Sha256Hex
+
+
 class AgentExecutionMetadata(DomainModel):
     """Reliability-relevant facts for one host agent execution."""
 
@@ -125,6 +139,9 @@ class AgentExecutionMetadata(DomainModel):
     duration_seconds: float = Field(ge=0)
     timeout_seconds: float | None = Field(default=None, gt=0)
     requested_model: NonEmptyString | None = None
+    identity_binding: AgentIdentityBinding | None = Field(
+        default=None, exclude_if=lambda value: value is None
+    )
 
 
 class ExperimentConfiguration(DomainModel):
@@ -138,6 +155,9 @@ class ExperimentConfiguration(DomainModel):
         allow_inf_nan=False,
     )
     evaluation_backend: Literal["host", "docker"]
+    identity_binding: AgentIdentityBinding | None = Field(
+        default=None, exclude_if=lambda value: value is None
+    )
 
 
 class ExperimentAggregate(DomainModel):

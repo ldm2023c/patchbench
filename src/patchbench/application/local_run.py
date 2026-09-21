@@ -12,6 +12,7 @@ from patchbench.domain.models import (
     RunRecord,
     RunStatus,
     TaskSpec,
+    AgentIdentityBinding,
 )
 from patchbench.domain.provenance import compute_task_fingerprint
 from patchbench.domain.patch_evidence import summarize_patch
@@ -31,6 +32,7 @@ def run_task(
     agent_name: str,
     agent_timeout_seconds: float | None = None,
     requested_model: str | None = None,
+    agent_identity_binding: AgentIdentityBinding | None = None,
     workspace_root: Path | None = None,
     results_root: Path | None = None,
     sandbox: Sandbox | None = None,
@@ -45,6 +47,7 @@ def run_task(
         agent_name=agent_name,
         agent_timeout_seconds=agent_timeout_seconds,
         requested_model=requested_model,
+        agent_identity_binding=agent_identity_binding,
         workspace_root=workspace_root,
         results_root=results_root,
         sandbox=sandbox,
@@ -59,6 +62,7 @@ def _execute_single_run(
     agent_name: str,
     agent_timeout_seconds: float | None = None,
     requested_model: str | None = None,
+    agent_identity_binding: AgentIdentityBinding | None = None,
     workspace_root: Path | None = None,
     results_root: Path | None = None,
     sandbox: Sandbox | None = None,
@@ -115,6 +119,7 @@ def _execute_single_run(
                 duration_seconds=agent_result.duration_seconds,
                 timeout_seconds=agent_timeout_seconds,
                 requested_model=requested_model,
+                identity_binding=agent_identity_binding,
             ),
             artifacts=artifact_paths,
             provenance=provenance,
