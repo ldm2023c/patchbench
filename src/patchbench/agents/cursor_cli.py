@@ -335,13 +335,34 @@ class CursorCliAdapter:
                 "Cursor CLI model-list preflight failed with exit code "
                 f"{models.returncode}"
             )
-        available_models = set(models.stdout.splitlines())
+        available_models = self._parse_available_model_ids(models.stdout)
         if self._model not in available_models:
             raise AgentSetupError(
                 "Cursor CLI requested model is unavailable in the authenticated "
                 "model list"
             )
         self._cli_version = cli_version
+
+    @staticmethod
+    def _parse_available_model_ids(output: str) -> set[str]:
+        available_models: set[str] = set()
+        for line in output.splitlines():
+            if " - " not in line:
+                continue
+            candidate, _display_name = line.split(" - ", 1)
+            if (
+                not candidate
+                or candidate != candidate.strip()
+                or any(
+                    character.isspace()
+                    or ord(character) < 32
+                    or ord(character) == 127
+                    for character in candidate
+                )
+            ):
+                continue
+            available_models.add(candidate)
+        return available_models
 
     def _run_setup_command(
         self,

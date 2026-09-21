@@ -40,6 +40,13 @@ API_KEY = "CURSOR_API_KEY"
 DUMMY_API_KEY = "  dummy-cursor-secret-never-log  "
 ENDPOINT = "https://api2.cursor.sh"
 MODEL = "claude-4.6-sonnet-medium"
+REALISTIC_MODELS_OUTPUT = """Available models
+
+auto - Auto (default)
+claude-4.6-sonnet-medium - Claude Sonnet 4.6 1M
+claude-4.6-sonnet-medium-thinking - Claude Sonnet 4.6 1M Thinking
+
+Tip: use --model <id> to switch."""
 AMBIENT_CURSOR_VARIABLES = {
     "CURSOR_AUTH_TOKEN",
     "CURSOR_API_ENDPOINT",
@@ -139,7 +146,7 @@ def fake_cursor(tmp_path, monkeypatch):
             time.sleep(float(os.environ.get("{MODELS_SLEEP}", "0")))
             if os.environ.get("{MODELS_MODE}") == "nonzero":
                 raise SystemExit(6)
-            print(os.environ.get("{MODELS_OUTPUT}", "{MODEL}"))
+            print(os.environ.get("{MODELS_OUTPUT}", {REALISTIC_MODELS_OUTPUT!r}))
             if os.environ.get("{DELETE_AFTER_MODELS}") == "1":
                 Path(sys.argv[0]).unlink()
             raise SystemExit(0)
@@ -422,13 +429,22 @@ def test_rejects_invalid_timeout_before_setup(tmp_path, fake_cursor, timeout):
 @pytest.mark.parametrize(
     "models_output,accepted",
     [
-        (MODEL, True),
-        (f"auto\n{MODEL}\nother", True),
-        ("auto", False),
-        (f"prefix-{MODEL}", False),
-        (f"{MODEL}-thinking", False),
-        (f" {MODEL} ", False),
+        (REALISTIC_MODELS_OUTPUT, True),
+        ("auto - Auto (default)", False),
+        (f"prefix-{MODEL} - Other", False),
+        (f"{MODEL}-thinking - Claude Sonnet 4.6 1M Thinking", False),
+        (f" {MODEL} - Claude Sonnet 4.6 1M", False),
         ("Claude Sonnet 4.6 1M", False),
+        ("Available models\n\nTip: use --model <id> to switch.", False),
+        (
+            "Available models\n\n"
+            "auto - Auto (default)\n"
+            "gpt-5 - GPT-5\n"
+            f"{MODEL} - Display prose is not parsed\n"
+            "other-model - Other\n\n"
+            "Tip: use --model <id> to switch.",
+            True,
+        ),
     ],
 )
 def test_requested_model_requires_exact_available_id_line(
@@ -446,6 +462,13 @@ def test_requested_model_requires_exact_available_id_line(
         with pytest.raises(AgentSetupError, match="requested model is unavailable"):
             adapter.run(AgentRunRequest(workspace, "prompt"))
     assert_temporary_state_removed(log)
+
+
+def test_model_list_parser_rejects_whitespace_and_control_in_candidate_id():
+    parse = CursorCliAdapter._parse_available_model_ids
+    assert parse("model id - Display") == set()
+    assert parse("model\tid - Display") == set()
+    assert parse("model\x1fid - Display") == set()
 
 
 @pytest.mark.parametrize(
