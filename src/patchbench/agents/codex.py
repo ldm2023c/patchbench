@@ -43,6 +43,7 @@ class CodexAdapter:
         model: str,
         executable: str | Path = "codex",
         relay_base_url: str | None = None,
+        expected_cli_version: str | None = None,
     ) -> None:
         if (
             not isinstance(model, str)
@@ -58,6 +59,9 @@ class CodexAdapter:
         self._model = model
         self._executable = executable_text
         self._relay_base_url = self._validate_relay_base_url(relay_base_url)
+        self._expected_cli_version = self._validate_expected_cli_version(
+            expected_cli_version
+        )
         self._cli_version: str | None = None
 
     @property
@@ -83,6 +87,12 @@ class CodexAdapter:
         """Return the explicit relay route, if relay mode is configured."""
 
         return self._relay_base_url
+
+    @property
+    def expected_cli_version(self) -> str | None:
+        """Return the exact CLI version required during preflight, if any."""
+
+        return self._expected_cli_version
 
     def run(self, request: AgentRunRequest) -> AgentRunResult:
         """Run Codex against an existing workspace and capture its raw result."""
@@ -361,9 +371,19 @@ class CodexAdapter:
         if version.returncode != 0:
             raise self._setup_command_error(version, "version")
 
-        cli_version = version.stdout.strip()
+        cli_version = version.stdout.rstrip("\r\n")
         if not cli_version:
             raise AgentSetupError("Codex version preflight returned no version")
+        self._validate_observed_cli_version(cli_version)
+
+        if (
+            self._expected_cli_version is not None
+            and cli_version != self._expected_cli_version
+        ):
+            raise AgentSetupError(
+                "Codex CLI version mismatch: expected "
+                f"{self._expected_cli_version!r}, observed {cli_version!r}"
+            )
 
         if relay_mode:
             help_result = self._run_setup_command(
@@ -476,6 +496,31 @@ class CodexAdapter:
         environment["HOME"] = str(isolated_home)
         environment["CODEX_HOME"] = str(codex_home)
         return environment
+
+    @staticmethod
+    def _validate_expected_cli_version(value: str | None) -> str | None:
+        if value is None:
+            return None
+        if (
+            not isinstance(value, str)
+            or not value
+            or value != value.strip()
+            or any(ord(character) < 32 or ord(character) == 127 for character in value)
+        ):
+            raise AgentSetupError(
+                "Codex expected CLI version must be nonblank canonical text"
+            )
+        return value
+
+    @staticmethod
+    def _validate_observed_cli_version(value: str) -> None:
+        if (
+            value != value.strip()
+            or any(ord(character) < 32 or ord(character) == 127 for character in value)
+        ):
+            raise AgentSetupError(
+                "Codex version preflight returned no canonical version"
+            )
 
     @staticmethod
     def _validate_relay_base_url(value: str | None) -> str | None:

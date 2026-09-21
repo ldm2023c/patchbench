@@ -740,3 +740,53 @@ def test_temporary_state_inside_workspace_is_rejected_and_removed(
     assert created_home is not None
     assert not created_home.exists()
     assert not log.exists()
+
+
+def test_cursor_expected_cli_version_exact_match_allows_run(tmp_path, fake_cursor):
+    executable, log = fake_cursor
+    workspace = tmp_path / "workspace"
+    workspace.mkdir()
+
+    adapter = CursorCliAdapter(
+        model=MODEL,
+        executable=executable,
+        expected_cli_version="2026.09.18-test",
+    )
+    result = adapter.run(AgentRunRequest(workspace, "fix"))
+
+    assert result.status is AgentRunStatus.COMPLETED
+    assert adapter.expected_cli_version == "2026.09.18-test"
+    assert adapter.cli_version == "2026.09.18-test"
+    assert [record["arguments"] for record in invocations(log)] == [
+        ["--disable-auto-update", "--version"],
+        ["--disable-auto-update", "--help"],
+        ["--disable-auto-update", "--endpoint", ENDPOINT, "--list-models"],
+        model_arguments(workspace, "fix"),
+    ]
+
+
+def test_cursor_expected_cli_version_mismatch_stops_before_help_model_list_or_model(
+    tmp_path, fake_cursor
+):
+    executable, log = fake_cursor
+    workspace = tmp_path / "workspace"
+    workspace.mkdir()
+    adapter = CursorCliAdapter(
+        model=MODEL,
+        executable=executable,
+        expected_cli_version="2026.09.18-9a7762b",
+    )
+
+    with pytest.raises(AgentSetupError, match="version mismatch"):
+        adapter.run(AgentRunRequest(workspace, "fix"))
+
+    assert adapter.cli_version is None
+    assert [record["arguments"] for record in invocations(log)] == [
+        ["--disable-auto-update", "--version"],
+    ]
+
+
+@pytest.mark.parametrize("expected", ["", " 2026.09.18-test", "2026.09.18-test\n", 123])
+def test_cursor_rejects_invalid_expected_cli_version(expected):
+    with pytest.raises(AgentSetupError, match="expected CLI version"):
+        CursorCliAdapter(model=MODEL, expected_cli_version=expected)  # type: ignore[arg-type]

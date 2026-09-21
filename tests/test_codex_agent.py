@@ -39,6 +39,7 @@ _IGNORE_TERMINATION_ENVIRONMENT_VARIABLE = (
 _PRE_TIMEOUT_OUTPUT_ENVIRONMENT_VARIABLE = "PATCHBENCH_TEST_CODEX_PRE_TIMEOUT_OUTPUT"
 _EXIT_AFTER_CHILD_ENVIRONMENT_VARIABLE = "PATCHBENCH_TEST_CODEX_EXIT_AFTER_CHILD"
 _VERSION_SLEEP_ENVIRONMENT_VARIABLE = "PATCHBENCH_TEST_CODEX_VERSION_SLEEP"
+_VERSION_OUTPUT_ENVIRONMENT_VARIABLE = "PATCHBENCH_TEST_CODEX_VERSION_OUTPUT"
 _LOGIN_SLEEP_ENVIRONMENT_VARIABLE = "PATCHBENCH_TEST_CODEX_LOGIN_SLEEP"
 _HELP_SLEEP_ENVIRONMENT_VARIABLE = "PATCHBENCH_TEST_CODEX_HELP_SLEEP"
 _HELP_MODE_ENVIRONMENT_VARIABLE = "PATCHBENCH_TEST_CODEX_HELP_MODE"
@@ -122,7 +123,10 @@ def fake_codex(tmp_path, monkeypatch) -> tuple[Path, Path]:
                 time.sleep(float(os.environ.get(
                     "{_VERSION_SLEEP_ENVIRONMENT_VARIABLE}", "0"
                 )))
-                print("codex-cli 0.152.0")
+                sys.stdout.write(os.environ.get(
+                    "{_VERSION_OUTPUT_ENVIRONMENT_VARIABLE}",
+                    "codex-cli 0.152.0\\n",
+                ))
                 raise SystemExit(0)
 
             if arguments == ["login", "status"]:
@@ -673,10 +677,10 @@ def test_codex_version_preflight_is_bounded_by_full_deadline(
     executable, invocation_log = fake_codex
     workspace = tmp_path / "workspace"
     workspace.mkdir()
-    monkeypatch.setenv(_VERSION_SLEEP_ENVIRONMENT_VARIABLE, "0.2")
+    monkeypatch.setenv(_VERSION_SLEEP_ENVIRONMENT_VARIABLE, "1.0")
     with pytest.raises(AgentSetupError, match="version preflight exceeded"):
         CodexAdapter(model="test-model", executable=executable).run(
-            AgentRunRequest(workspace, "prompt", timeout_seconds=0.05)
+            AgentRunRequest(workspace, "prompt", timeout_seconds=0.3)
         )
     assert [record["arguments"] for record in _read_invocations(invocation_log)] == [
         ["--version"]
@@ -707,13 +711,13 @@ def test_codex_relay_help_preflight_is_bounded_and_removes_home(
     workspace = tmp_path / "workspace"
     workspace.mkdir()
     monkeypatch.setenv(_API_KEY, _DUMMY_API_KEY)
-    monkeypatch.setenv(_HELP_SLEEP_ENVIRONMENT_VARIABLE, "0.2")
+    monkeypatch.setenv(_HELP_SLEEP_ENVIRONMENT_VARIABLE, "1.0")
     with pytest.raises(AgentSetupError, match="exec help preflight exceeded"):
         CodexAdapter(
             model="gpt-5.5",
             executable=executable,
             relay_base_url=_RELAY_BASE_URL,
-        ).run(AgentRunRequest(workspace, "prompt", timeout_seconds=0.15))
+        ).run(AgentRunRequest(workspace, "prompt", timeout_seconds=0.3))
     records = _read_invocations(invocation_log)
     assert [record["arguments"] for record in records] == [
         ["--version"],
@@ -1114,3 +1118,158 @@ def test_codex_adapter_raises_when_timeout_signal_management_fails(
     assert signal_calls[0][1] == signal.SIGTERM
     assert any(signal_number == signal.SIGKILL for _, signal_number in signal_calls)
     assert len({process_group_id for process_group_id, _ in signal_calls}) == 1
+
+
+def test_codex_expected_cli_version_exact_match_allows_run(tmp_path, fake_codex):
+    executable, invocation_log = fake_codex
+    workspace = tmp_path / "workspace"
+    workspace.mkdir()
+
+    adapter = CodexAdapter(
+        model="test-model",
+        executable=executable,
+        expected_cli_version="codex-cli 0.152.0",
+    )
+    result = adapter.run(AgentRunRequest(workspace, "fix"))
+
+    assert result.status is AgentRunStatus.COMPLETED
+    assert adapter.expected_cli_version == "codex-cli 0.152.0"
+    assert adapter.cli_version == "codex-cli 0.152.0"
+    assert [record["arguments"] for record in _read_invocations(invocation_log)] == [
+        ["--version"],
+        ["login", "status"],
+        ["exec", "-C", str(workspace.resolve()), "--sandbox", "workspace-write",
+         "--ephemeral", "--ignore-user-config", "--json", "-m", "test-model", "-"],
+    ]
+
+
+def test_codex_expected_cli_version_mismatch_stops_before_login_or_model(
+    tmp_path, fake_codex
+):
+    executable, invocation_log = fake_codex
+    workspace = tmp_path / "workspace"
+    workspace.mkdir()
+    adapter = CodexAdapter(
+        model="test-model",
+        executable=executable,
+        expected_cli_version="codex-cli 0.153.4",
+    )
+
+    with pytest.raises(AgentSetupError, match="version mismatch"):
+        adapter.run(AgentRunRequest(workspace, "fix"))
+
+    assert adapter.cli_version is None
+    assert [record["arguments"] for record in _read_invocations(invocation_log)] == [
+        ["--version"],
+    ]
+
+
+@pytest.mark.parametrize("expected", ["", " codex-cli 0.152.0", "codex-cli 0.152.0\n", 123])
+def test_codex_rejects_invalid_expected_cli_version(expected):
+    with pytest.raises(AgentSetupError, match="expected CLI version"):
+        CodexAdapter(model="test-model", expected_cli_version=expected)  # type: ignore[arg-type]
+
+
+def test_codex_expected_frozen_cli_version_exact_newline_succeeds(
+    tmp_path, monkeypatch, fake_codex
+):
+    executable, invocation_log = fake_codex
+    workspace = tmp_path / "workspace"
+    workspace.mkdir()
+    monkeypatch.setenv(
+        _VERSION_OUTPUT_ENVIRONMENT_VARIABLE, "codex-cli 0.153.4\n"
+    )
+
+    adapter = CodexAdapter(
+        model="test-model",
+        executable=executable,
+        expected_cli_version="codex-cli 0.153.4",
+    )
+    result = adapter.run(AgentRunRequest(workspace, "fix"))
+
+    assert result.status is AgentRunStatus.COMPLETED
+    assert adapter.cli_version == "codex-cli 0.153.4"
+    assert [record["arguments"] for record in _read_invocations(invocation_log)] == [
+        ["--version"],
+        ["login", "status"],
+        ["exec", "-C", str(workspace.resolve()), "--sandbox", "workspace-write",
+         "--ephemeral", "--ignore-user-config", "--json", "-m", "test-model", "-"],
+    ]
+
+
+def test_codex_expected_frozen_cli_version_mismatch_stops_before_later_preflight(
+    tmp_path, monkeypatch, fake_codex
+):
+    executable, invocation_log = fake_codex
+    workspace = tmp_path / "workspace"
+    workspace.mkdir()
+    monkeypatch.setenv(
+        _VERSION_OUTPUT_ENVIRONMENT_VARIABLE, "codex-cli 0.153.5\n"
+    )
+    adapter = CodexAdapter(
+        model="test-model",
+        executable=executable,
+        expected_cli_version="codex-cli 0.153.4",
+    )
+
+    with pytest.raises(AgentSetupError, match="version mismatch"):
+        adapter.run(AgentRunRequest(workspace, "fix"))
+
+    assert adapter.cli_version is None
+    assert [record["arguments"] for record in _read_invocations(invocation_log)] == [
+        ["--version"],
+    ]
+
+
+@pytest.mark.parametrize(
+    "observed",
+    [
+        " codex-cli 0.153.4\n",
+        "codex-cli 0.153.4 \n",
+        "codex-cli 0.153.4\x1f\n",
+    ],
+)
+def test_codex_observed_cli_version_must_be_canonical_text(
+    tmp_path, monkeypatch, fake_codex, observed
+):
+    executable, invocation_log = fake_codex
+    workspace = tmp_path / "workspace"
+    workspace.mkdir()
+    monkeypatch.setenv(_VERSION_OUTPUT_ENVIRONMENT_VARIABLE, observed)
+    adapter = CodexAdapter(
+        model="test-model",
+        executable=executable,
+        expected_cli_version="codex-cli 0.153.4",
+    )
+
+    with pytest.raises(AgentSetupError, match="canonical version"):
+        adapter.run(AgentRunRequest(workspace, "fix"))
+
+    assert adapter.cli_version is None
+    assert [record["arguments"] for record in _read_invocations(invocation_log)] == [
+        ["--version"],
+    ]
+
+
+def test_codex_legacy_expected_cli_version_none_accepts_canonical_observed_version(
+    tmp_path, monkeypatch, fake_codex
+):
+    executable, invocation_log = fake_codex
+    workspace = tmp_path / "workspace"
+    workspace.mkdir()
+    monkeypatch.setenv(
+        _VERSION_OUTPUT_ENVIRONMENT_VARIABLE, "codex-cli 0.153.4\n"
+    )
+    adapter = CodexAdapter(model="test-model", executable=executable)
+
+    result = adapter.run(AgentRunRequest(workspace, "fix"))
+
+    assert result.status is AgentRunStatus.COMPLETED
+    assert adapter.expected_cli_version is None
+    assert adapter.cli_version == "codex-cli 0.153.4"
+    assert [record["arguments"] for record in _read_invocations(invocation_log)] == [
+        ["--version"],
+        ["login", "status"],
+        ["exec", "-C", str(workspace.resolve()), "--sandbox", "workspace-write",
+         "--ephemeral", "--ignore-user-config", "--json", "-m", "test-model", "-"],
+    ]

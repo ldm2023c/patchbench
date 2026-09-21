@@ -63,6 +63,7 @@ class GrokBuildAdapter:
         executable: str | Path = "grok",
         relay_base_url: str | None = None,
         relay_context_window: int | None = None,
+        expected_cli_version: str | None = None,
     ) -> None:
         if (
             not isinstance(model, str)
@@ -79,6 +80,9 @@ class GrokBuildAdapter:
         self._relay_context_window = self._validate_relay_context_window(
             relay_context_window,
             relay_enabled=self._relay_base_url is not None,
+        )
+        self._expected_cli_version = self._validate_expected_cli_version(
+            expected_cli_version
         )
         self._cli_version: str | None = None
 
@@ -101,6 +105,10 @@ class GrokBuildAdapter:
     @property
     def relay_context_window(self) -> int | None:
         return self._relay_context_window
+
+    @property
+    def expected_cli_version(self) -> str | None:
+        return self._expected_cli_version
 
     def run(self, request: AgentRunRequest) -> AgentRunResult:
         """Run Grok Build in the supplied PatchBench workspace."""
@@ -383,6 +391,14 @@ class GrokBuildAdapter:
             raise AgentSetupError(
                 "Grok Build version preflight returned no canonical version"
             )
+        if (
+            self._expected_cli_version is not None
+            and cli_version != self._expected_cli_version
+        ):
+            raise AgentSetupError(
+                "Grok Build CLI version mismatch: expected "
+                f"{self._expected_cli_version!r}, observed {cli_version!r}"
+            )
         remaining = self._remaining_timeout(deadline)
         if remaining is not None and remaining <= 0:
             raise AgentSetupError(
@@ -437,6 +453,21 @@ class GrokBuildAdapter:
         if self._relay_context_window is not None:
             lines.append(f"context_window = {self._relay_context_window}")
         path.write_text("\n".join(lines) + "\n", encoding="utf-8")
+
+    @staticmethod
+    def _validate_expected_cli_version(value: str | None) -> str | None:
+        if value is None:
+            return None
+        if (
+            not isinstance(value, str)
+            or not value
+            or value != value.strip()
+            or any(ord(character) < 32 or ord(character) == 127 for character in value)
+        ):
+            raise AgentSetupError(
+                "Grok Build expected CLI version must be nonblank canonical text"
+            )
+        return value
 
     @staticmethod
     def _validate_relay_base_url(value: str | None) -> str | None:

@@ -928,3 +928,50 @@ def test_cleanup_failure_is_infrastructure_error(tmp_path, monkeypatch, fake_gro
     monkeypatch.setattr(adapter, "_force_cleanup", lambda process: "forced cleanup failed")
     with pytest.raises(AgentInfrastructureError, match="clean up Grok Build"):
         adapter.run(AgentRunRequest(workspace, "prompt"))
+
+
+def test_grok_expected_cli_version_exact_match_allows_run(tmp_path, fake_grok):
+    executable, log = fake_grok
+    workspace = tmp_path / "workspace"
+    workspace.mkdir()
+
+    adapter = GrokBuildAdapter(
+        model="model-a",
+        executable=executable,
+        expected_cli_version="grok build 0.9.0 (test)",
+    )
+    result = adapter.run(AgentRunRequest(workspace, "fix"))
+
+    assert result.status is AgentRunStatus.COMPLETED
+    assert adapter.expected_cli_version == "grok build 0.9.0 (test)"
+    assert adapter.cli_version == "grok build 0.9.0 (test)"
+    assert [record["arguments"] for record in invocations(log)] == [
+        VERSION_ARGUMENTS,
+        ["--help"],
+        model_arguments(workspace, "fix"),
+    ]
+
+
+def test_grok_expected_cli_version_mismatch_stops_before_help_or_model(
+    tmp_path, fake_grok
+):
+    executable, log = fake_grok
+    workspace = tmp_path / "workspace"
+    workspace.mkdir()
+    adapter = GrokBuildAdapter(
+        model="model-a",
+        executable=executable,
+        expected_cli_version="grok 1.0.34 (3736acbc8658)",
+    )
+
+    with pytest.raises(AgentSetupError, match="version mismatch"):
+        adapter.run(AgentRunRequest(workspace, "fix"))
+
+    assert adapter.cli_version is None
+    assert [record["arguments"] for record in invocations(log)] == [VERSION_ARGUMENTS]
+
+
+@pytest.mark.parametrize("expected", ["", " grok build 0.9.0", "grok build 0.9.0\n", 123])
+def test_grok_rejects_invalid_expected_cli_version(expected):
+    with pytest.raises(AgentSetupError, match="expected CLI version"):
+        GrokBuildAdapter(model="model-a", expected_cli_version=expected)  # type: ignore[arg-type]

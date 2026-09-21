@@ -107,6 +107,7 @@ class CursorCliAdapter:
         model: str,
         executable: str | Path = "agent",
         endpoint: str = "https://api2.cursor.sh",
+        expected_cli_version: str | None = None,
     ) -> None:
         if (
             not isinstance(model, str)
@@ -120,6 +121,9 @@ class CursorCliAdapter:
         self._model = model
         self._executable = executable_text
         self._endpoint = self._validate_endpoint(endpoint)
+        self._expected_cli_version = self._validate_expected_cli_version(
+            expected_cli_version
+        )
         self._cli_version: str | None = None
 
     @property
@@ -137,6 +141,10 @@ class CursorCliAdapter:
     @property
     def endpoint(self) -> str:
         return self._endpoint
+
+    @property
+    def expected_cli_version(self) -> str | None:
+        return self._expected_cli_version
 
     def run(self, request: AgentRunRequest) -> AgentRunResult:
         """Run Cursor CLI in the supplied PatchBench workspace."""
@@ -297,6 +305,14 @@ class CursorCliAdapter:
             raise AgentSetupError(
                 "Cursor CLI version preflight returned no canonical version"
             )
+        if (
+            self._expected_cli_version is not None
+            and cli_version != self._expected_cli_version
+        ):
+            raise AgentSetupError(
+                "Cursor CLI version mismatch: expected "
+                f"{self._expected_cli_version!r}, observed {cli_version!r}"
+            )
 
         help_result = self._run_setup_command(
             [self._DISABLE_UPDATE_FLAG, "--help"],
@@ -447,6 +463,21 @@ class CursorCliAdapter:
         if api_key is None or not api_key.strip():
             raise AgentSetupError("Cursor CLI API-key authentication is unavailable")
         return api_key
+
+    @staticmethod
+    def _validate_expected_cli_version(value: str | None) -> str | None:
+        if value is None:
+            return None
+        if (
+            not isinstance(value, str)
+            or not value
+            or value != value.strip()
+            or any(ord(character) < 32 or ord(character) == 127 for character in value)
+        ):
+            raise AgentSetupError(
+                "Cursor CLI expected CLI version must be nonblank canonical text"
+            )
+        return value
 
     @staticmethod
     def _validate_endpoint(value: str) -> str:

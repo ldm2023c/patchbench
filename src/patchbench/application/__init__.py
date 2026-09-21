@@ -1,6 +1,14 @@
 """Application-layer Run, Replay, and Diagnosis orchestration."""
 
 from patchbench.application.local_run import run_task
+from patchbench.application.v13_agent_execution import (
+    ACCEPTED_M8_AGENT_MANIFEST_SHA256,
+    FrozenAgentExecutionPlan,
+    FrozenAgentResolutionError,
+    load_v13_agent_manifest,
+    resolve_v13_agent_config,
+    run_v13_agent_experiment,
+)
 from patchbench.application.replay import ReplayError, ReplayExecution, replay_run
 from patchbench.application.diagnosis_execution import (
     DiagnosisExecution, DiagnosisExecutionError, DiagnosisExecutionReason, execute_blind_diagnosis,
@@ -51,6 +59,9 @@ from patchbench.application.diagnosis_validation_results import (
 )
 
 __all__ = ["ReplayError", "ReplayExecution", "replay_run", "run_task",
+           "ACCEPTED_M8_AGENT_MANIFEST_SHA256", "FrozenAgentExecutionPlan",
+           "FrozenAgentResolutionError", "load_v13_agent_manifest",
+           "resolve_v13_agent_config", "run_v13_agent_experiment",
            "DiagnosisValidationRunError", "DiagnosisValidationRunReason",
            "build_diagnosis_validation_run_plan", "run_frozen_diagnosis_validation",
            "DiagnosisGoldLockError", "DiagnosisGoldLockReason",
