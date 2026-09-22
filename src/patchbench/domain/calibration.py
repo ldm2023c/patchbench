@@ -53,6 +53,8 @@ class V13CalibrationProtocol(DomainModel):
     environment_only_remediation_required: StrictBool
     failed_batch_evidence_retention_required: StrictBool
     all_configurations_required_for_batch_acceptance: StrictBool
+    accepted_batch_selection_policy: Literal["first_complete_all_admitted_batch"]
+    evaluation_outcome_must_not_influence_batch_selection: StrictBool
     formal_benchmark_task_execution_forbidden: StrictBool
     formal_study_tuning_from_calibration_forbidden: StrictBool
     calibration_outcome_must_not_influence_task_selection: StrictBool
@@ -64,8 +66,6 @@ class V13CalibrationProtocol(DomainModel):
 
     @model_validator(mode="after")
     def validate_protocol_rules(self) -> Self:
-        if self.ordered_agent_config_ids != tuple(sorted(self.ordered_agent_config_ids)):
-            raise ValueError("calibration config IDs must follow frozen manifest order")
         if len(self.ordered_agent_config_ids) != len(set(self.ordered_agent_config_ids)):
             raise ValueError("calibration config IDs must be unique")
         if self.admitted_agent_statuses != (AgentRunStatus.COMPLETED,):
@@ -78,6 +78,10 @@ class V13CalibrationProtocol(DomainModel):
             raise ValueError("failed calibration evidence must be retained")
         if self.all_configurations_required_for_batch_acceptance is not True:
             raise ValueError("all selected configurations are required for batch acceptance")
+        if self.evaluation_outcome_must_not_influence_batch_selection is not True:
+            raise ValueError(
+                "evaluation outcome must not influence calibration batch selection"
+            )
         contamination_flags = (
             self.formal_benchmark_task_execution_forbidden,
             self.formal_study_tuning_from_calibration_forbidden,

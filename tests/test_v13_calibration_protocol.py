@@ -34,8 +34,8 @@ from scripts.v13_calibration_protocol import (
 
 
 PROJECT_ROOT = Path(__file__).resolve().parents[1]
-PROTOCOL_SHA256 = "d3034417aae0f1c821a4fe6dfa522c5a412e13d60b591696a7682b153153bb5f"
-PROTOCOL_BYTE_SHA256 = "5a70acae41ece3915e4b5e1f30b894212ba365a737864e940afdaf8ac52e0b36"
+PROTOCOL_SHA256 = "1347188de4d5cd3e25fb4f4444a60e7c0994dd4b020cb514bf369479d4794eff"
+PROTOCOL_BYTE_SHA256 = "2a81a974b1d8be7c19f3a32eb1d882ddd1d61c215a0f444670ab0b39c2214bf8"
 
 
 def checked_protocol() -> V13CalibrationProtocol:
@@ -115,6 +115,10 @@ def test_execution_shape_and_runtime_admission_rules_are_frozen():
     assert protocol.evaluation_pass_required is False
     assert protocol.within_batch_retry_policy == "no_retry"
     assert protocol.all_configurations_required_for_batch_acceptance is True
+    assert protocol.accepted_batch_selection_policy == (
+        "first_complete_all_admitted_batch"
+    )
+    assert protocol.evaluation_outcome_must_not_influence_batch_selection is True
 
 
 def test_retry_remediation_and_evidence_retention_rules_are_frozen():
@@ -156,6 +160,8 @@ def test_formal_study_contamination_boundary_is_frozen():
         ("within_batch_retry_policy", "retry_failed_slots"),
         ("failed_batch_rerun_policy", "rerun_failed_slots"),
         ("failed_batch_evidence_retention_required", False),
+        ("accepted_batch_selection_policy", "best_pass_rate_batch"),
+        ("evaluation_outcome_must_not_influence_batch_selection", False),
         ("formal_benchmark_task_execution_forbidden", False),
         ("formal_study_tuning_from_calibration_forbidden", False),
     ],
@@ -187,6 +193,41 @@ def test_protocol_hash_changes_when_material_frozen_fields_change(field, value):
     )
 
 
+def test_accepted_batch_selection_rules_are_in_builder_output():
+    protocol = build_calibration_protocol(PROJECT_ROOT)
+
+    assert protocol.accepted_batch_selection_policy == (
+        "first_complete_all_admitted_batch"
+    )
+    assert protocol.evaluation_outcome_must_not_influence_batch_selection is True
+    data = json.loads(deterministic_protocol_json(protocol))
+    assert data["accepted_batch_selection_policy"] == (
+        "first_complete_all_admitted_batch"
+    )
+    assert data["evaluation_outcome_must_not_influence_batch_selection"] is True
+
+
+def test_config_id_uniqueness_is_enforced_without_alphabetical_order_requirement():
+    data = checked_protocol().model_dump(mode="json")
+    data["ordered_agent_config_ids"] = (
+        "z-nonalphabetic-order",
+        "a-nonalphabetic-order",
+    )
+    protocol = V13CalibrationProtocol.model_validate(data)
+    assert protocol.ordered_agent_config_ids == (
+        "z-nonalphabetic-order",
+        "a-nonalphabetic-order",
+    )
+
+    duplicate = checked_protocol().model_dump(mode="json")
+    duplicate["ordered_agent_config_ids"] = (
+        "codex-gpt-5.5-relay",
+        "codex-gpt-5.5-relay",
+    )
+    with pytest.raises(ValidationError):
+        V13CalibrationProtocol.model_validate(duplicate)
+
+
 def test_semantic_drift_fails_verification(tmp_path):
     root = copy_protocol_inputs(tmp_path)
     path = root / CALIBRATION_PROTOCOL_PATH
@@ -209,6 +250,37 @@ def test_valid_semantic_drift_fails_verification(tmp_path):
     protocol = load_calibration_protocol(root)
     with pytest.raises(CalibrationProtocolIntegrityError, match="semantic mismatch"):
         verify_calibration_protocol(protocol, root)
+
+
+@pytest.mark.parametrize(
+    ("field", "value"),
+    [
+        ("accepted_batch_selection_policy", "best_pass_rate_batch"),
+        ("evaluation_outcome_must_not_influence_batch_selection", False),
+    ],
+)
+def test_new_batch_selection_rule_invalid_semantic_drift_fails_load(
+    tmp_path, field, value
+):
+    root = copy_protocol_inputs(tmp_path)
+    path = root / CALIBRATION_PROTOCOL_PATH
+    data = json.loads(path.read_text(encoding="utf-8"))
+    data[field] = value
+    path.write_text(json.dumps(data, indent=2) + "\n", encoding="utf-8")
+
+    with pytest.raises(CalibrationProtocolIntegrityError, match="Unable to load"):
+        load_calibration_protocol(root)
+
+
+def test_missing_new_batch_selection_rule_fails_load(tmp_path):
+    root = copy_protocol_inputs(tmp_path)
+    path = root / CALIBRATION_PROTOCOL_PATH
+    data = json.loads(path.read_text(encoding="utf-8"))
+    del data["accepted_batch_selection_policy"]
+    path.write_text(json.dumps(data, indent=2) + "\n", encoding="utf-8")
+
+    with pytest.raises(CalibrationProtocolIntegrityError, match="Unable to load"):
+        load_calibration_protocol(root)
 
 
 def test_byte_only_serialization_drift_fails_verification(tmp_path):

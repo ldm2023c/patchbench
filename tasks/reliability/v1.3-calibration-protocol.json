@@ -23,6 +23,8 @@
   "environment_only_remediation_required": true,
   "failed_batch_evidence_retention_required": true,
   "all_configurations_required_for_batch_acceptance": true,
+  "accepted_batch_selection_policy": "first_complete_all_admitted_batch",
+  "evaluation_outcome_must_not_influence_batch_selection": true,
   "formal_benchmark_task_execution_forbidden": true,
   "formal_study_tuning_from_calibration_forbidden": true,
   "calibration_outcome_must_not_influence_task_selection": true,

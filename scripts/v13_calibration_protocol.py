@@ -171,6 +171,8 @@ def build_calibration_protocol(
         environment_only_remediation_required=True,
         failed_batch_evidence_retention_required=True,
         all_configurations_required_for_batch_acceptance=True,
+        accepted_batch_selection_policy="first_complete_all_admitted_batch",
+        evaluation_outcome_must_not_influence_batch_selection=True,
         formal_benchmark_task_execution_forbidden=True,
         formal_study_tuning_from_calibration_forbidden=True,
         calibration_outcome_must_not_influence_task_selection=True,
