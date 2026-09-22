@@ -49,6 +49,13 @@ from patchbench.domain.calibration import (
     V13CalibrationProtocol,
     compute_v13_calibration_protocol_sha256,
 )
+from patchbench.domain.calibration_run import (
+    CalibrationBatchStatus,
+    CalibrationFailureReason,
+    CalibrationSlotStatus,
+    V13CalibrationBatch,
+    V13CalibrationSlot,
+)
 
 from patchbench.domain.provenance import compute_task_fingerprint
 
@@ -152,7 +159,12 @@ from patchbench.domain.diagnosis_validation_run import (
 )
 
 __all__ = [
-           "V13CalibrationProtocol", "compute_v13_calibration_protocol_sha256",
+    "CalibrationBatchStatus",
+    "CalibrationFailureReason",
+    "CalibrationSlotStatus",
+    "V13CalibrationBatch",
+    "V13CalibrationSlot",
+    "V13CalibrationProtocol", "compute_v13_calibration_protocol_sha256",
     "AgentConfigurationIdentity",
     "AgentConfigurationManifest",
     "AgentConfigurationOption",
