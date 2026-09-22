@@ -56,6 +56,21 @@ from patchbench.domain.calibration_run import (
     V13CalibrationBatch,
     V13CalibrationSlot,
 )
+from patchbench.domain.calibration_evidence import (
+    V13CalibrationEvidenceFreeze,
+    V13CalibrationEvidenceSlot,
+    compute_experiment_semantic_sha256,
+    compute_run_semantic_sha256,
+    compute_v13_calibration_batch_sha256,
+    compute_v13_calibration_evidence_freeze_sha256,
+)
+from patchbench.domain.formal_study import (
+    V13FormalMetricPolicy,
+    V13FormalPreregistration,
+    V13FormalRetryPolicy,
+    V13FormalSlot,
+    compute_v13_formal_preregistration_sha256,
+)
 
 from patchbench.domain.provenance import compute_task_fingerprint
 
@@ -159,6 +174,17 @@ from patchbench.domain.diagnosis_validation_run import (
 )
 
 __all__ = [
+    "V13CalibrationEvidenceFreeze",
+    "V13CalibrationEvidenceSlot",
+    "compute_experiment_semantic_sha256",
+    "compute_run_semantic_sha256",
+    "compute_v13_calibration_batch_sha256",
+    "compute_v13_calibration_evidence_freeze_sha256",
+    "V13FormalMetricPolicy",
+    "V13FormalPreregistration",
+    "V13FormalRetryPolicy",
+    "V13FormalSlot",
+    "compute_v13_formal_preregistration_sha256",
     "CalibrationBatchStatus",
     "CalibrationFailureReason",
     "CalibrationSlotStatus",

@@ -1,0 +1,76 @@
+{
+  "schema_version": 1,
+  "freeze_id": "patchbench-v1.3-calibration-001",
+  "source_batch_id": "calibration-001",
+  "source_batch_status": "accepted",
+  "source_batch_json_sha256": "297ebcc939f34df6a4fcf65d8cb7342059be8e02cefc433bd7b0d0e1a28455d1",
+  "source_batch_semantic_sha256": "cdbdd29fdb1fe07039acc37b86c2a91cb2a38b85fab7e40b6165aa499b828934",
+  "calibration_protocol_sha256": "1347188de4d5cd3e25fb4f4444a60e7c0994dd4b020cb514bf369479d4794eff",
+  "m3_candidate_sha256": "a51000e6afccfea67ae198e3fa024a36cea02d49a22945aafc763c3d9302d043",
+  "m8_agent_manifest_sha256": "6902dcac0c86c514405107fb2752c3b011e5bf119a3c35ee1164bd90ff0cb965",
+  "calibration_task_id": "example_bug",
+  "ordered_agent_config_ids": [
+    "codex-gpt-5.5-relay",
+    "cursor-claude-4.6-sonnet-medium",
+    "grok-build-grok-4.5-relay"
+  ],
+  "slots": [
+    {
+      "config_id": "codex-gpt-5.5-relay",
+      "experiment_id": "393127b73d474c1aaeac054d3a55d048",
+      "run_id": "438771549e304899b2c9cf46be058392",
+      "agent_status": "completed",
+      "evaluation_passed": true,
+      "identity_binding": {
+        "manifest_sha256": "6902dcac0c86c514405107fb2752c3b011e5bf119a3c35ee1164bd90ff0cb965",
+        "config_id": "codex-gpt-5.5-relay",
+        "config_sha256": "36e25acabc2589ac75c80f514ff9066274751584f425c9c5b3f85e994a090cb0"
+      },
+      "run_semantic_sha256": "a8a9767936d89996ba72c3762a56335bba2e1654a958a78f4bb01c93e38c26cd",
+      "experiment_semantic_sha256": "bd12edba6b0b8a7f7979a72f5bb887019cc32d0a3914418400028fc4af60dd0a",
+      "prompt_sha256": "fd3ff70037e155ac8156569ab02229afa25a2162aabb7a2fbf31b597d5b2d80e",
+      "agent_stdout_sha256": "a2dfebb5eab859ecde9ce3918ec9a65690638bf7ed699c7d8245f7c4a47562c2",
+      "agent_stderr_sha256": "afce4a7b812db10b6ae074151875c8d6e4c0406c4493bd3f10e14d31b13773c6",
+      "test_log_sha256": "7497fce0bbbf67f8c27d62bf8dfeeab29d572adba8cf286f6e3e4928e45d01be",
+      "patch_sha256": "dc83d2a1244f4a121fd56dc20b57490e7c8493f3a0f7ffea5c56a8a6f61e605f"
+    },
+    {
+      "config_id": "cursor-claude-4.6-sonnet-medium",
+      "experiment_id": "69b7baa121534ade9034603842bc4e30",
+      "run_id": "f950366eb74c4f3b975c88e1fbaacb03",
+      "agent_status": "completed",
+      "evaluation_passed": true,
+      "identity_binding": {
+        "manifest_sha256": "6902dcac0c86c514405107fb2752c3b011e5bf119a3c35ee1164bd90ff0cb965",
+        "config_id": "cursor-claude-4.6-sonnet-medium",
+        "config_sha256": "04db98cadc7b642bd85b4fdac1d19901f38b91cde9835c319b014203c47f5a21"
+      },
+      "run_semantic_sha256": "1afdc8afb8e610f0c55b69d458651fa6b69c57089d1d6cb789b015357da0f8d6",
+      "experiment_semantic_sha256": "dc4e97c598cbcd07985304c14275f41eddd02c10c55c6bf9ec20f2c65bb439fe",
+      "prompt_sha256": "fd3ff70037e155ac8156569ab02229afa25a2162aabb7a2fbf31b597d5b2d80e",
+      "agent_stdout_sha256": "28ef6855fa78fe31d3e17fa77a1b130877fc1403f2f93e4ab3432b5b9bfae52c",
+      "agent_stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "test_log_sha256": "b32d6162cce12d3742f6f3e4b788ff6366f3bcce436f2855b59525b553ec6431",
+      "patch_sha256": "f15c0d846b37d7b0140edba9fbb6c900204135b6738add395704cb7266fe5903"
+    },
+    {
+      "config_id": "grok-build-grok-4.5-relay",
+      "experiment_id": "a6c43930d2934f64851e603735711f40",
+      "run_id": "c7c464f92b7c4ddc93a82753f0923287",
+      "agent_status": "completed",
+      "evaluation_passed": true,
+      "identity_binding": {
+        "manifest_sha256": "6902dcac0c86c514405107fb2752c3b011e5bf119a3c35ee1164bd90ff0cb965",
+        "config_id": "grok-build-grok-4.5-relay",
+        "config_sha256": "e30b70a175e20fd893fd1ea8689a35339d3bd795ba2e2bb271979ed111e5a838"
+      },
+      "run_semantic_sha256": "c80f778496538aa6aee249b6504a58e8d18c031765e650ed59c05ff2956a2c61",
+      "experiment_semantic_sha256": "46d69dbd3c60830c100d6d4f793407c41ef5f97cc3e1cefc7f1a210b98a057c4",
+      "prompt_sha256": "fd3ff70037e155ac8156569ab02229afa25a2162aabb7a2fbf31b597d5b2d80e",
+      "agent_stdout_sha256": "6c9707e1cc520fb5572dd3344132bd95b25a0ff2a86beb62f11d8ec564c7de03",
+      "agent_stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "test_log_sha256": "ffdf9bcd0bf10455b43d05471b92f50986593c0aa4790f6be8bf8e0744e2ed82",
+      "patch_sha256": "c3e81c7d296cc2632bef08003c50c085201ee052bdce92b4fc825a0632c08dc9"
+    }
+  ]
+}
