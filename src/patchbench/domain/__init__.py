@@ -71,6 +71,15 @@ from patchbench.domain.formal_study import (
     V13FormalSlot,
     compute_v13_formal_preregistration_sha256,
 )
+from patchbench.domain.formal_execution import (
+    FormalAttemptStatus,
+    FormalFailureCategory,
+    FormalSlotStatus,
+    FormalStudyStatus,
+    V13FormalAttemptRecord,
+    V13FormalSlotExecution,
+    V13FormalStudyLedger,
+)
 
 from patchbench.domain.provenance import compute_task_fingerprint
 
@@ -174,6 +183,13 @@ from patchbench.domain.diagnosis_validation_run import (
 )
 
 __all__ = [
+    "FormalAttemptStatus",
+    "FormalFailureCategory",
+    "FormalSlotStatus",
+    "FormalStudyStatus",
+    "V13FormalAttemptRecord",
+    "V13FormalSlotExecution",
+    "V13FormalStudyLedger",
     "V13CalibrationEvidenceFreeze",
     "V13CalibrationEvidenceSlot",
     "compute_experiment_semantic_sha256",
