@@ -97,6 +97,16 @@ from patchbench.domain.formal_analysis import (
     V13FormalRetryReporting,
     compute_v13_formal_analysis_sha256,
 )
+from patchbench.domain.formal_incident import (
+    V13FormalIncidentFreeze,
+    V13FormalIncidentRun,
+    compute_v13_formal_incident_freeze_sha256,
+)
+from patchbench.domain.formal_replication import (
+    V13FormalReplicationPreregistration,
+    V13FormalReplicationSlot,
+    compute_v13_formal_replication_preregistration_sha256,
+)
 
 from patchbench.domain.provenance import compute_task_fingerprint
 
@@ -200,6 +210,12 @@ from patchbench.domain.diagnosis_validation_run import (
 )
 
 __all__ = [
+    "V13FormalIncidentFreeze",
+    "V13FormalIncidentRun",
+    "compute_v13_formal_incident_freeze_sha256",
+    "V13FormalReplicationPreregistration",
+    "V13FormalReplicationSlot",
+    "compute_v13_formal_replication_preregistration_sha256",
     "V13FormalAnalysis",
     "V13FormalMetric",
     "V13FormalMetricRow",

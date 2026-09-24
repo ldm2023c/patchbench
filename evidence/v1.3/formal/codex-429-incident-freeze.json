@@ -1,0 +1,533 @@
+{
+  "schema_version": 1,
+  "incident_id": "patchbench-v1.3-original-codex-429",
+  "original_study_id": "patchbench-v1.3-formal",
+  "original_formal_preregistration_sha256": "192291d7d4f86f704dfd3200bea321fa5bb9ad04ce354e1724bcdb0ac837f807",
+  "original_formal_evidence_freeze_sha256": "c41b52f10d50075ac30bfc0ff1d2f5f498ff5960ec36f4b7aa9958495d1264bd",
+  "original_formal_analysis_sha256": "57d591b880e4e40e668488bee3e0886ea36425df7f973b3d0d7a0a8ad69cc25a",
+  "original_execution_harness_commit": "c735b112770060cb1dd367406c5b764f673ce6ba",
+  "provider_failure_remediation_commit": "1d857b0239bb980e448f75d81848f6f8ac8549bd",
+  "original_codex_planned_slots": 36,
+  "original_codex_completed_slots": 4,
+  "original_codex_command_failed_slots": 32,
+  "original_codex_timed_out_slots": 0,
+  "structured_429_adjudicated_slots": 32,
+  "unadjudicated_command_failed_slots": 0,
+  "adjudicated_runs": [
+    {
+      "ordinal": 13,
+      "slot_id": "r01-message_codec-codex-gpt-5.5-relay",
+      "repetition_index": 1,
+      "task_id": "message_codec",
+      "config_id": "codex-gpt-5.5-relay",
+      "run_id": "9a493d57f61c4a2b9f31a6c4e6f16565",
+      "original_agent_status": "command_failed",
+      "original_evaluation_passed": false,
+      "agent_stdout_sha256": "ec11796734ec6427a7849a0cea9e5ebd104657cfe8ad385116e2c56b038f7785",
+      "incident_kind": "codex_structured_http_429",
+      "structured_event_types_seen": [
+        "error",
+        "turn.failed"
+      ]
+    },
+    {
+      "ordinal": 16,
+      "slot_id": "r01-schema_upgrade-codex-gpt-5.5-relay",
+      "repetition_index": 1,
+      "task_id": "schema_upgrade",
+      "config_id": "codex-gpt-5.5-relay",
+      "run_id": "7d639c10227b48cdbd0e50dd874404e1",
+      "original_agent_status": "command_failed",
+      "original_evaluation_passed": false,
+      "agent_stdout_sha256": "ad41e9348279eddb2551fb26a84af01cb3804283587cc2fb72871d7c5b3cd9c9",
+      "incident_kind": "codex_structured_http_429",
+      "structured_event_types_seen": [
+        "error",
+        "turn.failed"
+      ]
+    },
+    {
+      "ordinal": 19,
+      "slot_id": "r01-resource_lifecycle-codex-gpt-5.5-relay",
+      "repetition_index": 1,
+      "task_id": "resource_lifecycle",
+      "config_id": "codex-gpt-5.5-relay",
+      "run_id": "e314cd5ce7f84aa7b3517cac9aea8395",
+      "original_agent_status": "command_failed",
+      "original_evaluation_passed": false,
+      "agent_stdout_sha256": "3ee167b3b9266a88529ce1145f821222fa047f5bfec89cac62e59b7ebb79be9a",
+      "incident_kind": "codex_structured_http_429",
+      "structured_event_types_seen": [
+        "error",
+        "turn.failed"
+      ]
+    },
+    {
+      "ordinal": 22,
+      "slot_id": "r01-streaming_events-codex-gpt-5.5-relay",
+      "repetition_index": 1,
+      "task_id": "streaming_events",
+      "config_id": "codex-gpt-5.5-relay",
+      "run_id": "61d1de1bd4524482b597f3cb13c5e772",
+      "original_agent_status": "command_failed",
+      "original_evaluation_passed": false,
+      "agent_stdout_sha256": "ae87f4747c573fab1785aa8f3ac89fa2329f70ff29c83b41b2a530d669fd1dd7",
+      "incident_kind": "codex_structured_http_429",
+      "structured_event_types_seen": [
+        "error",
+        "turn.failed"
+      ]
+    },
+    {
+      "ordinal": 25,
+      "slot_id": "r01-atomic_batch-codex-gpt-5.5-relay",
+      "repetition_index": 1,
+      "task_id": "atomic_batch",
+      "config_id": "codex-gpt-5.5-relay",
+      "run_id": "6ac50ded7a204fc2842b348849706bc2",
+      "original_agent_status": "command_failed",
+      "original_evaluation_passed": false,
+      "agent_stdout_sha256": "184755b0efb235f99af8f0da401007f75fa9f946b061f4208f6b94a21e583128",
+      "incident_kind": "codex_structured_http_429",
+      "structured_event_types_seen": [
+        "error",
+        "turn.failed"
+      ]
+    },
+    {
+      "ordinal": 28,
+      "slot_id": "r01-format_fallback-codex-gpt-5.5-relay",
+      "repetition_index": 1,
+      "task_id": "format_fallback",
+      "config_id": "codex-gpt-5.5-relay",
+      "run_id": "86587e6bb5104a82b3ba3e3cf59bf113",
+      "original_agent_status": "command_failed",
+      "original_evaluation_passed": false,
+      "agent_stdout_sha256": "6b9d66b5a66d5ed57672e1ea0db5b40c4fd5125111fa972fce3cffec9e78f56c",
+      "incident_kind": "codex_structured_http_429",
+      "structured_event_types_seen": [
+        "error",
+        "turn.failed"
+      ]
+    },
+    {
+      "ordinal": 31,
+      "slot_id": "r01-atomic_writer-codex-gpt-5.5-relay",
+      "repetition_index": 1,
+      "task_id": "atomic_writer",
+      "config_id": "codex-gpt-5.5-relay",
+      "run_id": "aa6e95e47278439b811f1a181fb93a00",
+      "original_agent_status": "command_failed",
+      "original_evaluation_passed": false,
+      "agent_stdout_sha256": "864256fc38cad733495247b60326cea173258851fdb9f1314febee77dee6d2b9",
+      "incident_kind": "codex_structured_http_429",
+      "structured_event_types_seen": [
+        "error",
+        "turn.failed"
+      ]
+    },
+    {
+      "ordinal": 34,
+      "slot_id": "r01-cache_revalidation-codex-gpt-5.5-relay",
+      "repetition_index": 1,
+      "task_id": "cache_revalidation",
+      "config_id": "codex-gpt-5.5-relay",
+      "run_id": "9b07190ad9234618ad0b07bd01e436f2",
+      "original_agent_status": "command_failed",
+      "original_evaluation_passed": false,
+      "agent_stdout_sha256": "f90fc55da85fb06d53e5aeb472354e77a3b55b2619c9a91ce85c76e708fab380",
+      "incident_kind": "codex_structured_http_429",
+      "structured_event_types_seen": [
+        "error",
+        "turn.failed"
+      ]
+    },
+    {
+      "ordinal": 39,
+      "slot_id": "r02-env_config-codex-gpt-5.5-relay",
+      "repetition_index": 2,
+      "task_id": "env_config",
+      "config_id": "codex-gpt-5.5-relay",
+      "run_id": "0d351ef2871b4eabbbca4853c2ec7361",
+      "original_agent_status": "command_failed",
+      "original_evaluation_passed": false,
+      "agent_stdout_sha256": "918c994bbdc34a59da2e37fe5e799165c94e00af898f53f992dd70b65f7e11f1",
+      "incident_kind": "codex_structured_http_429",
+      "structured_event_types_seen": [
+        "error",
+        "turn.failed"
+      ]
+    },
+    {
+      "ordinal": 42,
+      "slot_id": "r02-request_signing-codex-gpt-5.5-relay",
+      "repetition_index": 2,
+      "task_id": "request_signing",
+      "config_id": "codex-gpt-5.5-relay",
+      "run_id": "7c61a826dae8487a8fac1ae4aa132f04",
+      "original_agent_status": "command_failed",
+      "original_evaluation_passed": false,
+      "agent_stdout_sha256": "37800efe88e0d096214f8daeb616f19288875835b57216304ab12d361862c44c",
+      "incident_kind": "codex_structured_http_429",
+      "structured_event_types_seen": [
+        "error",
+        "turn.failed"
+      ]
+    },
+    {
+      "ordinal": 45,
+      "slot_id": "r02-byte_ranges-codex-gpt-5.5-relay",
+      "repetition_index": 2,
+      "task_id": "byte_ranges",
+      "config_id": "codex-gpt-5.5-relay",
+      "run_id": "7cabae81f81549cabe01273d8aac5e94",
+      "original_agent_status": "command_failed",
+      "original_evaluation_passed": false,
+      "agent_stdout_sha256": "b59716e122950f4fd05aa512cbc5c96675ea8105f28e9e83279b792c29ad6d47",
+      "incident_kind": "codex_structured_http_429",
+      "structured_event_types_seen": [
+        "error",
+        "turn.failed"
+      ]
+    },
+    {
+      "ordinal": 48,
+      "slot_id": "r02-config_resolution-codex-gpt-5.5-relay",
+      "repetition_index": 2,
+      "task_id": "config_resolution",
+      "config_id": "codex-gpt-5.5-relay",
+      "run_id": "fe1312ab15ac42d2a09a3ebd35114a6c",
+      "original_agent_status": "command_failed",
+      "original_evaluation_passed": false,
+      "agent_stdout_sha256": "e4bb9306d7f361752845500c5efa8c4689c631f7ac69f64508abe6f13e59ae76",
+      "incident_kind": "codex_structured_http_429",
+      "structured_event_types_seen": [
+        "error",
+        "turn.failed"
+      ]
+    },
+    {
+      "ordinal": 51,
+      "slot_id": "r02-message_codec-codex-gpt-5.5-relay",
+      "repetition_index": 2,
+      "task_id": "message_codec",
+      "config_id": "codex-gpt-5.5-relay",
+      "run_id": "d0c029612176425880a8e25b4e8d9867",
+      "original_agent_status": "command_failed",
+      "original_evaluation_passed": false,
+      "agent_stdout_sha256": "c3c27a0b1ee3bf797d1201305a7d5ed4b367c71837bffc03ba65c8ed625387a0",
+      "incident_kind": "codex_structured_http_429",
+      "structured_event_types_seen": [
+        "error",
+        "turn.failed"
+      ]
+    },
+    {
+      "ordinal": 54,
+      "slot_id": "r02-schema_upgrade-codex-gpt-5.5-relay",
+      "repetition_index": 2,
+      "task_id": "schema_upgrade",
+      "config_id": "codex-gpt-5.5-relay",
+      "run_id": "2be95aa52fc544f89f6f5d998d8b83d7",
+      "original_agent_status": "command_failed",
+      "original_evaluation_passed": false,
+      "agent_stdout_sha256": "d992f7faacb9f8ca2b47fc7432cbd2ad8c241d74d2ec173bbd4ce64555087b56",
+      "incident_kind": "codex_structured_http_429",
+      "structured_event_types_seen": [
+        "error",
+        "turn.failed"
+      ]
+    },
+    {
+      "ordinal": 57,
+      "slot_id": "r02-resource_lifecycle-codex-gpt-5.5-relay",
+      "repetition_index": 2,
+      "task_id": "resource_lifecycle",
+      "config_id": "codex-gpt-5.5-relay",
+      "run_id": "bf00198c315f42089c7af17f6557923c",
+      "original_agent_status": "command_failed",
+      "original_evaluation_passed": false,
+      "agent_stdout_sha256": "b2fcaf6fc34c539c34dbf1732ad65fca26017e7749af7c5ee190ec966d46b7ec",
+      "incident_kind": "codex_structured_http_429",
+      "structured_event_types_seen": [
+        "error",
+        "turn.failed"
+      ]
+    },
+    {
+      "ordinal": 60,
+      "slot_id": "r02-streaming_events-codex-gpt-5.5-relay",
+      "repetition_index": 2,
+      "task_id": "streaming_events",
+      "config_id": "codex-gpt-5.5-relay",
+      "run_id": "a6ec2e3252714ad6ad35c985b5823735",
+      "original_agent_status": "command_failed",
+      "original_evaluation_passed": false,
+      "agent_stdout_sha256": "31cfe9fba0d2915b93a432543b1385baee2a477cc1d83b4aecbbbd364d9025da",
+      "incident_kind": "codex_structured_http_429",
+      "structured_event_types_seen": [
+        "error",
+        "turn.failed"
+      ]
+    },
+    {
+      "ordinal": 63,
+      "slot_id": "r02-atomic_batch-codex-gpt-5.5-relay",
+      "repetition_index": 2,
+      "task_id": "atomic_batch",
+      "config_id": "codex-gpt-5.5-relay",
+      "run_id": "bc2941157d12446dac2a284f4a605ed9",
+      "original_agent_status": "command_failed",
+      "original_evaluation_passed": false,
+      "agent_stdout_sha256": "6b7b8fe596c2d8b5884a61c334ab4843f5fe15aae29ea0260865619599674f41",
+      "incident_kind": "codex_structured_http_429",
+      "structured_event_types_seen": [
+        "error",
+        "turn.failed"
+      ]
+    },
+    {
+      "ordinal": 66,
+      "slot_id": "r02-format_fallback-codex-gpt-5.5-relay",
+      "repetition_index": 2,
+      "task_id": "format_fallback",
+      "config_id": "codex-gpt-5.5-relay",
+      "run_id": "ebf4109d1d8f4d0896b6531c91119219",
+      "original_agent_status": "command_failed",
+      "original_evaluation_passed": false,
+      "agent_stdout_sha256": "719b7f3ebbd8798cc06061882213a964d6d426d5f34025bf5fc2ede45f8e4582",
+      "incident_kind": "codex_structured_http_429",
+      "structured_event_types_seen": [
+        "error",
+        "turn.failed"
+      ]
+    },
+    {
+      "ordinal": 69,
+      "slot_id": "r02-atomic_writer-codex-gpt-5.5-relay",
+      "repetition_index": 2,
+      "task_id": "atomic_writer",
+      "config_id": "codex-gpt-5.5-relay",
+      "run_id": "2d63d0910c4b4ef490497aaac2d35dc7",
+      "original_agent_status": "command_failed",
+      "original_evaluation_passed": false,
+      "agent_stdout_sha256": "793135e8327a74a0be4979d22524a96da8e6f43566757de30d6fcf8d1d77e41c",
+      "incident_kind": "codex_structured_http_429",
+      "structured_event_types_seen": [
+        "error",
+        "turn.failed"
+      ]
+    },
+    {
+      "ordinal": 72,
+      "slot_id": "r02-cache_revalidation-codex-gpt-5.5-relay",
+      "repetition_index": 2,
+      "task_id": "cache_revalidation",
+      "config_id": "codex-gpt-5.5-relay",
+      "run_id": "5caf8b226f4a4ab5bb8f802c830ecaf2",
+      "original_agent_status": "command_failed",
+      "original_evaluation_passed": false,
+      "agent_stdout_sha256": "028fa84acd92443afce3ae1f063d411c0222dac2c7b4a016861e0ffc4313eef9",
+      "incident_kind": "codex_structured_http_429",
+      "structured_event_types_seen": [
+        "error",
+        "turn.failed"
+      ]
+    },
+    {
+      "ordinal": 74,
+      "slot_id": "r03-env_config-codex-gpt-5.5-relay",
+      "repetition_index": 3,
+      "task_id": "env_config",
+      "config_id": "codex-gpt-5.5-relay",
+      "run_id": "765e02b964d0449ba010ebdd80044785",
+      "original_agent_status": "command_failed",
+      "original_evaluation_passed": false,
+      "agent_stdout_sha256": "1487e77942a81fd76c84f206d578ab4af167196db67968d30de2b8abd292443a",
+      "incident_kind": "codex_structured_http_429",
+      "structured_event_types_seen": [
+        "error",
+        "turn.failed"
+      ]
+    },
+    {
+      "ordinal": 77,
+      "slot_id": "r03-request_signing-codex-gpt-5.5-relay",
+      "repetition_index": 3,
+      "task_id": "request_signing",
+      "config_id": "codex-gpt-5.5-relay",
+      "run_id": "e8229bc3ddd9496682f0f5e117326fdf",
+      "original_agent_status": "command_failed",
+      "original_evaluation_passed": false,
+      "agent_stdout_sha256": "b4476e577009fa7e0630aec5ba1fa1b1a5407b55a3516aaafe659c7d1c967d76",
+      "incident_kind": "codex_structured_http_429",
+      "structured_event_types_seen": [
+        "error",
+        "turn.failed"
+      ]
+    },
+    {
+      "ordinal": 80,
+      "slot_id": "r03-byte_ranges-codex-gpt-5.5-relay",
+      "repetition_index": 3,
+      "task_id": "byte_ranges",
+      "config_id": "codex-gpt-5.5-relay",
+      "run_id": "64f29faf55a44cceacd6a84753399ebf",
+      "original_agent_status": "command_failed",
+      "original_evaluation_passed": false,
+      "agent_stdout_sha256": "8b20ca9be25d159af0dffc29890779e08abe1aadd47c10c1e51b5769fe7934ce",
+      "incident_kind": "codex_structured_http_429",
+      "structured_event_types_seen": [
+        "error",
+        "turn.failed"
+      ]
+    },
+    {
+      "ordinal": 83,
+      "slot_id": "r03-config_resolution-codex-gpt-5.5-relay",
+      "repetition_index": 3,
+      "task_id": "config_resolution",
+      "config_id": "codex-gpt-5.5-relay",
+      "run_id": "3239bdb16219439a905c6ef799bbeb6d",
+      "original_agent_status": "command_failed",
+      "original_evaluation_passed": false,
+      "agent_stdout_sha256": "901ce0b7b37eee29180b449aa62178aa16b73ae9e1cfaccc6cee6b0adad12e8f",
+      "incident_kind": "codex_structured_http_429",
+      "structured_event_types_seen": [
+        "error",
+        "turn.failed"
+      ]
+    },
+    {
+      "ordinal": 86,
+      "slot_id": "r03-message_codec-codex-gpt-5.5-relay",
+      "repetition_index": 3,
+      "task_id": "message_codec",
+      "config_id": "codex-gpt-5.5-relay",
+      "run_id": "81414a9cfaf3455ea9f596f22854386d",
+      "original_agent_status": "command_failed",
+      "original_evaluation_passed": false,
+      "agent_stdout_sha256": "1b46ad77014bd02d4ebeb4ddb659b867bf080dab144fecbaffea8122cf89b33d",
+      "incident_kind": "codex_structured_http_429",
+      "structured_event_types_seen": [
+        "error",
+        "turn.failed"
+      ]
+    },
+    {
+      "ordinal": 89,
+      "slot_id": "r03-schema_upgrade-codex-gpt-5.5-relay",
+      "repetition_index": 3,
+      "task_id": "schema_upgrade",
+      "config_id": "codex-gpt-5.5-relay",
+      "run_id": "7760d05a0e4844b5ac3ce7ac9609c8d9",
+      "original_agent_status": "command_failed",
+      "original_evaluation_passed": false,
+      "agent_stdout_sha256": "1d1f7d226b89858ca0b1ac3c5bf7e3efd28e3265cfdf16e64b74ad1fc379df7f",
+      "incident_kind": "codex_structured_http_429",
+      "structured_event_types_seen": [
+        "error",
+        "turn.failed"
+      ]
+    },
+    {
+      "ordinal": 92,
+      "slot_id": "r03-resource_lifecycle-codex-gpt-5.5-relay",
+      "repetition_index": 3,
+      "task_id": "resource_lifecycle",
+      "config_id": "codex-gpt-5.5-relay",
+      "run_id": "aa8e03f1321c4eeabdfa914a0ce91743",
+      "original_agent_status": "command_failed",
+      "original_evaluation_passed": false,
+      "agent_stdout_sha256": "fa20464ce04e9ed69d074dad32f2e4e9a3343f0556a3904932755deb47a6e474",
+      "incident_kind": "codex_structured_http_429",
+      "structured_event_types_seen": [
+        "error",
+        "turn.failed"
+      ]
+    },
+    {
+      "ordinal": 95,
+      "slot_id": "r03-streaming_events-codex-gpt-5.5-relay",
+      "repetition_index": 3,
+      "task_id": "streaming_events",
+      "config_id": "codex-gpt-5.5-relay",
+      "run_id": "4d755ee670d74293bfee9c4107ef12b1",
+      "original_agent_status": "command_failed",
+      "original_evaluation_passed": false,
+      "agent_stdout_sha256": "5f9aa90d98b8494063c1f8baae0d332cdda3f3a3a70fd667d88490150b379104",
+      "incident_kind": "codex_structured_http_429",
+      "structured_event_types_seen": [
+        "error",
+        "turn.failed"
+      ]
+    },
+    {
+      "ordinal": 98,
+      "slot_id": "r03-atomic_batch-codex-gpt-5.5-relay",
+      "repetition_index": 3,
+      "task_id": "atomic_batch",
+      "config_id": "codex-gpt-5.5-relay",
+      "run_id": "badcff4a03ca4df293fa14a0243cfd47",
+      "original_agent_status": "command_failed",
+      "original_evaluation_passed": false,
+      "agent_stdout_sha256": "d656c4457389a573bc0cc98853f266837fedb6335ad7d1f1cdd6e9cdc5fa74c4",
+      "incident_kind": "codex_structured_http_429",
+      "structured_event_types_seen": [
+        "error",
+        "turn.failed"
+      ]
+    },
+    {
+      "ordinal": 101,
+      "slot_id": "r03-format_fallback-codex-gpt-5.5-relay",
+      "repetition_index": 3,
+      "task_id": "format_fallback",
+      "config_id": "codex-gpt-5.5-relay",
+      "run_id": "4252d6dfa88a497e8bfd4edd2ce481aa",
+      "original_agent_status": "command_failed",
+      "original_evaluation_passed": false,
+      "agent_stdout_sha256": "7a858b7ebb2fc79687d1d98adfff2aa3cedd5b16befe77ab984947a440b885fb",
+      "incident_kind": "codex_structured_http_429",
+      "structured_event_types_seen": [
+        "error",
+        "turn.failed"
+      ]
+    },
+    {
+      "ordinal": 104,
+      "slot_id": "r03-atomic_writer-codex-gpt-5.5-relay",
+      "repetition_index": 3,
+      "task_id": "atomic_writer",
+      "config_id": "codex-gpt-5.5-relay",
+      "run_id": "ba15ff52dfda42478613fd573742d611",
+      "original_agent_status": "command_failed",
+      "original_evaluation_passed": false,
+      "agent_stdout_sha256": "5d545600ab463b93e3b2993952898f5cb9adae388f2e639b1df12de7307b4255",
+      "incident_kind": "codex_structured_http_429",
+      "structured_event_types_seen": [
+        "error",
+        "turn.failed"
+      ]
+    },
+    {
+      "ordinal": 107,
+      "slot_id": "r03-cache_revalidation-codex-gpt-5.5-relay",
+      "repetition_index": 3,
+      "task_id": "cache_revalidation",
+      "config_id": "codex-gpt-5.5-relay",
+      "run_id": "c3a65fb1606c41729975100d595c9226",
+      "original_agent_status": "command_failed",
+      "original_evaluation_passed": false,
+      "agent_stdout_sha256": "042ca2b5f29732b8127d874a483644a7eda28b4aa40eea157d8268cdcdf460cb",
+      "incident_kind": "codex_structured_http_429",
+      "structured_event_types_seen": [
+        "error",
+        "turn.failed"
+      ]
+    }
+  ],
+  "unadjudicated_command_failed_run_ids": [],
+  "comparative_capability_interpretation_status": "infrastructure_confounded",
+  "original_study_remains_as_run_operational_evidence": true
+}
