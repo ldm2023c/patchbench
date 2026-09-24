@@ -80,6 +80,23 @@ from patchbench.domain.formal_execution import (
     V13FormalSlotExecution,
     V13FormalStudyLedger,
 )
+from patchbench.domain.formal_evidence import (
+    V13FormalAttemptEvidence,
+    V13FormalEvidenceFreeze,
+    V13FormalRunEvidence,
+    V13FormalSlotEvidence,
+    compute_v13_formal_attempt_sha256,
+    compute_v13_formal_evidence_freeze_sha256,
+    compute_v13_formal_study_sha256,
+)
+from patchbench.domain.formal_analysis import (
+    V13FormalAnalysis,
+    V13FormalMetric,
+    V13FormalMetricRow,
+    V13FormalRetryReason,
+    V13FormalRetryReporting,
+    compute_v13_formal_analysis_sha256,
+)
 
 from patchbench.domain.provenance import compute_task_fingerprint
 
@@ -183,6 +200,19 @@ from patchbench.domain.diagnosis_validation_run import (
 )
 
 __all__ = [
+    "V13FormalAnalysis",
+    "V13FormalMetric",
+    "V13FormalMetricRow",
+    "V13FormalRetryReason",
+    "V13FormalRetryReporting",
+    "compute_v13_formal_analysis_sha256",
+    "V13FormalAttemptEvidence",
+    "V13FormalEvidenceFreeze",
+    "V13FormalRunEvidence",
+    "V13FormalSlotEvidence",
+    "compute_v13_formal_attempt_sha256",
+    "compute_v13_formal_evidence_freeze_sha256",
+    "compute_v13_formal_study_sha256",
     "FormalAttemptStatus",
     "FormalFailureCategory",
     "FormalSlotStatus",
