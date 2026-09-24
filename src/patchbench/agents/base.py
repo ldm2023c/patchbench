@@ -42,6 +42,10 @@ class AgentInfrastructureError(RuntimeError):
     """Raised when PatchBench cannot safely start or manage agent execution."""
 
 
+class AgentProviderTransportError(AgentInfrastructureError):
+    """Raised when structured evidence proves a provider transport failure."""
+
+
 class Agent(Protocol):
     """Structural contract implemented by coding-agent adapters."""
 

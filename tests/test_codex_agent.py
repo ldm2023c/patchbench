@@ -14,6 +14,7 @@ import patchbench.agents.codex as codex_module
 from patchbench.agents.base import (
     Agent,
     AgentInfrastructureError,
+    AgentProviderTransportError,
     AgentRunRequest,
     AgentRunStatus,
     AgentSetupError,
@@ -25,6 +26,7 @@ from scripts.v13_candidate_manifest import load_candidate_manifest
 
 _LOG_ENVIRONMENT_VARIABLE = "PATCHBENCH_TEST_CODEX_LOG"
 _EXIT_CODE_ENVIRONMENT_VARIABLE = "PATCHBENCH_TEST_CODEX_EXIT_CODE"
+_STDOUT_ENVIRONMENT_VARIABLE = "PATCHBENCH_TEST_CODEX_STDOUT"
 _AUTH_FAILURE_ENVIRONMENT_VARIABLE = "PATCHBENCH_TEST_CODEX_AUTH_FAILURE"
 _DELETE_AFTER_LOGIN_ENVIRONMENT_VARIABLE = (
     "PATCHBENCH_TEST_CODEX_DELETE_AFTER_LOGIN"
@@ -217,7 +219,10 @@ def fake_codex(tmp_path, monkeypatch) -> tuple[Path, Path]:
                         os.environ.get("{_EXEC_SLEEP_ENVIRONMENT_VARIABLE}", "0")
                     )
                 )
-                print('{{"type":"fake.result"}}')
+                sys.stdout.write(os.environ.get(
+                    "{_STDOUT_ENVIRONMENT_VARIABLE}",
+                    '{{"type":"fake.result"}}\\n',
+                ))
                 print("fake diagnostic", file=sys.stderr)
                 raise SystemExit(
                     int(os.environ.get("{_EXIT_CODE_ENVIRONMENT_VARIABLE}", "0"))
@@ -840,6 +845,132 @@ def test_codex_adapter_maps_nonzero_execution_to_command_failed(
     assert result.stdout == '{"type":"fake.result"}\n'
     assert result.stderr == "fake diagnostic\n"
     assert result.duration_seconds >= 0
+
+
+@pytest.mark.parametrize(
+    "events",
+    [
+        [
+            {"type": "thread.started", "thread_id": "synthetic"},
+            {"type": "turn.started"},
+            {
+                "type": "error",
+                "message": (
+                    "exceeded retry limit, last status: 429 Too Many Requests, "
+                    "request id: synthetic"
+                ),
+            },
+        ],
+        [
+            {
+                "type": "turn.failed",
+                "error": {
+                    "message": (
+                        "exceeded retry limit, last status: 429 Too Many Requests, "
+                        "request id: synthetic"
+                    )
+                },
+            }
+        ],
+        [
+            {
+                "type": "error",
+                "message": "last status: 429 Too Many Requests",
+            },
+            {
+                "type": "turn.failed",
+                "error": {"message": "last status: 429 Too Many Requests"},
+            },
+        ],
+    ],
+)
+def test_codex_adapter_raises_for_structured_provider_rate_limit(
+    tmp_path, monkeypatch, fake_codex, events
+) -> None:
+    executable, _ = fake_codex
+    workspace = tmp_path / "workspace"
+    workspace.mkdir()
+    monkeypatch.setenv(_EXIT_CODE_ENVIRONMENT_VARIABLE, "1")
+    monkeypatch.setenv(
+        _STDOUT_ENVIRONMENT_VARIABLE,
+        "".join(json.dumps(event) + "\n" for event in events),
+    )
+
+    with pytest.raises(
+        AgentProviderTransportError,
+        match=r"^Codex structured provider rate-limit failure \(HTTP 429\)$",
+    ):
+        CodexAdapter(model="test-model", executable=executable).run(
+            AgentRunRequest(workspace, "Attempt the task.")
+        )
+
+
+@pytest.mark.parametrize(
+    "stdout",
+    [
+        json.dumps(
+            {
+                "type": "item.completed",
+                "item": {
+                    "type": "agent_message",
+                    "text": "The test fixture contains 429 Too Many Requests",
+                },
+            }
+        )
+        + "\n",
+        json.dumps(
+            {
+                "type": "item.completed",
+                "item": {
+                    "type": "command_execution",
+                    "aggregated_output": "429 Too Many Requests",
+                },
+            }
+        )
+        + "\n",
+        "429 Too Many Requests\n",
+        '{"type":"error", malformed\n'
+        + json.dumps({"type": "turn.failed", "error": {"message": "tool failed"}})
+        + "\n",
+        json.dumps({"type": "error", "message": "repository tool failed"}) + "\n",
+    ],
+)
+def test_codex_adapter_does_not_infer_rate_limit_from_unrecognized_output(
+    tmp_path, monkeypatch, fake_codex, stdout
+) -> None:
+    executable, _ = fake_codex
+    workspace = tmp_path / "workspace"
+    workspace.mkdir()
+    monkeypatch.setenv(_EXIT_CODE_ENVIRONMENT_VARIABLE, "1")
+    monkeypatch.setenv(_STDOUT_ENVIRONMENT_VARIABLE, stdout)
+
+    result = CodexAdapter(model="test-model", executable=executable).run(
+        AgentRunRequest(workspace, "Attempt the task.")
+    )
+
+    assert result.status is AgentRunStatus.COMMAND_FAILED
+    assert result.exit_code == 1
+    assert result.stdout == stdout
+
+
+def test_codex_adapter_does_not_classify_successful_structured_429(
+    tmp_path, monkeypatch, fake_codex
+) -> None:
+    executable, _ = fake_codex
+    workspace = tmp_path / "workspace"
+    workspace.mkdir()
+    stdout = json.dumps(
+        {"type": "error", "message": "last status: 429 Too Many Requests"}
+    ) + "\n"
+    monkeypatch.setenv(_STDOUT_ENVIRONMENT_VARIABLE, stdout)
+
+    result = CodexAdapter(model="test-model", executable=executable).run(
+        AgentRunRequest(workspace, "Attempt the task.")
+    )
+
+    assert result.status is AgentRunStatus.COMPLETED
+    assert result.exit_code == 0
+    assert result.stdout == stdout
 
 
 def test_codex_adapter_missing_executable_is_a_setup_error(tmp_path) -> None:

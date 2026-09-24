@@ -3,6 +3,7 @@
 from patchbench.agents.base import (
     Agent,
     AgentInfrastructureError,
+    AgentProviderTransportError,
     AgentRunRequest,
     AgentRunResult,
     AgentRunStatus,
@@ -17,6 +18,7 @@ from patchbench.agents.grok_build import GrokBuildAdapter
 __all__ = [
     "Agent",
     "AgentInfrastructureError",
+    "AgentProviderTransportError",
     "AgentRunRequest",
     "AgentRunResult",
     "AgentRunStatus",

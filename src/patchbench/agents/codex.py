@@ -4,6 +4,7 @@ import json
 from math import isfinite
 import os
 from pathlib import Path
+import re
 import signal
 import subprocess
 from tempfile import TemporaryDirectory
@@ -12,11 +13,44 @@ from urllib.parse import urlsplit
 
 from patchbench.agents.base import (
     AgentInfrastructureError,
+    AgentProviderTransportError,
     AgentRunRequest,
     AgentRunResult,
     AgentRunStatus,
     AgentSetupError,
 )
+
+
+_HTTP_429_PATTERN = re.compile(r"(?<!\d)429(?!\d)")
+_TOO_MANY_REQUESTS_PATTERN = re.compile(r"\btoo\s+many\s+requests\b", re.IGNORECASE)
+
+
+def _has_structured_rate_limit_failure(stdout: str) -> bool:
+    """Return whether recognized Codex JSONL proves an HTTP 429 failure."""
+
+    for line in stdout.splitlines():
+        try:
+            event = json.loads(line)
+        except (json.JSONDecodeError, TypeError):
+            continue
+        if not isinstance(event, dict):
+            continue
+
+        message: object = None
+        if event.get("type") == "error":
+            message = event.get("message")
+        elif event.get("type") == "turn.failed":
+            error = event.get("error")
+            if isinstance(error, dict):
+                message = error.get("message")
+
+        if (
+            isinstance(message, str)
+            and _HTTP_429_PATTERN.search(message)
+            and _TOO_MANY_REQUESTS_PATTERN.search(message)
+        ):
+            return True
+    return False
 
 
 class CodexAdapter:
@@ -218,6 +252,11 @@ class CodexAdapter:
             if cleanup_detail is not None:
                 message += f"; cleanup also failed: {cleanup_detail}"
             raise AgentInfrastructureError(message) from error
+
+        if exit_code != 0 and _has_structured_rate_limit_failure(stdout):
+            raise AgentProviderTransportError(
+                "Codex structured provider rate-limit failure (HTTP 429)"
+            )
 
         return AgentRunResult(
             status=(

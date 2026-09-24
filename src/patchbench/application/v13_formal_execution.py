@@ -14,7 +14,8 @@ from pathlib import Path
 from pydantic import ValidationError
 
 from patchbench.agents.base import (
-    AgentInfrastructureError, AgentRunStatus, AgentSetupError,
+    AgentInfrastructureError, AgentProviderTransportError,
+    AgentRunStatus, AgentSetupError,
 )
 from patchbench.application.v13_agent_execution import (
     FrozenAgentExecutionPlan, FrozenAgentResolutionError,
@@ -402,6 +403,8 @@ def _terminalize_canonical(
 
 
 _RETRYABLE = (
+    (AgentProviderTransportError,
+     FormalFailureCategory.NETWORK_PROVIDER_TRANSPORT_SAME_ROUTE),
     (AgentSetupError, FormalFailureCategory.AGENT_SETUP),
     (AgentInfrastructureError, FormalFailureCategory.AGENT_INFRASTRUCTURE),
     (RepositoryError, FormalFailureCategory.REPOSITORY_INFRASTRUCTURE),

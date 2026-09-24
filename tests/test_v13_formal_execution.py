@@ -7,7 +7,8 @@ import threading
 import pytest
 
 from patchbench.agents.base import (
-    AgentInfrastructureError, AgentRunStatus, AgentSetupError,
+    AgentInfrastructureError, AgentProviderTransportError,
+    AgentRunStatus, AgentSetupError,
 )
 from patchbench.application import v13_formal_execution as execution
 from patchbench.application.v13_agent_execution import resolve_v13_agent_config
@@ -233,6 +234,146 @@ def test_typed_initial_failure_requires_explicit_retry_and_blocks_progress(tmp_p
     assert len(calls) == 1
 
 
+def test_provider_transport_failure_requires_same_route_retry(tmp_path):
+    results, _ = _initialize(tmp_path)
+    calls = []
+
+    def failing(*args, **kwargs):
+        calls.append(kwargs["config_id"])
+        raise AgentProviderTransportError("safe")
+
+    ledger = _run_next(results, failing)
+    slot = ledger.slots[0]
+    attempt_path = results / "slots" / slot.slot_id / "attempt-01"
+    attempt = execution._load_attempt(attempt_path)
+
+    assert ledger.status is FormalStudyStatus.RETRY_REQUIRED
+    assert slot.status is FormalSlotStatus.RETRY_REQUIRED
+    assert slot.canonical_run_id is None
+    assert slot.canonical_agent_status is None
+    assert slot.canonical_evaluation_passed is None
+    assert attempt.status is FormalAttemptStatus.RETRYABLE_INFRASTRUCTURE_FAILURE
+    assert (
+        attempt.failure_category
+        is FormalFailureCategory.NETWORK_PROVIDER_TRANSPORT_SAME_ROUTE
+    )
+    assert attempt.canonical_run_id is None
+    assert attempt.agent_status is None
+    assert attempt.evaluation_passed is None
+    assert list((attempt_path / "artifacts").iterdir()) == []
+    with pytest.raises(execution.FormalExecutionStateError, match="does not permit"):
+        _run_next(results, _runner(calls=calls))
+    assert len(calls) == 1
+
+
+def test_provider_transport_retry_succeeds_with_same_frozen_slot(tmp_path):
+    results, _ = _initialize(tmp_path)
+    ledger = _run_next(results, lambda *a, **k: (_ for _ in ()).throw(
+        AgentProviderTransportError("safe")
+    ))
+    original = ledger.slots[0]
+
+    ledger = execution.retry_formal_slot(
+        project_root=PROJECT_ROOT,
+        results_root=results,
+        slot_id=original.slot_id,
+        remediation=(
+            "network/provider transport availability without changing provider route"
+        ),
+        sandbox=FakeSandbox(),
+        runner=_runner(),
+    )
+    retried = ledger.slots[0]
+
+    assert (
+        retried.ordinal,
+        retried.slot_id,
+        retried.task_id,
+        retried.config_id,
+        retried.repetition_index,
+    ) == (
+        original.ordinal,
+        original.slot_id,
+        original.task_id,
+        original.config_id,
+        original.repetition_index,
+    )
+    assert retried.status is FormalSlotStatus.CANONICAL_OBSERVED
+    assert retried.attempts == (1, 2)
+    first = execution._load_attempt(
+        results / "slots" / retried.slot_id / "attempt-01"
+    )
+    second = execution._load_attempt(
+        results / "slots" / retried.slot_id / "attempt-02"
+    )
+    assert first.status is FormalAttemptStatus.RETRYABLE_INFRASTRUCTURE_FAILURE
+    assert second.status is FormalAttemptStatus.CANONICAL_OBSERVED
+
+
+def test_second_provider_transport_failure_is_unresolved_then_next_advances(tmp_path):
+    results, _ = _initialize(tmp_path)
+    fail = lambda *a, **k: (_ for _ in ()).throw(
+        AgentProviderTransportError("safe")
+    )
+    ledger = _run_next(results, fail)
+    slot_id = ledger.slots[0].slot_id
+
+    ledger = execution.retry_formal_slot(
+        project_root=PROJECT_ROOT,
+        results_root=results,
+        slot_id=slot_id,
+        remediation=(
+            "network/provider transport availability without changing provider route"
+        ),
+        sandbox=FakeSandbox(),
+        runner=fail,
+    )
+
+    assert ledger.slots[0].status is FormalSlotStatus.UNRESOLVED_INFRASTRUCTURE
+    assert ledger.slots[0].attempts == (1, 2)
+    second = execution._load_attempt(
+        results / "slots" / slot_id / "attempt-02"
+    )
+    assert second.status is FormalAttemptStatus.UNRESOLVED_INFRASTRUCTURE
+    assert (
+        second.failure_category
+        is FormalFailureCategory.NETWORK_PROVIDER_TRANSPORT_SAME_ROUTE
+    )
+    with pytest.raises(execution.FormalExecutionStateError):
+        execution.retry_formal_slot(
+            project_root=PROJECT_ROOT,
+            results_root=results,
+            slot_id=slot_id,
+            remediation=(
+                "network/provider transport availability without changing provider route"
+            ),
+            sandbox=FakeSandbox(),
+            runner=_runner(),
+        )
+    advanced = _run_next(results, _runner())
+    assert advanced.slots[1].status is FormalSlotStatus.CANONICAL_OBSERVED
+
+
+@pytest.mark.parametrize(
+    ("error", "expected_category"),
+    [
+        (AgentInfrastructureError("safe"), FormalFailureCategory.AGENT_INFRASTRUCTURE),
+        (AgentSetupError("safe"), FormalFailureCategory.AGENT_SETUP),
+    ],
+)
+def test_generic_agent_failures_keep_existing_categories(
+    tmp_path, error, expected_category
+):
+    results, _ = _initialize(tmp_path)
+    ledger = _run_next(
+        results, lambda *a, **k: (_ for _ in ()).throw(error)
+    )
+    attempt = execution._load_attempt(
+        results / "slots" / ledger.slots[0].slot_id / "attempt-01"
+    )
+    assert attempt.failure_category is expected_category
+
+
 def test_explicit_allowed_retry_uses_attempt_two_and_same_slot(tmp_path):
     results, _ = _initialize(tmp_path)
     ledger = _run_next(results, lambda *args, **kwargs: (_ for _ in ()).throw(
@@ -313,9 +454,18 @@ def test_returned_experiment_mismatch_blocks_even_with_run(tmp_path, mutation):
     assert ledger.slots[0].status is FormalSlotStatus.BLOCKED
 
 
-def test_exception_after_complete_run_reconciles_canonical_and_forbids_retry(tmp_path):
+@pytest.mark.parametrize(
+    "raised_error",
+    [
+        ArtifactStoreError("after Run"),
+        AgentProviderTransportError("after Run"),
+    ],
+)
+def test_exception_after_complete_run_reconciles_canonical_and_forbids_retry(
+    tmp_path, raised_error
+):
     results, _ = _initialize(tmp_path)
-    ledger = _run_next(results, _runner(raise_after=ArtifactStoreError("after Run")))
+    ledger = _run_next(results, _runner(raise_after=raised_error))
     assert ledger.slots[0].status is FormalSlotStatus.CANONICAL_OBSERVED
     with pytest.raises(execution.FormalExecutionStateError):
         execution.retry_formal_slot(
