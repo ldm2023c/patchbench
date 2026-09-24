@@ -1,0 +1,26 @@
+{
+  "schema_version": 1,
+  "admission_id": "patchbench-v1.3-replication-01-execution-admission",
+  "replication_id": "patchbench-v1.3-replication-01",
+  "study_id": "patchbench-v1.3-formal-replication-01",
+  "results_namespace": "results/v1.3-formal-replication-01",
+  "replication_preregistration_sha256": "169ce60cf8727234f0ce258235f12ccd7cfbb00e10509aa13fb54493707b49ba",
+  "provider_failure_remediation_commit": "1d857b0239bb980e448f75d81848f6f8ac8549bd",
+  "execution_harness_commit": "4eed7a5dd50dd2358aaafb2fbc9d62a596803cdf",
+  "agent_manifest_sha256": "6902dcac0c86c514405107fb2752c3b011e5bf119a3c35ee1164bd90ff0cb965",
+  "evaluation_backend": "docker",
+  "execution_sources": [
+    {
+      "path": "scripts/run_v13_formal_replication.py",
+      "byte_sha256": "77739aa972a3470e872b666ead75ee9d445ceee3e80be95d3c4b0af7d3ccf940"
+    },
+    {
+      "path": "src/patchbench/application/v13_formal_execution.py",
+      "byte_sha256": "d70a4ff7f41ec53ba4a6e6b9a50c4feda4ce190ca2dd38905180abbbfa3dd305"
+    },
+    {
+      "path": "src/patchbench/application/v13_formal_replication_execution.py",
+      "byte_sha256": "771283e4e79ebd16784a913c3ed1a6fc9d242b77677f6db1cdb18098fd4eafe8"
+    }
+  ]
+}

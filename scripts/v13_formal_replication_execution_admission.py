@@ -35,10 +35,16 @@ EXECUTION_SOURCE_PATHS = (
     Path("src/patchbench/application/v13_formal_execution.py"),
     Path("src/patchbench/application/v13_formal_replication_execution.py"),
 )
+REVIEWED_M18A_EXECUTION_HARNESS_COMMIT = (
+    "4eed7a5dd50dd2358aaafb2fbc9d62a596803cdf"
+)
 
-# M18B must replace these only after the reviewed M18A commit exists.
-ACCEPTED_REPLICATION_EXECUTION_ADMISSION_SHA256: str | None = None
-ACCEPTED_REPLICATION_EXECUTION_ADMISSION_BYTE_SHA256: str | None = None
+ACCEPTED_REPLICATION_EXECUTION_ADMISSION_SHA256 = (
+    "2dd1b8578a4f37163c4a142ba494399a0e49c362deef503670a15a3fedc70b96"
+)
+ACCEPTED_REPLICATION_EXECUTION_ADMISSION_BYTE_SHA256 = (
+    "fcfea44f40ec82d768d4bedb6ddcc87a22ae1a89215bda0a07e91f2dc4b3efd0"
+)
 
 
 class FormalReplicationAdmissionIntegrityError(RuntimeError):
@@ -63,6 +69,10 @@ def build_replication_execution_admission(
     *,
     project_root: Path = PROJECT_ROOT,
 ) -> V13FormalReplicationExecutionAdmission:
+    if execution_harness_commit != REVIEWED_M18A_EXECUTION_HARNESS_COMMIT:
+        raise FormalReplicationAdmissionIntegrityError(
+            "execution harness commit is not the reviewed M18A commit"
+        )
     root = Path(project_root).resolve()
     preregistration = verify_replication_preregistration(root)
     sources = tuple(V13FormalReplicationExecutionSource(

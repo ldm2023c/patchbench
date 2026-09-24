@@ -1,5 +1,6 @@
 """Provider-free tests for the admission-gated Replication-01 harness."""
 
+import hashlib
 import json
 from pathlib import Path
 
@@ -31,7 +32,9 @@ from tests.test_v13_formal_execution import (
 
 
 PROJECT_ROOT = Path(__file__).resolve().parents[1]
-SYNTHETIC_HARNESS_COMMIT = "a" * 40
+SYNTHETIC_HARNESS_COMMIT = (
+    "4eed7a5dd50dd2358aaafb2fbc9d62a596803cdf"
+)
 
 
 def _admission():
@@ -94,13 +97,21 @@ def test_original_contract_remains_bound_to_original_preregistration(tmp_path):
     assert not ledger.slots[0].slot_id.startswith("rep01-")
 
 
-def test_production_init_refuses_absent_m18b_admission_before_creation(tmp_path):
-    results = tmp_path / "replication"
-    with pytest.raises(engine.FormalExecutionIntegrityError, match="verification failed"):
-        replication.initialize_replication_study(
-            project_root=PROJECT_ROOT, results_root=results
-        )
-    assert not results.exists()
+def test_checked_production_admission_verifies_without_creating_results():
+    value = admission.verify_checked_replication_execution_admission(PROJECT_ROOT)
+    assert value.execution_harness_commit == SYNTHETIC_HARNESS_COMMIT
+    assert not (PROJECT_ROOT / replication.DEFAULT_REPLICATION_RESULTS_PATH).exists()
+
+
+def test_checked_admission_does_not_read_runtime_results(monkeypatch):
+    original = Path.read_bytes
+
+    def guarded(path):
+        assert "results/v1.3-formal" not in path.as_posix()
+        return original(path)
+
+    monkeypatch.setattr(Path, "read_bytes", guarded)
+    admission.verify_checked_replication_execution_admission(PROJECT_ROOT)
 
 
 @pytest.mark.parametrize(
@@ -303,8 +314,105 @@ def test_ledger_preregistration_identity_drift_is_rejected(tmp_path):
         )
 
 
-def test_m18a_defines_no_production_admission_artifact():
-    assert admission.ACCEPTED_REPLICATION_EXECUTION_ADMISSION_SHA256 is None
-    assert admission.ACCEPTED_REPLICATION_EXECUTION_ADMISSION_BYTE_SHA256 is None
+def test_m18b_checked_admission_has_exact_frozen_identity_and_sources():
+    value = admission.verify_checked_replication_execution_admission(PROJECT_ROOT)
+    assert value.execution_harness_commit == \
+        admission.REVIEWED_M18A_EXECUTION_HARNESS_COMMIT
+    assert tuple(item.path for item in value.execution_sources) == tuple(
+        path.as_posix() for path in admission.EXECUTION_SOURCE_PATHS
+    )
+    for source in value.execution_sources:
+        assert source.byte_sha256 == hashlib.sha256(
+            (PROJECT_ROOT / source.path).read_bytes()
+        ).hexdigest()
+    artifact = PROJECT_ROOT / admission.ADMISSION_PATH
+    assert admission.compute_v13_formal_replication_execution_admission_sha256(
+        value
+    ) == admission.ACCEPTED_REPLICATION_EXECUTION_ADMISSION_SHA256
+    assert hashlib.sha256(artifact.read_bytes()).hexdigest() == \
+        admission.ACCEPTED_REPLICATION_EXECUTION_ADMISSION_BYTE_SHA256
     assert replication.REQUIRED_EXECUTION_HARNESS_COMMIT is None
-    assert not (PROJECT_ROOT / admission.ADMISSION_PATH).exists()
+    assert not (PROJECT_ROOT / replication.DEFAULT_REPLICATION_RESULTS_PATH).exists()
+
+
+@pytest.mark.parametrize(
+    ("field", "changed"),
+    [
+        ("execution_harness_commit", "b" * 40),
+        ("replication_preregistration_sha256", "0" * 64),
+        ("provider_failure_remediation_commit", "0" * 40),
+        ("agent_manifest_sha256", "0" * 64),
+        ("evaluation_backend", "host"),
+    ],
+)
+def test_checked_admission_rejects_frozen_link_drift(monkeypatch, field, changed):
+    value = admission.verify_checked_replication_execution_admission(PROJECT_ROOT)
+    mutated = value.model_copy(update={field: changed})
+    monkeypatch.setattr(
+        admission,
+        "load_checked_replication_execution_admission",
+        lambda root: mutated,
+    )
+    with pytest.raises(admission.FormalReplicationAdmissionIntegrityError):
+        admission.verify_checked_replication_execution_admission(PROJECT_ROOT)
+
+
+def test_checked_admission_rejects_source_hash_drift(monkeypatch):
+    value = admission.verify_checked_replication_execution_admission(PROJECT_ROOT)
+    first = value.execution_sources[0].model_copy(
+        update={"byte_sha256": "0" * 64}
+    )
+    mutated = value.model_copy(update={
+        "execution_sources": (first,) + value.execution_sources[1:]
+    })
+    monkeypatch.setattr(
+        admission,
+        "load_checked_replication_execution_admission",
+        lambda root: mutated,
+    )
+    with pytest.raises(
+        admission.FormalReplicationAdmissionIntegrityError,
+        match="semantic mismatch",
+    ):
+        admission.verify_checked_replication_execution_admission(PROJECT_ROOT)
+
+
+def test_checked_admission_rejects_semantic_drift(monkeypatch):
+    value = admission.verify_checked_replication_execution_admission(PROJECT_ROOT)
+    mutated = value.model_copy(update={"results_namespace": "results/other"})
+    monkeypatch.setattr(
+        admission,
+        "load_checked_replication_execution_admission",
+        lambda root: mutated,
+    )
+    with pytest.raises(
+        admission.FormalReplicationAdmissionIntegrityError,
+        match="semantic mismatch",
+    ):
+        admission.verify_checked_replication_execution_admission(PROJECT_ROOT)
+
+
+def test_checked_admission_rejects_artifact_byte_drift(monkeypatch):
+    original = admission._read_file
+    artifact = (PROJECT_ROOT / admission.ADMISSION_PATH).resolve()
+
+    def drift(path, label):
+        raw = original(path, label)
+        return raw + b"\n" if Path(path).resolve() == artifact else raw
+
+    monkeypatch.setattr(admission, "_read_file", drift)
+    with pytest.raises(
+        admission.FormalReplicationAdmissionIntegrityError,
+        match="byte SHA mismatch",
+    ):
+        admission.verify_checked_replication_execution_admission(PROJECT_ROOT)
+
+
+def test_admission_builder_rejects_nonreviewed_commit():
+    with pytest.raises(
+        admission.FormalReplicationAdmissionIntegrityError,
+        match="reviewed M18A commit",
+    ):
+        admission.build_replication_execution_admission(
+            "b" * 40, project_root=PROJECT_ROOT
+        )
