@@ -77,6 +77,29 @@ class FormalStudyStatusSummary:
 
 Runner = Callable[..., ExperimentRecord]
 Resolver = Callable[..., FrozenAgentExecutionPlan]
+PreregistrationVerifier = Callable[[Path], object]
+
+
+@dataclass(frozen=True)
+class FormalExecutionContract:
+    """Immutable study identity used by the shared formal execution engine."""
+
+    study_id: str
+    accepted_preregistration_sha256: str
+    default_results_path: Path
+    preregistration_verifier: PreregistrationVerifier
+
+
+def _verify_original_preregistration(project_root: Path):
+    return verify_preregistration(project_root)
+
+
+ORIGINAL_FORMAL_EXECUTION_CONTRACT = FormalExecutionContract(
+    study_id="patchbench-v1.3-formal",
+    accepted_preregistration_sha256=ACCEPTED_PREREGISTRATION_SHA256,
+    default_results_path=DEFAULT_FORMAL_RESULTS_PATH,
+    preregistration_verifier=_verify_original_preregistration,
+)
 
 
 def _deterministic_json(model) -> str:
@@ -110,8 +133,12 @@ def _exclusive_lock(namespace: Path):
             stream.close()
 
 
-def _namespace(project_root: Path, results_root: Path | None) -> Path:
-    return (project_root / DEFAULT_FORMAL_RESULTS_PATH if results_root is None
+def _namespace(
+    project_root: Path,
+    results_root: Path | None,
+    contract: FormalExecutionContract = ORIGINAL_FORMAL_EXECUTION_CONTRACT,
+) -> Path:
+    return (project_root / contract.default_results_path if results_root is None
             else Path(results_root)).resolve()
 
 
@@ -122,10 +149,15 @@ def _load_model(path: Path, model_type, label: str):
         raise FormalExecutionIntegrityError(f"invalid {label}") from error
 
 
-def _initial_ledger(preregistration) -> V13FormalStudyLedger:
+def _initial_ledger(
+    preregistration,
+    contract: FormalExecutionContract = ORIGINAL_FORMAL_EXECUTION_CONTRACT,
+) -> V13FormalStudyLedger:
+    if preregistration.study_id != contract.study_id:
+        raise FormalExecutionIntegrityError("preregistration study identity mismatch")
     return V13FormalStudyLedger(
         study_id=preregistration.study_id,
-        formal_preregistration_sha256=ACCEPTED_PREREGISTRATION_SHA256,
+        formal_preregistration_sha256=contract.accepted_preregistration_sha256,
         status=FormalStudyStatus.READY,
         slots=tuple(V13FormalSlotExecution(
             ordinal=slot.ordinal, slot_id=slot.slot_id,
@@ -137,14 +169,15 @@ def _initial_ledger(preregistration) -> V13FormalStudyLedger:
 
 def initialize_formal_study(
     *, project_root: Path, results_root: Path | None = None,
+    contract: FormalExecutionContract = ORIGINAL_FORMAL_EXECUTION_CONTRACT,
 ) -> V13FormalStudyLedger:
     root = Path(project_root).resolve()
-    namespace = _namespace(root, results_root)
+    namespace = _namespace(root, results_root, contract)
     with _exclusive_lock(namespace):
-        preregistration = verify_preregistration(root)
+        preregistration = contract.preregistration_verifier(root)
         if namespace.exists():
             raise FormalExecutionStateError("formal study namespace already exists")
-        ledger = _initial_ledger(preregistration)
+        ledger = _initial_ledger(preregistration, contract)
         try:
             namespace.mkdir(parents=True, exist_ok=False)
             (namespace / "slots").mkdir()
@@ -156,7 +189,11 @@ def initialize_formal_study(
         return ledger
 
 
-def _load_study(namespace: Path, preregistration) -> V13FormalStudyLedger:
+def _load_study(
+    namespace: Path,
+    preregistration,
+    contract: FormalExecutionContract = ORIGINAL_FORMAL_EXECUTION_CONTRACT,
+) -> V13FormalStudyLedger:
     if not namespace.is_dir() or namespace.is_symlink():
         raise FormalExecutionIntegrityError("formal namespace is missing or unsafe")
     try:
@@ -168,9 +205,10 @@ def _load_study(namespace: Path, preregistration) -> V13FormalStudyLedger:
     ledger = _load_model(
         namespace / STUDY_LEDGER_NAME, V13FormalStudyLedger, "formal study ledger"
     )
-    expected = _initial_ledger(preregistration)
+    expected = _initial_ledger(preregistration, contract)
     if (ledger.study_id != expected.study_id
-            or ledger.formal_preregistration_sha256 != ACCEPTED_PREREGISTRATION_SHA256
+            or ledger.formal_preregistration_sha256
+            != contract.accepted_preregistration_sha256
             or ledger.planned_slot_count != 108
             or tuple((s.ordinal, s.slot_id, s.repetition_index, s.task_id, s.config_id)
                      for s in ledger.slots)
@@ -468,6 +506,7 @@ def _audit_filesystem(
     project_root: Path, namespace: Path, preregistration,
     ledger: V13FormalStudyLedger, *, resolver: Resolver,
     allow_reconcilable_in_progress: bool = False,
+    contract: FormalExecutionContract = ORIGINAL_FORMAL_EXECUTION_CONTRACT,
 ) -> None:
     slots_root = namespace / "slots"
     if not slots_root.is_dir() or slots_root.is_symlink():
@@ -495,7 +534,7 @@ def _audit_filesystem(
             if (attempt.slot_id != slot.slot_id
                     or attempt.attempt_index not in slot.attempts
                     or attempt.formal_preregistration_sha256
-                    != ACCEPTED_PREREGISTRATION_SHA256
+                    != contract.accepted_preregistration_sha256
                     or attempt.config_id != slot.config_id
                     or attempt.task_id != slot.task_id):
                 raise FormalExecutionIntegrityError("attempt identity differs from study ledger")
@@ -606,6 +645,7 @@ def _reconcile_in_progress(
 def _create_attempt(
     namespace: Path, ledger: V13FormalStudyLedger, index: int,
     *, attempt_index: int, remediation: str | None,
+    contract: FormalExecutionContract = ORIGINAL_FORMAL_EXECUTION_CONTRACT,
 ) -> tuple[V13FormalStudyLedger, V13FormalAttemptRecord, Path]:
     slot = ledger.slots[index]
     slot_dir = _slot_directory(namespace, slot.slot_id)
@@ -619,7 +659,7 @@ def _create_attempt(
     attempt = V13FormalAttemptRecord(
         slot_id=slot.slot_id, attempt_index=attempt_index,
         status=FormalAttemptStatus.IN_PROGRESS,
-        formal_preregistration_sha256=ACCEPTED_PREREGISTRATION_SHA256,
+        formal_preregistration_sha256=contract.accepted_preregistration_sha256,
         config_id=slot.config_id, task_id=slot.task_id, remediation=remediation,
     )
     (attempt_dir / "attempt.json").write_text(
@@ -639,10 +679,11 @@ def _execute_attempt(
     ledger: V13FormalStudyLedger, index: int,
     *, attempt_index: int, remediation: str | None, sandbox: Sandbox,
     resolver: Resolver, runner: Runner, workspace_root: Path | None,
+    contract: FormalExecutionContract = ORIGINAL_FORMAL_EXECUTION_CONTRACT,
 ) -> V13FormalStudyLedger:
     ledger, attempt, attempt_dir = _create_attempt(
         namespace, ledger, index, attempt_index=attempt_index,
-        remediation=remediation,
+        remediation=remediation, contract=contract,
     )
     artifacts_root = attempt_dir / "artifacts"
     try:
@@ -690,12 +731,14 @@ def _execute_attempt(
 
 def _prepare_mutation(
     project_root: Path, namespace: Path, *, resolver: Resolver,
+    contract: FormalExecutionContract = ORIGINAL_FORMAL_EXECUTION_CONTRACT,
 ) -> tuple[object, V13FormalStudyLedger, bool]:
-    preregistration = verify_preregistration(project_root)
-    ledger = _load_study(namespace, preregistration)
+    preregistration = contract.preregistration_verifier(project_root)
+    ledger = _load_study(namespace, preregistration, contract)
     _audit_filesystem(
         project_root, namespace, preregistration, ledger, resolver=resolver,
         allow_reconcilable_in_progress=True,
+        contract=contract,
     )
     ledger, reconciled = _reconcile_in_progress(
         project_root, namespace, preregistration, ledger, resolver=resolver
@@ -708,12 +751,13 @@ def run_next_formal_attempt(
     results_root: Path | None = None, workspace_root: Path | None = None,
     resolver: Resolver = resolve_v13_agent_config,
     runner: Runner = run_v13_agent_experiment,
+    contract: FormalExecutionContract = ORIGINAL_FORMAL_EXECUTION_CONTRACT,
 ) -> V13FormalStudyLedger:
     root = Path(project_root).resolve()
-    namespace = _namespace(root, results_root)
+    namespace = _namespace(root, results_root, contract)
     with _exclusive_lock(namespace):
         preregistration, ledger, reconciled = _prepare_mutation(
-            root, namespace, resolver=resolver
+            root, namespace, resolver=resolver, contract=contract
         )
         if reconciled:
             return ledger
@@ -730,6 +774,7 @@ def run_next_formal_attempt(
             root, namespace, preregistration, ledger, index,
             attempt_index=1, remediation=None, sandbox=sandbox,
             resolver=resolver, runner=runner, workspace_root=workspace_root,
+            contract=contract,
         )
 
 
@@ -738,12 +783,13 @@ def retry_formal_slot(
     results_root: Path | None = None, workspace_root: Path | None = None,
     resolver: Resolver = resolve_v13_agent_config,
     runner: Runner = run_v13_agent_experiment,
+    contract: FormalExecutionContract = ORIGINAL_FORMAL_EXECUTION_CONTRACT,
 ) -> V13FormalStudyLedger:
     root = Path(project_root).resolve()
-    namespace = _namespace(root, results_root)
+    namespace = _namespace(root, results_root, contract)
     with _exclusive_lock(namespace):
         preregistration, ledger, reconciled = _prepare_mutation(
-            root, namespace, resolver=resolver
+            root, namespace, resolver=resolver, contract=contract
         )
         if reconciled:
             return ledger
@@ -767,25 +813,33 @@ def retry_formal_slot(
             root, namespace, preregistration, ledger, index,
             attempt_index=2, remediation=remediation, sandbox=sandbox,
             resolver=resolver, runner=runner, workspace_root=workspace_root,
+            contract=contract,
         )
 
 
 def check_formal_study(
     *, project_root: Path, results_root: Path | None = None,
     resolver: Resolver = resolve_v13_agent_config,
+    contract: FormalExecutionContract = ORIGINAL_FORMAL_EXECUTION_CONTRACT,
 ) -> V13FormalStudyLedger:
     root = Path(project_root).resolve()
-    preregistration = verify_preregistration(root)
-    namespace = _namespace(root, results_root)
-    ledger = _load_study(namespace, preregistration)
-    _audit_filesystem(root, namespace, preregistration, ledger, resolver=resolver)
+    preregistration = contract.preregistration_verifier(root)
+    namespace = _namespace(root, results_root, contract)
+    ledger = _load_study(namespace, preregistration, contract)
+    _audit_filesystem(
+        root, namespace, preregistration, ledger, resolver=resolver,
+        contract=contract,
+    )
     return ledger
 
 
 def formal_study_status(
     *, project_root: Path, results_root: Path | None = None,
+    contract: FormalExecutionContract = ORIGINAL_FORMAL_EXECUTION_CONTRACT,
 ) -> FormalStudyStatusSummary:
-    ledger = check_formal_study(project_root=project_root, results_root=results_root)
+    ledger = check_formal_study(
+        project_root=project_root, results_root=results_root, contract=contract
+    )
     terminal = {FormalSlotStatus.CANONICAL_OBSERVED,
                 FormalSlotStatus.UNRESOLVED_INFRASTRUCTURE}
     retry = next((s.slot_id for s in ledger.slots

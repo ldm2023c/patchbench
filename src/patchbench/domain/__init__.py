@@ -107,6 +107,11 @@ from patchbench.domain.formal_replication import (
     V13FormalReplicationSlot,
     compute_v13_formal_replication_preregistration_sha256,
 )
+from patchbench.domain.formal_replication_execution import (
+    V13FormalReplicationExecutionAdmission,
+    V13FormalReplicationExecutionSource,
+    compute_v13_formal_replication_execution_admission_sha256,
+)
 
 from patchbench.domain.provenance import compute_task_fingerprint
 
@@ -216,6 +221,9 @@ __all__ = [
     "V13FormalReplicationPreregistration",
     "V13FormalReplicationSlot",
     "compute_v13_formal_replication_preregistration_sha256",
+    "V13FormalReplicationExecutionAdmission",
+    "V13FormalReplicationExecutionSource",
+    "compute_v13_formal_replication_execution_admission_sha256",
     "V13FormalAnalysis",
     "V13FormalMetric",
     "V13FormalMetricRow",
