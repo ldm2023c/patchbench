@@ -71,7 +71,8 @@ A slice should ideally be small enough for its behavior and diff to be understoo
 For each reviewable slice:
 
 1. Lock design, scope, non-goals, and acceptance checks.
-2. Start a short-lived feature branch from the current version branch (`v1.2`).
+2. Start a short-lived feature branch from the accepted integration branch
+   (`main` after the V1.3 finalization line).
 3. Codex implements the authorized slice, verifies it, and self-reviews.
 4. Codex returns an implementation report with exact status and limitations.
 5. The human inspects changes, then stages, commits, and pushes for review.
@@ -132,7 +133,7 @@ git diff --cached
 After commits exist on the feature branch, use:
 
 ```bash
-git diff v1.2...HEAD
+git diff main...HEAD
 ```
 
 ### Important: untracked files
@@ -246,10 +247,10 @@ review and acceptance are required before integration into the version branch.
 
 ## 10. Git and PR Policy
 
-Feature development uses short-lived branches off the current version branch,
-currently `v1.2`. The human owns staging, commits, pushes, acceptance, ff-only
-integration, and branch cleanup. Explicit session authorization governs any
-exception; implementation permission alone does not authorize Git publication.
+Feature development uses short-lived branches off the accepted integration
+branch. The human owns staging, commits, pushes, acceptance, ff-only integration,
+and branch cleanup. Explicit session authorization governs any exception;
+implementation permission alone does not authorize Git publication.
 
 ## 11. Scope Discipline
 
@@ -284,3 +285,34 @@ For documentation-only changes, inspect changed Markdown links, search for stale
 claims, run `git diff --check` and `git status --short`, and verify permitted file
 scope. Full unrelated pytest runs and live experiments are not required solely
 for prose edits. Report tests as not run rather than recycling old counts.
+
+## 14. V1.3 formal-study workflow lessons
+
+V1.3 separated design, admission, execution, evidence, and interpretation into
+reviewable boundaries:
+
+1. Freeze TaskSpec design and candidate identity before calibration or formal
+   execution.
+2. Freeze Agent semantics, provider route options, timeout, and exact CLI runtime
+   identities before provider calls.
+3. Freeze the formal preregistration and reviewed execution sources before
+   initializing a production namespace.
+4. Admit the actual host runtime before execution. Runtime drift is a stop
+   condition; it is not fixed by changing frozen versions to match the host.
+5. Execute one slot per state-machine command and persist each attempt before
+   continuing.
+6. Preserve the fixed denominator. Do not replace failures or select a more
+   favorable Run after observing outcomes.
+7. Inspect raw incident evidence before interpreting comparative metrics.
+8. Correct taxonomy prospectively, preserve historical evidence, and use a
+   preregistered full replication instead of rewriting the first study.
+9. Freeze compact evidence and derive metrics deterministically only after the
+   production ledger is terminal.
+
+Git operations remained human-owned throughout this workflow. Report-level
+review verified claims and artifact identities; source-level review verified
+contracts, state transitions, and fail-closed behavior. Neither review level
+substitutes for the other.
+
+PatchBench V1.3 is final after M20. Additional experiments or features require
+a separately scoped future version rather than another V1.3 milestone.

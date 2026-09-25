@@ -157,6 +157,55 @@ class V13FormalEvidenceFreeze(DomainModel):
         return self
 
 
+class V13FormalReplicationEvidenceFreeze(DomainModel):
+    """Compact evidence binding for the completed Replication-01 study."""
+
+    model_config = ConfigDict(extra="forbid", frozen=True, str_strip_whitespace=False)
+
+    schema_version: Annotated[int, Field(strict=True, ge=1, le=1)] = 1
+    freeze_id: Literal["patchbench-v1.3-formal-replication-01-results"]
+    replication_id: Literal["patchbench-v1.3-replication-01"]
+    study_id: Literal["patchbench-v1.3-formal-replication-01"]
+    replication_preregistration_sha256: Sha256Hex
+    design_sha256: Sha256Hex
+    candidate_sha256: Sha256Hex
+    agent_manifest_sha256: Sha256Hex
+    execution_harness_commit: Literal["4eed7a5dd50dd2358aaafb2fbc9d62a596803cdf"]
+    execution_admission_sha256: Sha256Hex
+    source_study_status: Literal["completed"]
+    source_study_json_sha256: Sha256Hex
+    source_study_semantic_sha256: Sha256Hex
+    planned_slot_count: Literal[108]
+    terminal_slot_count: Literal[108]
+    canonical_slot_count: Literal[107]
+    unresolved_infrastructure_slot_count: Literal[1]
+    blocked_slot_count: Literal[0]
+    slots: tuple[V13FormalSlotEvidence, ...] = Field(min_length=108, max_length=108)
+
+    @model_validator(mode="after")
+    def validate_slots(self) -> Self:
+        if tuple(slot.ordinal for slot in self.slots) != tuple(range(1, 109)):
+            raise ValueError("replication evidence slots must preserve exact ordinal order")
+        if len({slot.slot_id for slot in self.slots}) != 108:
+            raise ValueError("replication evidence slot IDs must be unique")
+        canonical = sum(
+            slot.source_slot_status is FormalSlotStatus.CANONICAL_OBSERVED
+            for slot in self.slots
+        )
+        unresolved = sum(
+            slot.source_slot_status is FormalSlotStatus.UNRESOLVED_INFRASTRUCTURE
+            for slot in self.slots
+        )
+        if (
+            canonical != self.canonical_slot_count
+            or unresolved != self.unresolved_infrastructure_slot_count
+            or canonical + unresolved != self.terminal_slot_count
+            or self.terminal_slot_count != self.planned_slot_count
+        ):
+            raise ValueError("replication evidence outcome counts differ from slots")
+        return self
+
+
 def canonical_json_bytes(value: object) -> bytes:
     return json.dumps(
         value, sort_keys=True, separators=(",", ":"), ensure_ascii=False,
@@ -174,5 +223,11 @@ def compute_v13_formal_attempt_sha256(attempt) -> str:
 
 def compute_v13_formal_evidence_freeze_sha256(
     freeze: V13FormalEvidenceFreeze,
+) -> str:
+    return hashlib.sha256(canonical_json_bytes(freeze.model_dump(mode="json"))).hexdigest()
+
+
+def compute_v13_formal_replication_evidence_freeze_sha256(
+    freeze: V13FormalReplicationEvidenceFreeze,
 ) -> str:
     return hashlib.sha256(canonical_json_bytes(freeze.model_dump(mode="json"))).hexdigest()

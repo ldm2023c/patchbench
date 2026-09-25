@@ -15,6 +15,40 @@ Run → Repeat → Classify → Compare → Replay
                    └─ semantic FAIL → verified evidence → optional Diagnosis
 ```
 
+## V1.3 FINAL — Formal Multi-Agent Reliability Study
+
+PatchBench V1.3 is **FINAL and feature-frozen after M20**. Its primary result is
+the independently preregistered Replication-01 study: **12 frozen repository
+tasks × 3 frozen Agent configurations × 3 repetitions = 108 planned slots**.
+Agents execute on the host under exact manifest and CLI admission; the official
+evaluator runs in Docker. Immutable attempt ledgers distinguish canonical Runs
+from typed pre-canonical infrastructure failures.
+
+Replication-01 completed all 108 slots with **107 canonical observations, one
+unresolved infrastructure slot, zero blocked slots, and zero remaining slots**.
+All 107 completed Agent executions passed the frozen evaluator. The three
+preregistered overall metrics are:
+
+| Metric | Replication-01 |
+|---|---:|
+| End-to-End Reliability | 107/108 (99.07%) |
+| Completed Semantic Repair | 107/107 (100%) |
+| Operational Completion | 107/108 (99.07%) |
+
+The unresolved slot remains in the fixed denominator. It followed two
+structured HTTP 429 observations on the frozen Codex relay route. PatchBench
+evidence proves the response and typed classification; the operator separately
+confirmed exhausted relay quota and reset it. The artifacts do not prove which
+physical upstream component originated the 429.
+
+The original 108-slot study remains immutable and separate. Its Codex results
+were infrastructure-confounded because 32 structured HTTP 429 responses had
+been canonicalized as command failures by the earlier abstraction. M16 added
+provider-aware classification, and M17 preregistered a fresh full replication
+instead of rewriting history. See the
+[final replication report](evidence/v1.3/formal-replication-01/FINAL_REPORT.md)
+and [V1.3 engineering record](docs/V1_3_FORMAL_STUDY.md).
+
 ## V1.1 Evidence Release
 
 The frozen final sample contains **4 tasks × 8 = 32 Runs**: **30/32 PASS
@@ -338,14 +372,13 @@ isolation, not a production-grade hostile multi-tenant security boundary.
 
 ## Project Status
 
-V1 and V1.1 are historical completed releases. The current integration branch
-is `v1.2`: Diagnosis infrastructure and validation machinery are implemented
-through D6-R5, including Human Gold scoring, aggregate/pair metrics, the frozen
-15-case validation suite, sharded real-provider acquisition, immutable
-collection, finalized semantic scores, operational route scoring, and the final
-Validation V1 result artifact. Optional V2 context-engine/service work remains
-deferred. See [Project Status](docs/PROJECT_STATUS.md) for accepted commits,
-artifact identities, and interpretation boundaries.
+V1.3 is the current final release and is feature-frozen after M20. V1.1 and
+V1.2 remain completed historical releases: V1.1 provides the first frozen
+32-Run evidence release, while V1.2 provides the Evidence-Grounded Diagnosis
+subsystem and bounded Validation V1 result. Further Agents, tasks, reruns,
+metrics, context systems, dashboards, or statistical studies require a
+separately scoped future version. See [Project Status](docs/PROJECT_STATUS.md)
+for final identities and interpretation boundaries.
 
 Historical patch Replay has been validated end to end with both a FakeAgent
 source Run and a real Codex source Run using Docker evaluation. The real

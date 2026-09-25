@@ -1,144 +1,337 @@
 # PatchBench Interview Notes
 
-Current reference: [Project Status](PROJECT_STATUS.md) and
-[Diagnosis contracts](DIAGNOSIS.md). Historical ADRs are retained below.
+PatchBench V1.3 is **FINAL and feature-frozen after M20**. Start with the
+[V1.3 engineering record](V1_3_FORMAL_STUDY.md), then use the
+[final evidence report](../evidence/v1.3/formal-replication-01/FINAL_REPORT.md)
+and [project status](PROJECT_STATUS.md) for exact identities. V1.1 and V1.2 are
+completed historical layers; [Diagnosis](DIAGNOSIS.md) remains the V1.2 subsystem
+reference.
 
-## 1. 30-second pitch
+## 30-second project introduction
 
-PatchBench measures coding-agent reliability through repeated independent Runs,
-fixed official evaluation, persisted evidence, and patch Replay. V1.1 froze a
-32-Run evidence release: 30 PASS and two external Codex quota failures; all 30
-normally completed executions passed. V1.2 adds reviewed evidence-grounded
-Diagnosis infrastructure: complete bounded evidence, Blind and same-cell PASS
-Contrastive hypotheses, a structural citation Auditor, and immutable artifacts.
-Human-Gold scoring, aggregate metrics, a frozen 15-case validation suite, real
-provider acquisition, semantic score finalization, and the final Validation V1
-result are implemented. On the frozen 13 semantic cases, Blind reached 9/10
-preferred Top-1 over non-abstention cases while Contrastive reached 8/10; both
-modes had 0/3 abstention recall. I describe these as bounded suite results, not
-general Diagnosis accuracy.
+PatchBench is a reproducible coding-Agent reliability platform for repository
+repairs. It freezes tasks, Agent configurations, exact CLI runtimes, execution
+order, and Docker evaluation; runs repeated independent attempts; and preserves
+raw evidence before computing metrics. V1.3 studied 12 tasks across three Agents
+and three repetitions, for 108 slots. The final independent replication ended
+with 107 canonical passing Runs and one unresolved infrastructure slot. Its
+three metrics are 107/108 End-to-End Reliability, 107/107 Completed Semantic
+Repair, and 107/108 Operational Completion. The key engineering lesson was that
+provider failures must be typed before a canonical Run exists, rather than
+silently counted as model repair failures.
 
-## 2. 2-minute story
+## 90-second / 2-minute architecture explanation
 
-A single PASS demonstrates one successful attempt, not reliability. I separated
-a Run, the atomic execution with its own workspace and evidence, from an
-Experiment, the frozen configuration and ordered repeated Runs with aggregates.
-Agent completion and official evaluation are independent: a completed Agent can
-produce a failing patch, while operational quota failures need separate reporting.
+A frozen TaskSpec and candidate manifest define repository state, prompt,
+evaluator, capability, and difficulty. A frozen Agent manifest binds the CLI,
+requested model, route options, policy, timeout, and exact runtime identity.
+Formal preregistration fixes 12 tasks, three Agent configurations, three
+repetitions, 108 ordered slots, retry rules, and metric formulas.
 
-V1.1 tightened the evidence boundary. Git captures the patch, historical
-provenance records the actual base, and frozen evaluation restores baseline tests
-in a separate evaluation worktree. Agent edits to tests remain visible evidence
-but cannot replace benchmark test truth. Replay re-applies a historical patch
-without another Agent call. The final release measured 32 Runs over four bounded
-tasks: 30 PASS, two quota failures, no replacement Runs. That is a bounded result,
-not a universal model-reliability claim.
+The execution harness advances one slot per command. An Agent runs on the host
+in a fresh Git worktree; the official evaluator runs in Docker. A completed
+attempt becomes one canonical `RunRecord`. A supported failure before canonical
+persistence becomes a typed infrastructure attempt and stops at
+`retry_required`. The human may authorize one frozen remediation, so the maximum
+is two attempts. There are no replacement Runs and no denominator changes.
 
-V1.2 addresses a different question: what hypotheses can be grounded in a
-completed semantic failure's evidence? D1–D6 route eligible Runs, compile exact
-bounded source/tests/patch/log evidence, make optional provider inference, audit
-citations deterministically, persist the attempt, and score it against Human Gold. Blind Diagnosis is the
-headline mode. Contrastive adds one verified same-cell PASS as secondary comparison
-evidence, never a reference fix. The provider cannot change official PASS/FAIL.
-The important limitation is that structural correctness is not semantic accuracy:
-the final real-provider Validation V1 result is a small frozen-suite measurement,
-not proof of production diagnosis quality or broad model reliability.
+Every attempt and slot transition is immutable. M20 converts the terminal runtime
+tree into a compact checked freeze that hashes every ledger, canonical Run, and
+raw Run file. The preregistered analysis reads only that freeze and reports three
+separate metrics. V1.2 Diagnosis remains optional evidence-grounded inference;
+it is not the V1.3 judge and never changes official evaluator truth.
 
-## 3. 5-minute architecture walkthrough
+## Why this project exists
 
-1. **Run / Experiment / Replay.** A Run starts at a known base in a fresh detached
-   Git worktree. Agent execution, patch capture, and official evaluation have
-   distinct responsibilities. Experiment repeats independent Runs sequentially;
-   Analyze reads persisted evidence; Replay uses the stored patch with zero Agents.
-2. **Official truth and routing.** Official PASS/FAIL remains fixed. FAIL with an
-   operational Agent failure routes to operational analysis. FAIL with a completed
-   Agent is eligible for semantic Diagnosis, subject to evidence readiness.
-3. **Verified evidence.** D2 checks raw TaskSpec/patch/log identities and historical
-   provenance, reconstructs base and candidate, and includes complete bounded
-   production source plus frozen tests. Unchanged files matter for cross-file
-   hypotheses. Unsupported included sources fail closed; no LLM retrieval or
-   truncation fallback can silently change context.
-4. **Inference boundary.** A separate DiagnosisProvider receives text/schema,
-   not repository or shell handles. Permission defaults closed and byte limits
-   apply before inference. Versioned prompts preserve exact evidence as untrusted
-   data. The built-in OpenAI adapter is tool-less, store-false, and retry-free.
-5. **Typed hypotheses and auditing.** The provider emits only semantic fields.
-   PatchBench injects identity and linkage. Output is strictly validated, with
-   first-class abstention. D3 checks hashes, reference membership, and exact
-   artifact-relative ranges; it does not decide semantic truth.
-6. **Contrastive and persistence.** D5 selects the canonical first eligible
-   same-cell PASS in one persisted Experiment, preserves Blind E evidence, appends
-   P evidence, and re-verifies selection before inference. Completed attempts,
-   including Audit FAIL, use immutable four-file persistence with integrity checks.
-7. **Validation layer.** D6.1 scores route and semantic Diagnosis against typed
-   Human Gold; D6.2 aggregates exact metrics and paired Blind/Contrastive deltas;
-   D6.3 freezes a 15-case suite; D6-R1/R2 acquire real-provider results with
-   immutable full-run or sharded ledgers; D6-R3/R4/R5 collect successful shards,
-   finalize human-reviewed semantic scores, and publish the final result artifact.
+One successful coding-Agent run does not establish reliability. A deployment can
+fail because of semantic repair quality, CLI/tool behavior, credentials, provider
+transport, repository setup, or evaluation infrastructure. Combining those
+conditions into one vague pass rate hides the engineering question.
 
-## 4. Questions and defensible answers
+PatchBench makes the unit of evidence explicit and separates Agent completion,
+official semantic evaluation, and pre-canonical infrastructure handling. This
+supports reproducible debugging without pretending that a small benchmark proves
+universal model quality.
 
-| Question | Answer |
-| --- | --- |
-| Why single PASS != reliability? | Repeated independent attempts expose operational failures and outcome variation; one sample cannot establish a stable rate. |
-| Why Run vs Experiment? | Run owns execution/evidence; Experiment owns frozen repetition configuration, ordered child IDs, and aggregates. |
-| Why separate Agent status and official evaluation? | Completion describes the process, while PASS/FAIL describes the configured test outcome. Neither substitutes for the other. |
-| Why freeze baseline tests? | Candidate test edits must remain visible but cannot redefine the benchmark's official truth. |
-| Why deterministic evidence before inference? | It makes the exact context inspectable and hashable and prevents hidden selection from changing the question. |
-| Why Blind as headline? | It measures hypotheses from subject evidence without extra PASS comparison information. |
-| Why Contrastive as secondary ablation? | It changes available evidence; it should be evaluated separately rather than silently improving the headline context. |
-| How is the peer selected? | First eligible completed same-cell PASS in persisted Experiment run order, excluding the subject; match task/Agent/evaluator/historical provenance and verify Experiment configuration. |
-| What if the selected peer's raw artifacts fail verification? | Fail closed; do not fall back to another peer. |
-| Why isn't PASS a reference fix? | Tests passing does not identify a uniquely correct implementation or prove which difference caused the subject failure. |
-| Why complete bounded source? | Untouched cross-file behavior may matter. Explicit bounds keep context deterministic; over-budget or unsupported input fails instead of invoking retrieval. |
-| Can the provider change truth? | No. It emits hypotheses/abstention only; PatchBench owns official outcomes and identity/linkage. |
-| Does Audit PASS establish correctness? | No. Even an absurd claim can pass structural and citation checks. Semantic validation needs human gold. |
-| Why abstention? | Missing evidence should be represented explicitly, not forced into an unsupported family. Certainty is qualitative low/medium/high. |
-| Why exact line refs? | A reviewer can locate the cited artifact span. LF-only, artifact-relative coordinates and paired-null empty citations prevent ambiguous offsets. |
-| Why separate immutable artifacts? | Each inference attempt stays linked to its frozen Bundle and provider response identity without overwriting Run evidence or other attempts. |
-| Why opt-in external LLM use? | Repository evidence is transmitted externally; the caller must explicitly authorize it. PatchBench does not classify private-repository safety. |
-| What about prompt injection? | Evidence is framed as untrusted data and preserved exactly. The built-in adapter has no tools; this is not proof of adversarial prompt-injection security. |
-| Is the provider sandboxed? | The request has no workspace handles, but arbitrary third-party provider code is not sandboxed by the protocol. OpenAI necessarily uses network access. |
-| Is model output reproducible? | We record observed requested/returned models and SDK/request provenance; we do not freeze provider weights or promise identical external output. |
-| What does Replay prove? | It checks the stored patch under the reconstructed evaluator boundary without re-running an Agent; it does not reproduce every historical host dependency. |
+## V1.3 experimental design
 
-## 5. Current limitations — say this explicitly
+- **12 frozen tasks**, each with a pinned repository commit and Docker evaluator.
+- **4 primary capabilities:** `local_boundary`, `cross_file`,
+  `state_consistency`, and `regression_robustness`.
+- **3 designed difficulties:** easy, medium, and hard, defined structurally.
+- **3 frozen Agents:** Codex GPT-5.5 through an Ailink relay route, Cursor CLI
+  Claude 4.6 Sonnet Medium, and Grok Build Grok 4.5 through an Ailink relay route.
+- **3 repetitions per Task × Agent cell**, producing **108 ordered slots**.
+- Exact Agent configuration SHA, policy SHA, model, route options, timeout, and
+  CLI version were frozen before production execution.
+- The Agent ran on the host; Docker supplied the official deterministic evaluator.
+- The order, retry policy, and three metric formulas were preregistered.
 
-Diagnosis validation infrastructure is implemented through Human-Gold scoring,
-aggregate/paired metrics, a frozen 15-case suite, real-provider acquisition,
-semantic score finalization and the final Validation V1 result. On the frozen
-13 semantic cases, Blind scored 9/10 preferred Top-1 over non-abstention cases
-and Contrastive scored 8/10; both modes had 0/3 abstention recall. The paired
-comparison showed no family improvement from Contrastive and one family/audit
-regression at `semantic-09`. These are bounded suite results, not statistical
-significance, production readiness, or a claim that Contrastive is generally
-worse.
+PatchBench evaluates the frozen Agent deployment as a system. The result cannot
+be reduced to an abstract model name alone.
 
-V1.1 is the only current empirical coding-agent reliability release. Its 30/32
-end-to-end PASS rate is 93.75%; 30/30 normally completed executions passed.
-The two quota failures were retained, not replaced. Four purpose-built tasks in
-one environment do not establish general reliability or Diagnosis quality.
-Production patch signatures were 8/8/4/1 across streaming_events, request_signing,
-atomic_batch, and cache_revalidation; these are exact signatures, not counts of
-semantically distinct algorithms. Whole-patch diversity can be inflated by test edits.
-See the [frozen final report](../evidence/v1.1/FINAL_REPORT.md).
+## The major production incident
 
-## 6. Next work and resume wording
+The original study appeared to show:
 
-V1.2 Diagnosis validation is complete through D6-R5. Further postmortem, V2,
-service, or context work is optional and requires separate authorization. Current
-Diagnosis is programmatic; there is no `patchbench diagnose` CLI.
+```text
+Codex: 4/36 operational completion
+Cursor: 36/36 operational completion
+Grok: 36/36 operational completion
+```
 
-Defensible resume wording: “Built a local coding-agent reliability harness with
-frozen evaluation, historical patch Replay, and a 32-Run evidence release; added
-reviewed evidence-grounded Diagnosis infrastructure with strict provider
-contracts, deterministic citation auditing, Human-Gold validation contracts,
-paired Blind/Contrastive metrics, immutable execution provenance, and a bounded
-15-case Validation V1 result.” If giving numbers, specify the denominator and
-suite: “On the frozen 13 semantic cases, Blind scored 9/10 preferred Top-1 over
-non-abstention cases; Contrastive scored 8/10; both had 0/3 abstention recall.”
-Do not call the gateway result an official OpenAI validation result or a broad
-Diagnosis accuracy claim.
+Investigation found 32 Codex `COMMAND_FAILED` observations. All 32 immutable raw
+agent logs contained the supported structured HTTP 429 event. The old abstraction
+mapped a CLI nonzero exit to a canonical command-failed Run before it understood
+this provider transport condition.
+
+That means `4/36` must not be described as GPT-5.5 semantic coding ability. It
+is a faithful operational record of the original harness, but the cross-Agent
+semantic interpretation is infrastructure-confounded.
+
+## The fix
+
+M16 added strict structured event parsing for the supported Codex HTTP 429 shape
+and raised `AgentProviderTransportError`. Before a canonical Run exists, the
+formal harness maps it to `network_provider_transport_same_route`, persists the
+attempt, and stops at `retry_required`. It never creates a canonical Run for that
+attempt. If a canonical Run was already persisted, the Run remains authoritative
+and a later exception cannot erase it.
+
+This correction changes taxonomy and prospective handling. It does not rewrite
+old Run evidence, infer arbitrary network errors, or identify the physical source
+of a 429.
+
+## Why the first experiment was preserved
+
+Deleting or selectively rerunning the original would permit outcome-based
+replacement. PatchBench instead:
+
+1. preserved the immutable original runtime and checked M15 artifacts;
+2. froze a deterministic M17 incident adjudication;
+3. preregistered an independent full 108-slot replication;
+4. froze the reviewed replication harness and runtime identities before execution;
+5. kept original and replication namespaces separate;
+6. reported the two studies descriptively without pooling them.
+
+A full replication was necessary because a Codex-only replacement would change
+the design after observing results and would not reproduce the original balanced
+Task × Agent × repetition matrix.
+
+## Replication story
+
+M19 completed Replication-01 with:
+
+```text
+terminal=108/108
+canonical=107
+unresolved infrastructure=1
+blocked=0
+remaining=0
+```
+
+Two Codex slots encountered `network_provider_transport_same_route` on attempt 1.
+The `env_config` slot exhausted the single retry and remains unresolved. The
+`request_signing` slot produced a canonical passing Run on attempt 2. No attempt
+3 or replacement Run exists.
+
+PatchBench evidence establishes a structured HTTP 429 on the frozen Codex route.
+The operator separately inspected the relay service, confirmed exhausted relay
+quota, and reset it. That provider-side fact is operator-reported; it is not
+proved by the checked client artifacts. The artifacts cannot establish whether
+the 429 originated in the relay implementation, physical upstream, OpenAI,
+shared account, or IP limiting.
+
+Final Replication-01 metrics:
+
+| Stratum | End-to-End Reliability | Completed Semantic Repair | Operational Completion |
+|---|---:|---:|---:|
+| Overall | 107/108 | 107/107 | 107/108 |
+| Codex | 35/36 | 35/35 | 35/36 |
+| Cursor | 36/36 | 36/36 | 36/36 |
+| Grok Build | 36/36 | 36/36 | 36/36 |
+
+All 107 completed Agent executions passed their frozen evaluator. This is a
+bounded result over 12 tasks, not a universal ranking.
+
+## Three metrics and why all three exist
+
+### End-to-End Reliability
+
+```text
+COMPLETED + evaluator PASS / all planned slots
+```
+
+Interview language: “Did the frozen deployment deliver a verified repair when a
+slot was requested?” Infrastructure remains in the denominator because users
+experience the whole deployment path.
+
+### Completed Semantic Repair
+
+```text
+COMPLETED + evaluator PASS / Agent status COMPLETED slots
+```
+
+Interview language: “Conditional on the Agent completing, did its patch pass the
+frozen evaluator?” An infrastructure-unresolved slot is excluded because no
+completed repair exists to judge.
+
+### Operational Completion
+
+```text
+Agent status COMPLETED / all planned slots
+```
+
+Interview language: “Could the deployment complete the coding attempt?” This
+separates availability from conditional repair quality.
+
+None of these is a composite winner score. The unresolved slot remains in the
+fixed E2E and operational denominators.
+
+## Key engineering decisions
+
+- **Git worktree isolation:** every Run starts from the pinned commit outside the
+  source working tree.
+- **Docker evaluation:** evaluator runtime and baseline tests are controlled;
+  Agent execution remains host-side.
+- **TaskSpec and candidate freeze:** task content and selection cannot drift after
+  outcomes are observed.
+- **Agent manifest freeze:** CLI, model, route options, policy, and timeout form
+  one semantic deployment identity.
+- **Exact CLI admission:** padded, mismatched, or unavailable runtime versions
+  fail before provider calls.
+- **RunRecord and raw evidence:** metadata, prompt, stdout, stderr, test log, and
+  patch remain inspectable and hash-bound.
+- **No LLM primary judge:** deterministic repository tests define official truth.
+- **Replay:** a historical patch can be re-evaluated without another Agent call.
+- **Diagnosis boundary:** V1.2 hypotheses are optional and cannot revise truth.
+- **Formal attempt state machine:** one command advances one slot; evidence is
+  persisted before continuation.
+- **Retry policy:** one human-authorized same-route remediation, maximum two
+  attempts, no automatic retry.
+- **Evidence freeze:** compact checked artifacts bind the raw runtime tree without
+  committing the entire tree.
+
+## Hard questions and good answers
+
+### Why not just compare pass rates?
+
+A single rate can mix semantic failures, timeouts, provider failures, and setup
+failures. The three preregistered metrics expose deployment reliability,
+conditional repair quality, and operational completion separately.
+
+### Why is infrastructure failure in the E2E denominator?
+
+E2E asks whether a requested slot delivered a verified repair. A user-facing
+deployment failure is still an unsuccessful delivery. Removing it post hoc would
+change the preregistered estimand and denominator.
+
+### Why exclude it from Completed Semantic Repair?
+
+That metric is conditional on a completed Agent execution. With no completed
+patch, there is no semantic repair outcome to evaluate.
+
+### Why not rerun the unresolved slot?
+
+The preregistered limit is two attempts. A third official attempt would violate
+the frozen policy and permit result-dependent continuation. A later supplemental
+check may be labeled separately, but cannot replace the slot or change metrics.
+
+### Why use Docker?
+
+Docker gives the evaluator a controlled image, command, mount, and cleanup
+boundary across Runs. It improves reproducibility; it does not make arbitrary
+code perfectly secure.
+
+### Why freeze exact CLI versions?
+
+The CLI controls prompts, tools, permissions, configuration discovery, output
+schema, and process behavior. Model equality alone does not make two Agent
+deployments equivalent.
+
+### How do you know the 32 original failures were 429?
+
+The incident verifier reads immutable raw agent logs for all 32 affected Runs and
+requires the supported structured HTTP 429 shape, then binds the adjudication to
+the original freeze and analysis identities.
+
+### Can you prove Ailink or OpenAI caused the 429?
+
+No. The artifacts establish the frozen provider-facing route and structured HTTP
+429 response. They do not prove the physical upstream origin. Relay quota
+exhaustion during replication is a separate operator-confirmed observation.
+
+### Why a full 108-run replication instead of Codex-only 36?
+
+A full replication preserves the preregistered balanced design and avoids
+selecting only the affected Agent after seeing outcomes. It also tests the
+corrected state machine under the same complete protocol.
+
+### Why not use an LLM judge?
+
+The tasks have deterministic repository tests. An LLM judge would add another
+nondeterministic model and unclear calibration to the primary outcome. V1.2
+Diagnosis is explicitly secondary and evidence-grounded.
+
+### What would you improve in V2?
+
+Use a separately preregistered broader task sample, more environments, and
+power-aware statistical design. Improve controlled credential/runtime admission
+and provider observability without changing the meaning of historical studies.
+
+### What is the biggest limitation?
+
+Twelve purpose-built tasks and one host/provider period are too small for broad
+generality. Provider routes are observed at the client boundary, not
+cryptographically traced to physical upstreams.
+
+### What was your contribution and hardest engineering decision?
+
+The central contribution was designing auditable boundaries across task freeze,
+Agent identity, runtime admission, execution state, raw evidence, incident
+taxonomy, and analysis. The hardest decision was preserving an apparently bad
+first result, correcting the abstraction prospectively, and preregistering a
+full replication instead of rewriting history.
+
+## Source-reading map
+
+| File | What it demonstrates |
+|---|---|
+| `src/patchbench/application/v13_formal_execution.py` | One-slot state machine, retry boundary, canonical Run precedence |
+| `src/patchbench/application/v13_agent_execution.py` | Frozen Agent resolution and identity binding |
+| `src/patchbench/agents/codex.py` | Exact Codex admission and typed provider failure propagation |
+| `src/patchbench/agents/structured_provider_failure.py` | Strict supported HTTP 429 parsing |
+| `src/patchbench/domain/formal_replication.py` | Full independent replication preregistration |
+| `src/patchbench/application/v13_formal_replication_execution.py` | M18 admission-gated execution facade and namespace separation |
+| `scripts/v13_formal_replication_evidence.py` | Replication runtime verification and compact freeze |
+| `scripts/v13_formal_replication_analysis.py` | Preregistered metric derivation from checked evidence |
+| `tasks/reliability/v1.3-design.json` | Task design, capability, and structural difficulty freeze |
+| `tasks/reliability/v1.3-candidate.json` | Exact 12-task candidate identity |
+| `tasks/reliability/v1.3-agent-configurations.json` | Three deployment identities and CLI versions |
+| `tasks/reliability/v1.3-replication-01-preregistration.json` | Fixed replication order, retry policy, and metrics |
+| `evidence/v1.3/formal/codex-429-incident-freeze.json` | Original incident adjudication |
+| `evidence/v1.3/formal-replication-01/formal-study-freeze.json` | Final compact execution evidence |
+| `evidence/v1.3/formal-replication-01/formal-study-analysis.json` | Final machine-readable metrics |
+
+## Claims not to make
+
+Do not say:
+
+- “GPT-5.5 only had 11.1% coding ability.”
+- “Cursor or Grok is universally better.”
+- “OpenAI definitely caused the 429.”
+- “The unresolved replication slot was a model failure.”
+- “The 108 slots establish statistical generality.”
+- “Docker makes arbitrary code secure.”
+- “Diagnosis is the official judge.”
+- “The operator quota observation is proved by frozen client artifacts.”
+- “A future supplemental recovery run can replace Replication-01.”
+
+## Final boundary
+
+PatchBench V1.3 is complete. No M21, new Agent, new task, rerun, score, RAG
+system, dashboard, or significance study remains required. Each would need a
+separately scoped future version.
 
 ## Appendix: Historical decision snapshots
 

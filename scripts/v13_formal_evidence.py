@@ -155,36 +155,21 @@ def _freeze_run(
     )
 
 
-def build_formal_evidence_freeze(
-    source_results: Path,
+def freeze_verified_slots(
+    source: Path,
     *,
-    project_root: Path = PROJECT_ROOT,
-) -> V13FormalEvidenceFreeze:
-    root = Path(project_root).resolve()
-    supplied_source = Path(source_results)
-    if supplied_source.is_symlink():
-        raise FormalEvidenceIntegrityError("formal source namespace is symlinked")
-    source = supplied_source.resolve()
-    preregistration = verify_preregistration(root)
-    ledger = check_formal_study(project_root=root, results_root=source)
-    design = _load_design(root)
-    if ledger.status is not FormalStudyStatus.COMPLETED:
-        raise FormalEvidenceIntegrityError("formal source study is not completed")
-    study_bytes = _read_exact_file(source / "study.json", "source study ledger")
-    try:
-        if V13FormalStudyLedger.model_validate_json(study_bytes) != ledger:
-            raise FormalEvidenceIntegrityError("source study changed during verification")
-    except ValidationError as error:
-        raise FormalEvidenceIntegrityError("invalid source study ledger") from error
-    if tuple((item.ordinal, item.slot_id, item.repetition_index, item.task_id, item.config_id)
-             for item in ledger.slots) != tuple(
-                 (item.ordinal, item.slot_id, item.repetition_index, item.task_id, item.config_id)
-                 for item in preregistration.slots
-             ):
-        raise FormalEvidenceIntegrityError("source slots differ from preregistration")
+    ledger: V13FormalStudyLedger,
+    preregistration,
+    design: BenchmarkDesignManifest,
+    accepted_preregistration_sha256: str,
+) -> tuple[V13FormalSlotEvidence, ...]:
+    """Freeze already verified formal slots using the shared M15 semantics."""
+
     profiles = {item.task_id: item for item in design.tasks}
     if tuple(profiles) != preregistration.task_order:
-        raise FormalEvidenceIntegrityError("M1 task order differs from preregistration")
+        raise FormalEvidenceIntegrityError(
+            "M1 task order differs from preregistration"
+        )
 
     frozen_slots = []
     for slot, planned in zip(ledger.slots, preregistration.slots, strict=True):
@@ -202,7 +187,7 @@ def build_formal_evidence_freeze(
             if (attempt.slot_id != slot.slot_id
                     or attempt.attempt_index != attempt_index
                     or attempt.formal_preregistration_sha256
-                    != ACCEPTED_PREREGISTRATION_SHA256
+                    != accepted_preregistration_sha256
                     or attempt.config_id != slot.config_id
                     or attempt.task_id != slot.task_id):
                 raise FormalEvidenceIntegrityError("attempt identity differs from slot")
@@ -236,6 +221,43 @@ def build_formal_evidence_freeze(
             canonical_attempt_index=slot.canonical_attempt_index,
             canonical_run=canonical_run,
         ))
+    return tuple(frozen_slots)
+
+
+def build_formal_evidence_freeze(
+    source_results: Path,
+    *,
+    project_root: Path = PROJECT_ROOT,
+) -> V13FormalEvidenceFreeze:
+    root = Path(project_root).resolve()
+    supplied_source = Path(source_results)
+    if supplied_source.is_symlink():
+        raise FormalEvidenceIntegrityError("formal source namespace is symlinked")
+    source = supplied_source.resolve()
+    preregistration = verify_preregistration(root)
+    ledger = check_formal_study(project_root=root, results_root=source)
+    design = _load_design(root)
+    if ledger.status is not FormalStudyStatus.COMPLETED:
+        raise FormalEvidenceIntegrityError("formal source study is not completed")
+    study_bytes = _read_exact_file(source / "study.json", "source study ledger")
+    try:
+        if V13FormalStudyLedger.model_validate_json(study_bytes) != ledger:
+            raise FormalEvidenceIntegrityError("source study changed during verification")
+    except ValidationError as error:
+        raise FormalEvidenceIntegrityError("invalid source study ledger") from error
+    if tuple((item.ordinal, item.slot_id, item.repetition_index, item.task_id, item.config_id)
+             for item in ledger.slots) != tuple(
+                 (item.ordinal, item.slot_id, item.repetition_index, item.task_id, item.config_id)
+                 for item in preregistration.slots
+             ):
+        raise FormalEvidenceIntegrityError("source slots differ from preregistration")
+    frozen_slots = freeze_verified_slots(
+        source,
+        ledger=ledger,
+        preregistration=preregistration,
+        design=design,
+        accepted_preregistration_sha256=ACCEPTED_PREREGISTRATION_SHA256,
+    )
     canonical_count = sum(
         slot.status is FormalSlotStatus.CANONICAL_OBSERVED for slot in ledger.slots
     )
@@ -257,7 +279,7 @@ def build_formal_evidence_freeze(
         planned_slot_count=preregistration.planned_slot_count,
         canonical_slot_count=canonical_count,
         unresolved_infrastructure_slot_count=unresolved_count,
-        slots=tuple(frozen_slots),
+        slots=frozen_slots,
     )
 
 

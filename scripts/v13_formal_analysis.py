@@ -98,26 +98,9 @@ def _row(value: str, slots) -> V13FormalMetricRow:
     )
 
 
-def build_formal_analysis(
-    *,
-    project_root: Path = PROJECT_ROOT,
-    freeze=None,
-) -> V13FormalAnalysis:
-    root = Path(project_root).resolve()
-    if freeze is None:
-        try:
-            freeze = verify_checked_freeze(root)
-        except FormalEvidenceIntegrityError as error:
-            raise FormalAnalysisIntegrityError("checked formal freeze failed") from error
-    preregistration = verify_preregistration(root)
-    design = _load_design(root)
-    if (freeze.formal_preregistration_sha256 != ACCEPTED_PREREGISTRATION_SHA256
-            or freeze.design_sha256 != ACCEPTED_DESIGN_SHA256
-            or tuple((slot.ordinal, slot.slot_id, slot.task_id, slot.config_id)
-                     for slot in freeze.slots)
-            != tuple((slot.ordinal, slot.slot_id, slot.task_id, slot.config_id)
-                     for slot in preregistration.slots)):
-        raise FormalAnalysisIntegrityError("formal freeze differs from frozen plan")
+def build_preregistered_metric_sections(*, freeze, preregistration, design):
+    """Build the shared M12/M17 metric strata and retry report."""
+
     profile_by_task = {profile.task_id: profile for profile in design.tasks}
     if any(
         slot.primary_capability is not profile_by_task[slot.task_id].primary_capability
@@ -170,13 +153,43 @@ def build_formal_analysis(
             if slot.source_slot_status is FormalSlotStatus.UNRESOLVED_INFRASTRUCTURE
         ),
     )
+    return (
+        _row("overall", freeze.slots), by_agent, by_capability,
+        by_difficulty, by_task, retry_reporting,
+    )
+
+
+def build_formal_analysis(
+    *,
+    project_root: Path = PROJECT_ROOT,
+    freeze=None,
+) -> V13FormalAnalysis:
+    root = Path(project_root).resolve()
+    if freeze is None:
+        try:
+            freeze = verify_checked_freeze(root)
+        except FormalEvidenceIntegrityError as error:
+            raise FormalAnalysisIntegrityError("checked formal freeze failed") from error
+    preregistration = verify_preregistration(root)
+    design = _load_design(root)
+    if (freeze.formal_preregistration_sha256 != ACCEPTED_PREREGISTRATION_SHA256
+            or freeze.design_sha256 != ACCEPTED_DESIGN_SHA256
+            or tuple((slot.ordinal, slot.slot_id, slot.task_id, slot.config_id)
+                     for slot in freeze.slots)
+            != tuple((slot.ordinal, slot.slot_id, slot.task_id, slot.config_id)
+                     for slot in preregistration.slots)):
+        raise FormalAnalysisIntegrityError("formal freeze differs from frozen plan")
+    (overall, by_agent, by_capability, by_difficulty, by_task,
+     retry_reporting) = build_preregistered_metric_sections(
+        freeze=freeze, preregistration=preregistration, design=design,
+    )
     return V13FormalAnalysis(
         analysis_id="patchbench-v1.3-formal-analysis",
         formal_evidence_freeze_sha256=compute_freeze_sha(freeze),
         formal_preregistration_sha256=ACCEPTED_PREREGISTRATION_SHA256,
         design_sha256=ACCEPTED_DESIGN_SHA256,
         metrics_policy=preregistration.metrics_policy,
-        overall=_row("overall", freeze.slots),
+        overall=overall,
         by_agent_configuration=by_agent,
         by_primary_capability=by_capability,
         by_designed_difficulty=by_difficulty,

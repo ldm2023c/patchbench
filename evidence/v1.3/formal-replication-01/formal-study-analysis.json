@@ -1,0 +1,481 @@
+{
+  "schema_version": 1,
+  "analysis_id": "patchbench-v1.3-formal-replication-01-analysis",
+  "formal_replication_evidence_freeze_sha256": "e5389dec6b316263bb5c2582b19ea64ba4fb8be1e34d906cf9009436301be395",
+  "replication_preregistration_sha256": "169ce60cf8727234f0ce258235f12ccd7cfbb00e10509aa13fb54493707b49ba",
+  "design_sha256": "dc48fdac627abe9fcd95303d3042b5f0c822abbb0bb53a4dfba17dcc2f99f931",
+  "metrics_policy": {
+    "end_to_end_success_condition": "canonical_completed_and_evaluator_pass",
+    "end_to_end_denominator": "all_planned_slots_in_stratum",
+    "unresolved_infrastructure_is_end_to_end_failure": true,
+    "completed_semantic_repair_numerator": "canonical_completed_and_evaluator_pass",
+    "completed_semantic_repair_denominator": "canonical_completed_slots",
+    "completed_semantic_repair_is_conditional": true,
+    "operational_completion_numerator": "canonical_completed_slots",
+    "operational_completion_denominator": "all_planned_slots_in_stratum",
+    "operational_completion_is_descriptive": true,
+    "retry_reporting_required": [
+      "slots_requiring_retry",
+      "retry_reasons",
+      "slots_resolving_on_retry",
+      "slots_unresolved_after_retry"
+    ],
+    "reporting_strata": [
+      "overall",
+      "agent_configuration",
+      "primary_capability",
+      "designed_difficulty",
+      "task"
+    ],
+    "m1_m3_design_labels_authoritative": true,
+    "no_weighted_composite_agent_score": true,
+    "no_post_hoc_best_agent_rule": true,
+    "no_outcome_based_task_removal": true,
+    "no_outcome_based_agent_removal": true,
+    "no_difficulty_relabeling": true,
+    "no_failure_denominator_exclusion": true,
+    "no_cherry_picked_repetitions": true,
+    "no_replacement_runs_beyond_retry": true,
+    "no_performance_based_stopping": true
+  },
+  "overall": {
+    "value": "overall",
+    "end_to_end_reliability": {
+      "numerator": 107,
+      "denominator": 108,
+      "rate": 0.9907407407407407
+    },
+    "completed_semantic_repair": {
+      "numerator": 107,
+      "denominator": 107,
+      "rate": 1.0
+    },
+    "operational_completion": {
+      "numerator": 107,
+      "denominator": 108,
+      "rate": 0.9907407407407407
+    }
+  },
+  "by_agent_configuration": [
+    {
+      "value": "codex-gpt-5.5-relay",
+      "end_to_end_reliability": {
+        "numerator": 35,
+        "denominator": 36,
+        "rate": 0.9722222222222222
+      },
+      "completed_semantic_repair": {
+        "numerator": 35,
+        "denominator": 35,
+        "rate": 1.0
+      },
+      "operational_completion": {
+        "numerator": 35,
+        "denominator": 36,
+        "rate": 0.9722222222222222
+      }
+    },
+    {
+      "value": "cursor-claude-4.6-sonnet-medium",
+      "end_to_end_reliability": {
+        "numerator": 36,
+        "denominator": 36,
+        "rate": 1.0
+      },
+      "completed_semantic_repair": {
+        "numerator": 36,
+        "denominator": 36,
+        "rate": 1.0
+      },
+      "operational_completion": {
+        "numerator": 36,
+        "denominator": 36,
+        "rate": 1.0
+      }
+    },
+    {
+      "value": "grok-build-grok-4.5-relay",
+      "end_to_end_reliability": {
+        "numerator": 36,
+        "denominator": 36,
+        "rate": 1.0
+      },
+      "completed_semantic_repair": {
+        "numerator": 36,
+        "denominator": 36,
+        "rate": 1.0
+      },
+      "operational_completion": {
+        "numerator": 36,
+        "denominator": 36,
+        "rate": 1.0
+      }
+    }
+  ],
+  "by_primary_capability": [
+    {
+      "value": "local_boundary",
+      "end_to_end_reliability": {
+        "numerator": 26,
+        "denominator": 27,
+        "rate": 0.9629629629629629
+      },
+      "completed_semantic_repair": {
+        "numerator": 26,
+        "denominator": 26,
+        "rate": 1.0
+      },
+      "operational_completion": {
+        "numerator": 26,
+        "denominator": 27,
+        "rate": 0.9629629629629629
+      }
+    },
+    {
+      "value": "cross_file",
+      "end_to_end_reliability": {
+        "numerator": 27,
+        "denominator": 27,
+        "rate": 1.0
+      },
+      "completed_semantic_repair": {
+        "numerator": 27,
+        "denominator": 27,
+        "rate": 1.0
+      },
+      "operational_completion": {
+        "numerator": 27,
+        "denominator": 27,
+        "rate": 1.0
+      }
+    },
+    {
+      "value": "state_consistency",
+      "end_to_end_reliability": {
+        "numerator": 27,
+        "denominator": 27,
+        "rate": 1.0
+      },
+      "completed_semantic_repair": {
+        "numerator": 27,
+        "denominator": 27,
+        "rate": 1.0
+      },
+      "operational_completion": {
+        "numerator": 27,
+        "denominator": 27,
+        "rate": 1.0
+      }
+    },
+    {
+      "value": "regression_robustness",
+      "end_to_end_reliability": {
+        "numerator": 27,
+        "denominator": 27,
+        "rate": 1.0
+      },
+      "completed_semantic_repair": {
+        "numerator": 27,
+        "denominator": 27,
+        "rate": 1.0
+      },
+      "operational_completion": {
+        "numerator": 27,
+        "denominator": 27,
+        "rate": 1.0
+      }
+    }
+  ],
+  "by_designed_difficulty": [
+    {
+      "value": "easy",
+      "end_to_end_reliability": {
+        "numerator": 35,
+        "denominator": 36,
+        "rate": 0.9722222222222222
+      },
+      "completed_semantic_repair": {
+        "numerator": 35,
+        "denominator": 35,
+        "rate": 1.0
+      },
+      "operational_completion": {
+        "numerator": 35,
+        "denominator": 36,
+        "rate": 0.9722222222222222
+      }
+    },
+    {
+      "value": "medium",
+      "end_to_end_reliability": {
+        "numerator": 36,
+        "denominator": 36,
+        "rate": 1.0
+      },
+      "completed_semantic_repair": {
+        "numerator": 36,
+        "denominator": 36,
+        "rate": 1.0
+      },
+      "operational_completion": {
+        "numerator": 36,
+        "denominator": 36,
+        "rate": 1.0
+      }
+    },
+    {
+      "value": "hard",
+      "end_to_end_reliability": {
+        "numerator": 36,
+        "denominator": 36,
+        "rate": 1.0
+      },
+      "completed_semantic_repair": {
+        "numerator": 36,
+        "denominator": 36,
+        "rate": 1.0
+      },
+      "operational_completion": {
+        "numerator": 36,
+        "denominator": 36,
+        "rate": 1.0
+      }
+    }
+  ],
+  "by_task": [
+    {
+      "value": "env_config",
+      "end_to_end_reliability": {
+        "numerator": 8,
+        "denominator": 9,
+        "rate": 0.8888888888888888
+      },
+      "completed_semantic_repair": {
+        "numerator": 8,
+        "denominator": 8,
+        "rate": 1.0
+      },
+      "operational_completion": {
+        "numerator": 8,
+        "denominator": 9,
+        "rate": 0.8888888888888888
+      }
+    },
+    {
+      "value": "request_signing",
+      "end_to_end_reliability": {
+        "numerator": 9,
+        "denominator": 9,
+        "rate": 1.0
+      },
+      "completed_semantic_repair": {
+        "numerator": 9,
+        "denominator": 9,
+        "rate": 1.0
+      },
+      "operational_completion": {
+        "numerator": 9,
+        "denominator": 9,
+        "rate": 1.0
+      }
+    },
+    {
+      "value": "byte_ranges",
+      "end_to_end_reliability": {
+        "numerator": 9,
+        "denominator": 9,
+        "rate": 1.0
+      },
+      "completed_semantic_repair": {
+        "numerator": 9,
+        "denominator": 9,
+        "rate": 1.0
+      },
+      "operational_completion": {
+        "numerator": 9,
+        "denominator": 9,
+        "rate": 1.0
+      }
+    },
+    {
+      "value": "config_resolution",
+      "end_to_end_reliability": {
+        "numerator": 9,
+        "denominator": 9,
+        "rate": 1.0
+      },
+      "completed_semantic_repair": {
+        "numerator": 9,
+        "denominator": 9,
+        "rate": 1.0
+      },
+      "operational_completion": {
+        "numerator": 9,
+        "denominator": 9,
+        "rate": 1.0
+      }
+    },
+    {
+      "value": "message_codec",
+      "end_to_end_reliability": {
+        "numerator": 9,
+        "denominator": 9,
+        "rate": 1.0
+      },
+      "completed_semantic_repair": {
+        "numerator": 9,
+        "denominator": 9,
+        "rate": 1.0
+      },
+      "operational_completion": {
+        "numerator": 9,
+        "denominator": 9,
+        "rate": 1.0
+      }
+    },
+    {
+      "value": "schema_upgrade",
+      "end_to_end_reliability": {
+        "numerator": 9,
+        "denominator": 9,
+        "rate": 1.0
+      },
+      "completed_semantic_repair": {
+        "numerator": 9,
+        "denominator": 9,
+        "rate": 1.0
+      },
+      "operational_completion": {
+        "numerator": 9,
+        "denominator": 9,
+        "rate": 1.0
+      }
+    },
+    {
+      "value": "resource_lifecycle",
+      "end_to_end_reliability": {
+        "numerator": 9,
+        "denominator": 9,
+        "rate": 1.0
+      },
+      "completed_semantic_repair": {
+        "numerator": 9,
+        "denominator": 9,
+        "rate": 1.0
+      },
+      "operational_completion": {
+        "numerator": 9,
+        "denominator": 9,
+        "rate": 1.0
+      }
+    },
+    {
+      "value": "streaming_events",
+      "end_to_end_reliability": {
+        "numerator": 9,
+        "denominator": 9,
+        "rate": 1.0
+      },
+      "completed_semantic_repair": {
+        "numerator": 9,
+        "denominator": 9,
+        "rate": 1.0
+      },
+      "operational_completion": {
+        "numerator": 9,
+        "denominator": 9,
+        "rate": 1.0
+      }
+    },
+    {
+      "value": "atomic_batch",
+      "end_to_end_reliability": {
+        "numerator": 9,
+        "denominator": 9,
+        "rate": 1.0
+      },
+      "completed_semantic_repair": {
+        "numerator": 9,
+        "denominator": 9,
+        "rate": 1.0
+      },
+      "operational_completion": {
+        "numerator": 9,
+        "denominator": 9,
+        "rate": 1.0
+      }
+    },
+    {
+      "value": "format_fallback",
+      "end_to_end_reliability": {
+        "numerator": 9,
+        "denominator": 9,
+        "rate": 1.0
+      },
+      "completed_semantic_repair": {
+        "numerator": 9,
+        "denominator": 9,
+        "rate": 1.0
+      },
+      "operational_completion": {
+        "numerator": 9,
+        "denominator": 9,
+        "rate": 1.0
+      }
+    },
+    {
+      "value": "atomic_writer",
+      "end_to_end_reliability": {
+        "numerator": 9,
+        "denominator": 9,
+        "rate": 1.0
+      },
+      "completed_semantic_repair": {
+        "numerator": 9,
+        "denominator": 9,
+        "rate": 1.0
+      },
+      "operational_completion": {
+        "numerator": 9,
+        "denominator": 9,
+        "rate": 1.0
+      }
+    },
+    {
+      "value": "cache_revalidation",
+      "end_to_end_reliability": {
+        "numerator": 9,
+        "denominator": 9,
+        "rate": 1.0
+      },
+      "completed_semantic_repair": {
+        "numerator": 9,
+        "denominator": 9,
+        "rate": 1.0
+      },
+      "operational_completion": {
+        "numerator": 9,
+        "denominator": 9,
+        "rate": 1.0
+      }
+    }
+  ],
+  "retry_reporting": {
+    "slots_requiring_retry": [
+      "rep01-r01-env_config-codex-gpt-5.5-relay",
+      "rep01-r01-request_signing-codex-gpt-5.5-relay"
+    ],
+    "retry_reasons": [
+      {
+        "failure_category": "network_provider_transport_same_route",
+        "count": 2
+      }
+    ],
+    "slots_resolving_on_retry": [
+      "rep01-r01-request_signing-codex-gpt-5.5-relay"
+    ],
+    "slots_unresolved_after_retry": [
+      "rep01-r01-env_config-codex-gpt-5.5-relay"
+    ]
+  }
+}

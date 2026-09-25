@@ -2,9 +2,11 @@
 
 ## 1. Project Overview
 
-V1.1 is COMPLETE. V1.2 Diagnosis infrastructure and validation machinery are
-implemented through D6-R5, including the frozen Validation V1 result artifact.
-See [Project Status](docs/PROJECT_STATUS.md).
+PatchBench V1.3 is **FINAL and feature-frozen after M20**. V1.1 evidence and
+V1.2 Diagnosis remain completed historical layers. V1.3 adds the frozen
+multi-Agent formal reliability methodology, original formal study, incident
+adjudication, independent Replication-01, compact evidence freeze, and
+preregistered final analysis. See [Project Status](docs/PROJECT_STATUS.md).
 
 **Project Name:** PatchBench
 
@@ -137,7 +139,7 @@ references, rather than duplicates, the source Run patch.
 
 ---
 
-## 5. Implemented foundation and V1.2 scope
+## 5. Implemented foundation, V1.2 Diagnosis, and V1.3 formal study
 
 The completed V1/V1.1 foundation remains implemented:
 
@@ -198,6 +200,54 @@ Codex quota failures, and 30/30 normally completed executions passing.
 
 Current CLI commands are `validate-task`, `run`, `experiment`, `replay`, and
 `analyze`. Diagnosis is an application API with no CLI command.
+
+### 5.1 V1.3 formal reliability methodology
+
+V1.3 freezes 12 repository tasks across four primary capabilities and three
+structural difficulty levels. Three Agent configurations execute each task in
+three repetitions, yielding 108 preregistered slots. Each configuration binds
+the toolchain, requested model, route options, policy identity, timeout, and
+exact admitted CLI version. PatchBench evaluates the deployed Agent system,
+including its CLI, provider route, tools, repository interaction, and Docker
+evaluator; it does not treat an abstract model name as the whole subject.
+
+The formal execution contract advances one slot at a time. Every attempt is
+persisted before the next action. A completed Agent execution produces one
+canonical Run, while supported pre-canonical infrastructure failures enter a
+typed retry boundary. At most two attempts are allowed, with no automatic retry,
+replacement Run, denominator change, or post-hoc selection.
+
+The primary final result is the independent Replication-01 study:
+
+```text
+planned=108
+terminal=108
+canonical=107
+unresolved infrastructure=1
+blocked=0
+```
+
+Its three preregistered overall metrics are:
+
+- **End-to-End Reliability:** completed Agent execution plus evaluator PASS over
+  all planned slots: `107/108`.
+- **Completed Semantic Repair:** evaluator PASS over slots whose Agent execution
+  completed: `107/107`.
+- **Operational Completion:** Agent status COMPLETED over all planned slots:
+  `107/108`.
+
+These metrics answer different questions. End-to-End Reliability includes the
+full deployment path and fixed denominator. Completed Semantic Repair describes
+repair quality conditional on Agent completion. Operational Completion measures
+whether the Agent deployment completed. An unresolved infrastructure slot stays
+in the first and third denominators and is absent from the conditional second
+denominator.
+
+The original formal study remains immutable. Its 32 Codex command failures were
+later adjudicated from raw artifacts as structured HTTP 429 responses, making
+cross-Agent semantic interpretation infrastructure-confounded. M16 corrected
+the supported failure taxonomy; M17 preregistered a fresh full replication.
+Original and replication observations are never pooled or substituted.
 
 The current CLI form is:
 
@@ -344,6 +394,10 @@ Current non-goals are:
 Deterministic observable FailureAnalysis and Experiment-wide descriptive Analyze
 remain available. V1.2 adds optional semantic hypotheses and canonical same-cell
 peer selection; neither makes comparison a causal proof.
+
+PatchBench V1.3 is final after M20. A new Agent, task, rerun, scoring metric,
+dashboard, context engine, or statistical-significance study requires a
+separately scoped future version; none is a remaining V1.3 milestone.
 
 ---
 

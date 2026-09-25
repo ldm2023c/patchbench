@@ -34,6 +34,84 @@ Infrastructure-specific logic belongs in adapters.
 
 ---
 
+### V1.3 formal-study architecture
+
+```text
+Frozen Task design / candidate manifest
+        ↓
+Frozen Agent manifest + exact CLI admission
+        ↓
+Formal preregistration
+        ↓
+FormalExecutionContract
+        ↓
+one-slot-at-a-time state machine
+        ↓
+Agent host execution
+        ↓
+Docker official evaluation
+        ↓
+canonical Run or typed pre-canonical infrastructure failure
+        ↓
+immutable attempt/slot ledger
+        ↓
+compact evidence freeze
+        ↓
+deterministic preregistered analysis
+```
+
+The M8 Agent manifest binds three configurations: Codex through the frozen
+Ailink relay route, Cursor CLI through its frozen endpoint, and Grok Build
+through the frozen Ailink relay route. M9 resolves only those identities and
+requires exact canonical CLI versions. M18B separately freezes the reviewed
+Replication-01 execution sources before production execution.
+
+`FormalExecutionContract` binds study ID, preregistration identity, result
+namespace, and verifier. The state machine writes one immutable attempt before
+any next-slot transition. One canonical Run is authoritative once persisted,
+even if later cleanup raises. Before canonical persistence, supported failures
+can be typed as infrastructure and stop at `retry_required`.
+
+`AgentProviderTransportError` represents the supported provider transport
+boundary. For Codex, strict structured event parsing recognizes the frozen HTTP
+429 shape. A recognized pre-canonical 429 becomes
+`network_provider_transport_same_route`; it cannot create a canonical Run.
+Retry is human-authorized, preserves the route/model/timeout, and is limited to
+two attempts per slot. There are no replacement Runs and the planned denominator
+never changes.
+
+The original and Replication-01 namespaces are distinct and cannot alias:
+
+```text
+results/v1.3-formal
+results/v1.3-formal-replication-01
+```
+
+Their checked compact freezes bind study ledgers, attempt histories, canonical
+Run semantics, and raw Run files by SHA256. The original study remains immutable;
+Replication-01 is the primary final result. Cross-study comparison is descriptive
+only and does not pool observations.
+
+The main V1.3 implementation boundaries are:
+
+```text
+domain/formal_study.py                 preregistration contracts
+domain/formal_execution.py             ledger and attempt invariants
+domain/formal_replication.py           independent replication contract
+domain/formal_evidence.py              compact freeze schemas and hashes
+domain/formal_analysis.py              metric schemas and exact formulas
+application/v13_agent_execution.py     frozen Agent resolution
+application/v13_formal_execution.py    shared one-slot state machine
+application/v13_formal_replication_execution.py
+                                        admission-gated replication facade
+agents/structured_provider_failure.py  supported transport classification
+scripts/v13_formal_replication_evidence.py
+scripts/v13_formal_replication_analysis.py
+                                        final freeze and analysis verification
+```
+
+---
+
 ### V1.2 Diagnosis layers and trust boundaries
 
 D1–D6-R5 infrastructure is implemented and externally reviewed. Diagnosis is an
@@ -260,10 +338,12 @@ not a production-grade hostile multi-tenant security boundary.
 
 The Agent Adapter encapsulates how a specific coding agent is invoked.
 
-Initial real implementation:
+Frozen V1.3 real implementations:
 
 ```text
 CodexAdapter
+CursorCliAdapter
+GrokBuildAdapter
 ```
 
 The deterministic orchestration test double is:
@@ -290,9 +370,9 @@ Only executions that genuinely start return `COMPLETED`, `COMMAND_FAILED`, or
 `TIMED_OUT`. Setup, startup, and unsafe process-management failures remain
 exceptions. Agent execution is host-side; Docker is not an Agent runtime.
 
-The experiment system must not parse Codex-specific behavior outside `CodexAdapter`.
-
-Future agents should therefore be addable without rewriting the experiment engine.
+The experiment system does not parse toolchain-specific behavior outside the
+adapters. The frozen V1.3 resolver selects only checked Agent configurations;
+adding another Agent belongs to a separately scoped future version.
 
 ---
 
