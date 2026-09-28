@@ -3,6 +3,7 @@
 import hashlib
 import json
 import subprocess
+import sys
 from pathlib import Path
 
 import pytest
@@ -312,7 +313,7 @@ def test_agent_manifest_hash_changes_for_required_semantic_changes():
 
 def test_agent_manifest_script_check_succeeds():
     result = subprocess.run(
-        [".venv/bin/python", "scripts/v13_agent_manifest.py", "--check"],
+        [sys.executable, "scripts/v13_agent_manifest.py", "--check"],
         cwd=PROJECT_ROOT,
         text=True,
         capture_output=True,

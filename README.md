@@ -3,7 +3,8 @@
 **Coding Agent Reliability & Failure Analysis Platform**
 
 A reproducible experimentation platform for evaluating, diagnosing, and
-improving coding-agent reliability on real software repositories.
+improving coding-agent reliability on software repositories. PatchBench is an
+evaluation harness and evidence system; it is not itself a coding Agent.
 
 A coding agent succeeding once does not mean it is reliable. The same task and
 configuration can produce different patches, outcomes, and durations across
@@ -11,8 +12,11 @@ repeated executions. PatchBench preserves the execution evidence needed to
 study that variation:
 
 ```text
-Run → Repeat → Classify → Compare → Replay
-                   └─ semantic FAIL → verified evidence → optional Diagnosis
+TaskSpec → Agent execution → canonical patch → frozen deterministic evaluation
+                                                   ↓
+                                              RunRecord
+                                                   ↓
+                                  Experiment / Replay / optional Diagnosis
 ```
 
 ## V1.3 FINAL — Formal Multi-Agent Reliability Study
@@ -182,9 +186,13 @@ fresh worktree at caller-supplied TaskSpec base
 
 ### Prerequisites and installation
 
-PatchBench requires Python 3.12 or later and Git. Docker is optional and used
-only for task evaluation. Real-agent execution additionally requires an
-installed and authenticated Codex CLI; the Agent still runs on the host.
+PatchBench requires Python 3.12 or later and Git. Docker is optional for the
+example workflow and is required by the frozen V1.3 evaluator. The public CLI
+supports FakeAgent and Codex execution. Real Codex execution requires the
+admitted CLI plus its credential; the Agent runs on the host. The frozen V1.3
+study harness also has exact-version adapters for Codex, Cursor CLI, and Grok
+Build, each requiring its documented executable and credential. Verifying the
+checked evidence does not invoke any provider.
 
 ```bash
 python3 -m venv .venv
@@ -389,11 +397,26 @@ and temporary paths are intentionally omitted here.
 
 ## Development and Tests
 
-Run the ordinary regression suite:
+Run the provider-free regression suite:
 
 ```bash
-pytest
+pytest -q
 ```
+
+The checked V1.3 Replication-01 freeze and preregistered analysis are tracked in
+`evidence/v1.3/formal-replication-01/`. Their semantic and byte identities can
+be verified without raw runtime results or provider credentials:
+
+```bash
+python -m scripts.v13_formal_replication_evidence --check
+python -m scripts.v13_formal_replication_analysis --check
+```
+
+Raw execution output under `results/` is intentionally ignored because it can
+contain large, machine-specific provider transcripts. Tests that recompute a
+freeze from the local raw Replication-01 tree run when that tree is present and
+otherwise skip; tests of the checked freeze, hashes, links, counts, and metrics
+always run.
 
 Docker integration tests are explicitly opt-in:
 
@@ -402,5 +425,4 @@ PATCHBENCH_RUN_DOCKER_TESTS=1 pytest -m docker
 ```
 
 See [Development Workflow](docs/DEVELOPMENT.md) for the human-owned review,
-Git, and milestone process. PatchBench does not claim CI behavior that is not
-configured in this repository.
+Git, and milestone process.
