@@ -59,6 +59,10 @@ def _tree_sha256s(root: Path) -> dict[str, str]:
     }
 
 
+def _optional_tree_sha256s(root: Path) -> dict[str, str] | None:
+    return _tree_sha256s(root) if root.is_dir() else None
+
+
 def _initialize(tmp_path: Path):
     results = tmp_path / "replication"
     ledger = replication.initialize_replication_study(
@@ -107,11 +111,10 @@ def test_original_contract_remains_bound_to_original_preregistration(tmp_path):
 
 def test_checked_production_admission_verifies_without_mutating_results():
     results = PROJECT_ROOT / replication.DEFAULT_REPLICATION_RESULTS_PATH
-    before = _tree_sha256s(results)
+    before = _optional_tree_sha256s(results)
     value = admission.verify_checked_replication_execution_admission(PROJECT_ROOT)
     assert value.execution_harness_commit == SYNTHETIC_HARNESS_COMMIT
-    assert before
-    assert _tree_sha256s(results) == before
+    assert _optional_tree_sha256s(results) == before
 
 
 def test_checked_admission_does_not_read_runtime_results(monkeypatch):
@@ -327,7 +330,7 @@ def test_ledger_preregistration_identity_drift_is_rejected(tmp_path):
 
 def test_m18b_checked_admission_has_exact_frozen_identity_and_sources():
     results = PROJECT_ROOT / replication.DEFAULT_REPLICATION_RESULTS_PATH
-    before = _tree_sha256s(results)
+    before = _optional_tree_sha256s(results)
     value = admission.verify_checked_replication_execution_admission(PROJECT_ROOT)
     assert value.execution_harness_commit == \
         admission.REVIEWED_M18A_EXECUTION_HARNESS_COMMIT
@@ -345,8 +348,7 @@ def test_m18b_checked_admission_has_exact_frozen_identity_and_sources():
     assert hashlib.sha256(artifact.read_bytes()).hexdigest() == \
         admission.ACCEPTED_REPLICATION_EXECUTION_ADMISSION_BYTE_SHA256
     assert replication.REQUIRED_EXECUTION_HARNESS_COMMIT is None
-    assert before
-    assert _tree_sha256s(results) == before
+    assert _optional_tree_sha256s(results) == before
 
 
 @pytest.mark.parametrize(

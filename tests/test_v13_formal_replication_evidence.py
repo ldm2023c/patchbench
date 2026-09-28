@@ -28,9 +28,13 @@ from scripts.v13_formal_replication_preregistration import (
 
 PROJECT_ROOT = Path(__file__).resolve().parents[1]
 SOURCE = PROJECT_ROOT / "results/v1.3-formal-replication-01"
+requires_replication_runtime = pytest.mark.skipif(
+    not SOURCE.is_dir(),
+    reason="ignored Replication-01 runtime evidence is unavailable",
+)
 
 
-def test_checked_freeze_binds_completed_replication_and_all_raw_evidence():
+def test_checked_freeze_binds_completed_replication():
     freeze = evidence.verify_checked_replication_freeze(PROJECT_ROOT)
     preregistration = verify_replication_preregistration(PROJECT_ROOT)
     assert freeze.source_study_status == "completed"
@@ -51,7 +55,6 @@ def test_checked_freeze_binds_completed_replication_and_all_raw_evidence():
         for slot in preregistration.slots
     )
     assert len(freeze.slots) == 108
-    assert not tuple(SOURCE.glob("slots/*/attempt-03"))
 
     unresolved = tuple(
         slot for slot in freeze.slots
@@ -69,6 +72,15 @@ def test_checked_freeze_binds_completed_replication_and_all_raw_evidence():
     assert len(canonical) == 107
     assert all(slot.canonical_run is not None for slot in canonical)
 
+
+@requires_replication_runtime
+def test_checked_freeze_binds_sample_raw_evidence():
+    freeze = evidence.verify_checked_replication_freeze(PROJECT_ROOT)
+    assert not tuple(SOURCE.glob("slots/*/attempt-03"))
+    canonical = tuple(
+        slot for slot in freeze.slots
+        if slot.source_slot_status is FormalSlotStatus.CANONICAL_OBSERVED
+    )
     sample = canonical[0]
     attempt_index = sample.canonical_attempt_index
     assert attempt_index is not None
@@ -118,6 +130,7 @@ def test_replication_and_original_namespaces_cannot_alias():
         )
 
 
+@requires_replication_runtime
 def test_non_completed_replication_fails_closed(monkeypatch):
     ledger = evidence.check_formal_study(
         project_root=PROJECT_ROOT,

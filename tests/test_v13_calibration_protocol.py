@@ -2,6 +2,7 @@ import hashlib
 import json
 import shutil
 import subprocess
+import sys
 from pathlib import Path
 
 import pytest
@@ -307,7 +308,7 @@ def test_builder_rejects_example_bug_in_candidate_task_set(tmp_path):
 
 def test_script_check_succeeds():
     result = subprocess.run(
-        [".venv/bin/python", "scripts/v13_calibration_protocol.py", "--check"],
+        [sys.executable, "scripts/v13_calibration_protocol.py", "--check"],
         cwd=PROJECT_ROOT,
         capture_output=True,
         text=True,

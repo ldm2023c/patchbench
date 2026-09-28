@@ -3,6 +3,7 @@ from pathlib import Path
 from types import SimpleNamespace
 
 import pytest
+from rich.text import Text
 from typer.testing import CliRunner
 
 from patchbench.agents.base import AgentInfrastructureError, AgentRunStatus
@@ -23,6 +24,11 @@ from tests.test_task_loader import VALID_TASK
 
 
 runner = CliRunner()
+
+
+def plain_cli_output(value: str) -> str:
+    """Remove terminal presentation codes before semantic CLI assertions."""
+    return Text.from_ansi(value).plain
 
 
 def completed_experiment(
@@ -483,7 +489,7 @@ def test_experiment_rejects_invalid_cli_input_before_execution(
     )
 
     assert result.exit_code != 0
-    assert message in result.output
+    assert message in plain_cli_output(result.output)
 
 
 def test_completed_reliability_failures_remain_cli_success(
@@ -634,9 +640,10 @@ def test_replay_cli_surface_has_only_replay_options() -> None:
     result = runner.invoke(app, ["replay", "--help"])
 
     assert result.exit_code == 0
-    assert "--task" in result.output
-    assert "--run-id" in result.output
-    assert "--docker" in result.output
+    output = plain_cli_output(result.output)
+    assert "--task" in output
+    assert "--run-id" in output
+    assert "--docker" in output
     unsupported_options = (
         "--agent",
         "--model",
@@ -645,7 +652,7 @@ def test_replay_cli_surface_has_only_replay_options() -> None:
         "--retry",
     )
     for unsupported in unsupported_options:
-        assert unsupported not in result.output
+        assert unsupported not in output
 
 
 def test_replay_host_cli_persists_result_and_never_constructs_agent(
@@ -859,7 +866,8 @@ def test_replay_persistence_failure_is_cli_failure(
 def test_analyze_help_exposes_options():
     result = runner.invoke(app, ["analyze", "--help"])
     assert result.exit_code == 0
-    assert "--experiment" in result.output and "--json" in result.output
+    output = plain_cli_output(result.output)
+    assert "--experiment" in output and "--json" in output
 
 
 @pytest.mark.parametrize("outcomes", [(True, True), (True, False), (False, False)])
@@ -943,4 +951,5 @@ def test_analyze_available_through_python_module():
     result = subprocess.run([sys.executable, "-m", "patchbench.cli", "analyze", "--help"],
                             capture_output=True, text=True, check=False)
     assert result.returncode == 0, result.stderr
-    assert "--experiment" in result.stdout and "--json" in result.stdout
+    output = plain_cli_output(result.stdout)
+    assert "--experiment" in output and "--json" in output
